@@ -208,7 +208,8 @@ const Settings = (() => {
     reduceMotion: false,
     supabaseUrl: DEFAULT_SUPABASE_URL,
     supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
-    mirror: false
+    mirror: false,
+    mirrorSyncedAt: null
   };
   let current = Object.assign({}, defaults);
 
@@ -1232,9 +1233,6 @@ function renderHistory() {
     btn.appendChild(date);
 
     const mid = el('div', 'hitem__mid');
-    const titleRow = el('div', 'od-row');
-    titleRow.appendChild(el('span', 'row__title', SOURCE_LABEL[reading.source] || 'Reading'));
-    mid.appendChild(titleRow);
 
     const figures = el('div', 'hitem__figures');
     const items = [];
@@ -1334,7 +1332,11 @@ function renderSettings() {
   $('#sel-theme').value = Settings.get().theme;
   $('#sel-mass').value = Settings.get().massUnit;
   $('#chk-motion').checked = Boolean(Settings.get().reduceMotion);
-  $('#chk-mirror').checked = Boolean(Settings.get().mirror);
+
+  const mirrorOn = Boolean(Settings.get().mirror);
+  $('#chk-mirror').checked = mirrorOn;
+  $('#mirror-status').hidden = !mirrorOn;
+  $('#mirror-last').textContent = describeMirrorSync();
   $('#in-supa-url').value = Settings.get().supabaseUrl || '';
   $('#in-supa-key').value = Settings.get().supabaseAnonKey || '';
 
@@ -1355,6 +1357,12 @@ function renderSettings() {
   $('#install-sub').textContent = isStandalone()
     ? 'Installed. Camera and offline use are available.'
     : 'Add to your home screen for camera access and offline use.';
+}
+
+function describeMirrorSync() {
+  const at = Settings.get().mirrorSyncedAt;
+  if (!at) return 'Never synced';
+  return fmtDateTime(at) + ' · ' + relDays(at);
 }
 
 function isStandalone() {
@@ -1835,52 +1843,88 @@ function reportFieldLabel(key) {
   return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function reportFieldValue(key, value) {
-  const text = typeof value === 'number' ? String(value) : String(value);
-  const unit = REPORT_FIELD_UNITS[key];
-  return unit ? text + ' ' + unit : text;
-}
+// Report values already shown by an editable metric field, keyed by their path in
+// the report. Skipped below so the same number is never shown twice.
+const REPORT_METRIC_PATHS = new Set([
+  'metadata.test_date',
+  'user_profile.weight_kg',
+  'key_indicators.bmi',
+  'key_indicators.metabolic_age',
+  'key_indicators.visceral_fat_rating',
+  'key_indicators.physique_rating',
+  'key_indicators.physique_rating_score',
+  'key_indicators.muscle_quality_score',
+  'body_composition.fat_percentage',
+  'body_composition.muscle_mass_kg',
+  'body_composition.fat_free_mass_kg',
+  'body_composition.bone_mass_kg',
+  'body_composition.total_body_water_percent',
+  'body_composition.bmr_kcal'
+]);
 
-function appendReportRows(host, value) {
-  Object.keys(value || {}).forEach((key) => {
+// Flattens a report section into editable leaves, naming nested groups after their
+// parent so a segmental value reads "Muscle mass · Trunk".
+function reportLeaves(section, path, group, out) {
+  Object.keys(section || {}).forEach((key) => {
     if (key === 'leg_muscle_score') return;
-    const item = value[key];
+    const item = section[key];
     if (item == null || item === '') return;
-    if (item && typeof item === 'object' && !Array.isArray(item)) {
-      const heading = el('div', 'rev__title', reportFieldLabel(key));
-      heading.style.marginTop = 'var(--s-3)';
-      host.appendChild(heading);
-      appendReportRows(host, item);
+    const next = path ? path + '.' + key : key;
+    if (typeof item === 'object' && !Array.isArray(item)) {
+      reportLeaves(item, next, reportFieldLabel(key), out);
       return;
     }
-    const row = el('div', 'detail__row');
-    row.appendChild(el('span', 'detail__k', reportFieldLabel(key)));
-    row.appendChild(el('span', 'detail__v', reportFieldValue(key, item)));
-    host.appendChild(row);
+    if (REPORT_METRIC_PATHS.has(next)) return;
+    const label = reportFieldLabel(key);
+    out.push({ path: next, label: group ? group + ' · ' + label : label, value: item });
   });
+  return out;
 }
 
-function reportDetails(report) {
-  if (!report) return null;
-  const details = el('details');
-  details.open = true;
-  details.style.marginTop = 'var(--s-4)';
-  details.appendChild(el('summary', 'linkbtn', 'Structured report data'));
+function reviewReportField(leaf) {
+  const field = el('div', 'rev__field');
+  const id = 'rev-report-' + leaf.path.replace(/\./g, '-');
+  const unit = REPORT_FIELD_UNITS[leaf.path.split('.').pop()];
+  const label = el('label', 'rev__label', leaf.label + (unit ? ' · ' + unit : ''));
+  label.setAttribute('for', id);
+  field.appendChild(label);
 
-  const body = el('div');
-  body.style.marginTop = 'var(--s-3)';
-  Object.keys(REPORT_SECTION_LABELS).forEach((key) => {
-    const section = report[key];
-    if (!section || typeof section !== 'object') return;
-    const grid = el('div', 'detail__grid');
-    appendReportRows(grid, section);
-    if (!grid.childElementCount) return;
-    body.appendChild(el('div', 'rev__title', REPORT_SECTION_LABELS[key]));
-    body.appendChild(grid);
+  const numeric = typeof leaf.value === 'number';
+  const input = document.createElement('input');
+  input.className = 'rev__input';
+  input.id = id;
+  input.dataset.reportPath = leaf.path;
+  input.dataset.reportKind = numeric ? 'number' : 'text';
+  if (numeric) {
+    input.type = 'number';
+    input.step = 'any';
+    input.inputMode = 'decimal';
+  } else {
+    input.type = 'text';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+  }
+  input.value = String(leaf.value);
+  field.appendChild(input);
+  return field;
+}
+
+// Writes the edited report values back onto a copy of the extracted report.
+function applyReportEdits(report, edits) {
+  if (!report) return null;
+  const next = JSON.parse(JSON.stringify(report));
+  Object.keys(edits).forEach((path) => {
+    const parts = path.split('.');
+    let node = next;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!node[parts[i]] || typeof node[parts[i]] !== 'object') node[parts[i]] = {};
+      node = node[parts[i]];
+    }
+    const last = parts[parts.length - 1];
+    if (edits[path] === null) delete node[last];
+    else node[last] = edits[path];
   });
-  if (!body.childElementCount) return null;
-  details.appendChild(body);
-  return details;
+  return next;
 }
 
 function openReview(state) {
@@ -1905,9 +1949,6 @@ function openReview(state) {
     wrap.appendChild(img);
     host.appendChild(wrap);
   }
-
-  const structuredDetails = reportDetails(state.report);
-  if (structuredDetails) host.appendChild(structuredDetails);
 
   const form = el('form', 'rev');
   form.id = 'review-form';
@@ -1963,6 +2004,30 @@ function openReview(state) {
   });
   addRow.appendChild(select);
   form.appendChild(addRow);
+
+  /* The rest of the extracted report, edited in this same form. */
+  if (state.report) {
+    const sections = Object.keys(REPORT_SECTION_LABELS)
+      .map((key) => ({ key, leaves: reportLeaves(state.report[key], key, '', []) }))
+      .filter((entry) => entry.leaves.length);
+
+    if (sections.length) {
+      const heading = el('div', 'rev__title', 'Report details');
+      heading.style.marginTop = 'var(--s-5)';
+      form.appendChild(heading);
+
+      sections.forEach((entry) => {
+        const sub = el('div', 'rev__title', REPORT_SECTION_LABELS[entry.key]);
+        sub.style.marginTop = 'var(--s-3)';
+        form.appendChild(sub);
+        const reportGrid = el('div', 'rev__grid');
+        reportGrid.style.marginTop = 'var(--s-2)';
+        entry.leaves.forEach((leaf) => reportGrid.appendChild(reviewReportField(leaf)));
+        form.appendChild(reportGrid);
+      });
+    }
+  }
+
   host.appendChild(form);
 
   const errBox = el('p', 'rev__error');
@@ -2033,6 +2098,25 @@ async function saveReview() {
     metrics[key] = value;
   });
 
+  const reportEdits = {};
+  $$('#review-form input[data-report-path]').forEach((input) => {
+    const path = input.dataset.reportPath;
+    const raw = input.value.trim();
+    input.removeAttribute('aria-invalid');
+    if (input.dataset.reportKind === 'number') {
+      if (raw === '') { reportEdits[path] = null; return; }
+      const value = parseNumber(raw);
+      if (value == null || isNaN(value)) {
+        errs.push(reportFieldLabel(path.split('.').pop()) + ' is not a number.');
+        input.setAttribute('aria-invalid', 'true');
+        return;
+      }
+      reportEdits[path] = value;
+      return;
+    }
+    reportEdits[path] = raw === '' ? null : raw;
+  });
+
   const measuredAt = toDate($('#rev-date').value);
   if (!measuredAt) errs.push('The measurement date is missing.');
 
@@ -2059,7 +2143,7 @@ async function saveReview() {
     note: reviewState.notes || reviewState.note || '',
     confidence: reviewState.confidence,
     raw: reviewState.raw,
-    report: reviewState.report || null,
+    report: applyReportEdits(reviewState.report, reportEdits),
     metrics
   };
 
@@ -2078,30 +2162,43 @@ async function saveReview() {
   if (Settings.get().mirror && Auth.isConfigured && Auth.isConfigured()) mirrorPush([reading]);
 }
 
+// Best effort on the save path, but reports enough for the manual sync to talk
+// to the user. Records when the push last succeeded.
 async function mirrorPush(readings) {
-  const client = Auth.getSession();
-  if (!client || !client.local) {
-    // Use the raw REST endpoint so the app never needs to hold a client instance here.
-    try {
-      const url = Settings.get().supabaseUrl.replace(/\/+$/, '') + '/rest/v1/readings';
-      const token = await Auth.accessToken();
-      if (!token) return;
-      await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: Settings.get().supabaseAnonKey,
-          Authorization: 'Bearer ' + token,
-          Prefer: 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(readings.map((r) => ({
-          id: r.id,
-          measured_at: r.measuredAt,
-          source: r.source,
-          payload: r
-        })))
-      });
-    } catch (e) { /* the mirror is best effort */ }
+  if (!readings.length) return { ok: true, count: 0 };
+
+  const url = Settings.get().supabaseUrl.replace(/\/+$/, '') + '/rest/v1/readings';
+  const token = await Auth.accessToken();
+  if (!token) return { ok: false, count: 0, error: 'Sign in before mirroring readings.' };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: Settings.get().supabaseAnonKey,
+        Authorization: 'Bearer ' + token,
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(readings.map((r) => ({
+        id: r.id,
+        measured_at: r.measuredAt,
+        source: r.source,
+        payload: r
+      })))
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      return {
+        ok: false,
+        count: 0,
+        error: 'The mirror replied with ' + res.status + (detail ? ': ' + detail.slice(0, 140) : '.')
+      };
+    }
+    Settings.save({ mirrorSyncedAt: new Date().toISOString() });
+    return { ok: true, count: readings.length };
+  } catch (err) {
+    return { ok: false, count: 0, error: 'The mirror could not be reached.' };
   }
 }
 
@@ -2356,6 +2453,26 @@ function bindEvents() {
   $('#chk-mirror').addEventListener('change', (e) => {
     Settings.save({ mirror: e.target.checked });
     toast(e.target.checked ? 'Cloud mirror on — new readings copy to your project' : 'Cloud mirror off');
+    renderSettings();
+  });
+
+  $('#btn-sync-now').addEventListener('click', async () => {
+    const btn = $('#btn-sync-now');
+    if (!Auth.user()) { toast('Sign in before mirroring readings', 'error'); return; }
+    if (!Settings.get().supabaseUrl || !Settings.get().supabaseAnonKey) {
+      toast('Add your Supabase URL and anon key first', 'error');
+      return;
+    }
+    if (!CACHE.length) { toast('There is nothing to mirror yet'); return; }
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Syncing…';
+    const result = await mirrorPush(CACHE);
+    btn.disabled = false;
+    btn.textContent = label;
+    renderSettings();
+    if (result.ok) toast('Mirrored ' + result.count + ' reading' + (result.count === 1 ? '' : 's'));
+    else toast(result.error || 'The mirror did not answer', 'error');
   });
 
   $('#btn-save-config').addEventListener('click', async () => {

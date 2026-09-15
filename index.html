@@ -414,10 +414,17 @@
               <span class="sr-only">Cloud mirror</span>
             </label>
           </div>
+          <div class="od-row" id="mirror-status" hidden>
+            <div class="od-field od-fill">
+              <span class="row__title">Last sync</span>
+              <span class="row__sub" id="mirror-last">Never</span>
+            </div>
+            <button class="btn btn--ghost btn--small od-fixed" id="btn-sync-now" type="button">Sync now</button>
+          </div>
           <div class="od-row">
             <div class="od-field od-fill">
               <span class="row__title">Samsung Health export</span>
-              <span class="row__sub">A CSV shaped for import. Samsung Health has no public write API, so this is the honest route in.</span>
+              <span class="row__sub"></span>
             </div>
             <button class="btn btn--ghost btn--small od-fixed" id="btn-export-samsung" type="button">CSV</button>
           </div>
