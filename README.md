@@ -25,7 +25,7 @@ functions/share/[token].js      optional Cloudflare share inbox pickup
 .github/workflows/deploy.yml    GitHub Pages deployment
 ```
 
-Open `index.html` and it runs immediately in **local mode**: readings are entered by hand and kept in the browser. Nothing else has to be set up first.
+Open `index.html` and it starts at the Google sign-in screen. After sign-in, readings are still stored locally in the browser unless the optional cloud mirror is enabled.
 
 ---
 
@@ -77,9 +77,13 @@ Add a KV namespace and bind it as `SHARE_KV` to unlock the share target. Without
 
 1. <https://supabase.com/dashboard> → **New project**.
 2. **Authentication → Providers → Google → Enable.** Paste a Google OAuth client id and secret (create them at <https://console.cloud.google.com/apis/credentials> — authorised redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`).
-3. **Authentication → URL Configuration → Redirect URLs** — add both your deployed URL and `http://localhost:8000` if you test locally.
-4. **Project Settings → API** — copy the **Project URL** and the **anon public** key.
+3. **Authentication → URL Configuration → Redirect URLs** — add `https://namemeleo.github.io/composition/` and `http://localhost:8000` if you test locally.
+4. **Project Settings → API** — copy the **Project URL** and the **anon public** key. The browser app uses these public values to initialize Supabase; they are not secret.
 5. (Optional) Run `supabase/schema.sql` in the SQL editor to enable the cloud mirror.
+
+#### OAuth branding and the Supabase URL
+
+The Google consent page is hosted by the configured OAuth flow, so its `Continue to <project-ref>.supabase.co` line cannot be renamed by changing Composition's button text or redirect string. You can change the Google OAuth consent-screen app name, logo and support details in Google Cloud. To replace the Supabase hostname itself, configure a custom Supabase domain if it is available for your plan, then use that domain consistently in Supabase Auth, Google Cloud's authorised redirect URI, and the app configuration. Keep the deployed Composition URL in Supabase's redirect allowlist as well.
 
 ### 3. Deploy the OCR proxy
 
@@ -91,9 +95,8 @@ supabase link --project-ref <your-project-ref>
 # The key goes in as a secret, never into a file that is committed.
 supabase secrets set GEMINI_API_KEY=your-google-ai-studio-key
 supabase secrets set GEMINI_MODEL=gemini-3.5-flash-lite
-supabase secrets set ALLOWED_ORIGIN=https://your-username.github.io
-# optional, once you want sign-in to be mandatory for OCR:
-# supabase secrets set REQUIRE_AUTH=true
+supabase secrets set ALLOWED_ORIGIN=http://localhost:8000,https://your-username.github.io
+supabase secrets set REQUIRE_AUTH=true
 
 supabase functions deploy ocr --no-verify-jwt
 ```
@@ -104,9 +107,7 @@ Get a key from <https://aistudio.google.com/apikey>.
 
 ### 4. Point the app at it
 
-Open the deployed app → **Settings → OCR service** → paste the Supabase URL and anon key → **Test proxy**.
-
-That is the whole configuration. It is stored in `localStorage` on your device, which is why the app ships with no secrets in it.
+The deployed app uses the public Supabase URL and anon key defined near the top of `app.js`. To point a fork at a different project, update `DEFAULT_SUPABASE_URL` and `DEFAULT_SUPABASE_ANON_KEY` before deployment. The in-app OCR controls are intentionally hidden from ordinary users. Never put `GEMINI_API_KEY` or a service-role key in the browser.
 
 ---
 
@@ -134,7 +135,7 @@ Samsung Health has no public write API, so direct sync is not something this app
 
 - Readings live in IndexedDB on the device. There is no analytics, no telemetry, no third-party script beyond the Google Fonts stylesheet and `@supabase/supabase-js` (both loaded only when needed).
 - The cloud mirror is off by default. When on, rows are written to your own Supabase project under Row Level Security, readable only by your user id.
-- The OCR function logs nothing about the content of your reports. If you want the proxy to stay private, set `REQUIRE_AUTH=true` and keep `ALLOWED_ORIGIN` pinned to your own domain.
+- The OCR function logs nothing about the content of your reports. If you want the proxy to stay private, set `REQUIRE_AUTH=true` and keep `ALLOWED_ORIGIN` limited to the origins you use, separated by commas.
 - Shared-in files are parked at most ten minutes in KV and deleted on first read.
 
 ---
@@ -153,4 +154,4 @@ Then open <http://localhost:8000>. Camera access requires `localhost` or HTTPS.
 
 - The Gemini model id is a single secret, `GEMINI_MODEL`. Rename it there if you switch models.
 - The OCR prompt is schema-driven and was written without a sample report attached, so it targets the standard Tanita layout. The review screen exists precisely because extraction can be wrong; if a field comes back empty the app leaves it empty rather than guessing.
-- The app ships with eight clearly-labelled sample readings so the charts are not blank on first open. **Remove** on the dashboard, or **Erase everything** in Settings, clears them.
+- New installs start with no readings. Older browser profiles that already contain the previous sample readings still show the sample banner, and **Remove** on the dashboard clears only those sample records.

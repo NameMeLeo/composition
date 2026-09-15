@@ -17,7 +17,6 @@ const STORE = 'readings';
 const LS = {
   settings: 'composition.settings.v1',
   session: 'composition.local-session.v1',
-  seeded: 'composition.seeded.v1',
   mirror: 'composition.mirror.v1'
 };
 
@@ -47,6 +46,42 @@ const RANGES = [
 ];
 
 const SOURCE_LABEL = { qr: 'QR scan', file: 'Shared file', share: 'Shared file', manual: 'Entered by hand' };
+
+const REPORT_SECTION_LABELS = {
+  metadata: 'Report metadata',
+  user_profile: 'Subject profile',
+  key_indicators: 'Key indicators',
+  body_composition: 'Body composition',
+  segmental_analysis: 'Segmental analysis'
+};
+
+const REPORT_FIELD_LABELS = {
+  test_date: 'Test date', facility_name: 'Facility', serial_number: 'Serial number', device_brand: 'Device brand',
+  age: 'Age', gender: 'Gender', height_cm: 'Height', weight_kg: 'Weight',
+  bmi: 'BMI', metabolic_age: 'Metabolic age', visceral_fat_rating: 'Visceral fat rating',
+  visceral_fat_status: 'Visceral fat status', sarcopenic_index_smi: 'Sarcopenic index (SMI)',
+  skeletal_muscle_mass_kg: 'Skeletal muscle mass (SMM)', physique_rating: 'Physique rating',
+  physique_rating_score: 'Physique rating score', muscle_quality_score: 'Muscle quality',
+  fat_percentage: 'Body fat', fat_mass_kg: 'Fat mass', muscle_mass_kg: 'Muscle mass',
+  fat_free_mass_kg: 'Fat-free mass (FFM)', bone_mass_kg: 'Bone mass', protein_mass_kg: 'Protein mass',
+  total_body_water_kg: 'Total body water (TBW)', total_body_water_percent: 'Total body water',
+  intracellular_water_kg: 'Intracellular water (ICW)', extracellular_water_kg: 'Extracellular water (ECW)',
+  ecw_tbw_ratio_percent: 'ECW/TBW', bmr_kcal: 'BMR', bmr_kj: 'BMR',
+  muscle_mass: 'Muscle mass', fat_mass: 'Fat mass', trunk_kg: 'Trunk',
+  left_arm_kg: 'Left arm', right_arm_kg: 'Right arm', left_leg_kg: 'Left leg', right_leg_kg: 'Right leg'
+};
+
+const REPORT_FIELD_UNITS = {
+  age: 'yrs', height_cm: 'cm', weight_kg: 'kg', sarcopenic_index_smi: 'kg/m2',
+  skeletal_muscle_mass_kg: 'kg', fat_percentage: '%', fat_mass_kg: 'kg', muscle_mass_kg: 'kg',
+  fat_free_mass_kg: 'kg', bone_mass_kg: 'kg', protein_mass_kg: 'kg', total_body_water_kg: 'kg',
+  total_body_water_percent: '%', intracellular_water_kg: 'kg', extracellular_water_kg: 'kg',
+  ecw_tbw_ratio_percent: '%', bmr_kcal: 'kcal', bmr_kj: 'kJ',
+  trunk_kg: 'kg', left_arm_kg: 'kg', right_arm_kg: 'kg', left_leg_kg: 'kg', right_leg_kg: 'kg'
+};
+
+const DEFAULT_SUPABASE_URL = 'https://mtgoncthcfccotqgynzb.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10Z29uY3RoY2ZjY290cWd5bnpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NTUyMjYsImV4cCI6MjEwNTAzMTIyNn0.ppoAYDuVPMY2w978TeCarY_BNi4RFbv9_M_wdoqL-f8';
 
 /* ------------------------------------------------------------------ */
 /* Tiny helpers                                                        */
@@ -165,8 +200,8 @@ const Settings = (() => {
     theme: 'system',
     massUnit: 'kg',
     reduceMotion: false,
-    supabaseUrl: '',
-    supabaseAnonKey: '',
+    supabaseUrl: DEFAULT_SUPABASE_URL,
+    supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
     mirror: false
   };
   let current = Object.assign({}, defaults);
@@ -175,6 +210,8 @@ const Settings = (() => {
     try {
       const raw = localStorage.getItem(LS.settings);
       if (raw) current = Object.assign({}, defaults, JSON.parse(raw));
+      if (!current.supabaseUrl) current.supabaseUrl = defaults.supabaseUrl;
+      if (!current.supabaseAnonKey) current.supabaseAnonKey = defaults.supabaseAnonKey;
     } catch (e) { /* keep defaults */ }
     return current;
   }
@@ -304,36 +341,36 @@ const Auth = (() => {
   }
 
   async function init() {
-    if (isConfigured()) {
-      try {
-        const mod = await import('https://esm.sh/@supabase/supabase-js@2');
-        client = mod.createClient(Settings.get().supabaseUrl, Settings.get().supabaseAnonKey, {
-          auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' }
-        });
-        const { data } = await client.auth.getSession();
-        session = data.session || null;
-        client.auth.onAuthStateChange((_event, next) => {
-          session = next;
-          emit();
-        });
-        return session;
-      } catch (err) {
-        console.warn('Supabase could not start:', err);
-        client = null;
-      }
+    if (!isConfigured()) {
+      client = null;
+      session = null;
+      return null;
     }
     try {
-      const raw = localStorage.getItem(LS.session);
-      session = raw ? JSON.parse(raw) : null;
-    } catch (e) { session = null; }
-    return session;
+      const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+      client = mod.createClient(Settings.get().supabaseUrl, Settings.get().supabaseAnonKey, {
+        auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' }
+      });
+      const { data } = await client.auth.getSession();
+      session = data.session || null;
+      client.auth.onAuthStateChange((_event, next) => {
+        session = next;
+        emit();
+      });
+      return session;
+    } catch (err) {
+      console.warn('Supabase could not start:', err);
+      client = null;
+      session = null;
+      return null;
+    }
   }
 
   function emit() { listeners.forEach((fn) => { try { fn(session); } catch (e) { /* ignore */ } }); }
   function onChange(fn) { listeners.push(fn); }
   function getSession() { return session; }
   function user() { return session && session.user ? session.user : null; }
-  function isLocal() { return !client; }
+  function isLocal() { return false; }
 
   async function signInWithGoogle() {
     if (!client) throw new Error('Supabase is not configured yet.');
@@ -346,16 +383,6 @@ const Auth = (() => {
     if (error) throw error;
   }
 
-  function signInLocal(name) {
-    session = {
-      local: true,
-      user: { id: 'local-user', email: null, user_metadata: { full_name: name || 'Local mode' } }
-    };
-    try { localStorage.setItem(LS.session, JSON.stringify(session)); } catch (e) { /* ignore */ }
-    emit();
-    return session;
-  }
-
   async function signOut() {
     if (client) { try { await client.auth.signOut(); } catch (e) { /* ignore */ } }
     session = null;
@@ -364,11 +391,25 @@ const Auth = (() => {
   }
 
   async function accessToken() {
-    if (client) {
+    if (!client) return null;
+    try {
       const { data } = await client.auth.getSession();
-      return data && data.session ? data.session.access_token : null;
+      const current = data && data.session ? data.session : null;
+      const expiresSoon = current && current.expires_at && current.expires_at <= Math.floor(Date.now() / 1000) + 60;
+      if (current && !expiresSoon) {
+        session = current;
+        return current.access_token;
+      }
+
+      const refreshed = await client.auth.refreshSession();
+      session = refreshed.data && refreshed.data.session ? refreshed.data.session : null;
+      if (!session) emit();
+      return session ? session.access_token : null;
+    } catch (err) {
+      session = null;
+      emit();
+      return null;
     }
-    return null;
   }
 
   async function reset() {
@@ -378,20 +419,27 @@ const Auth = (() => {
     emit();
   }
 
-  return { init, onChange, getSession, user, isLocal, isConfigured, signInWithGoogle, signInLocal, signOut, accessToken, reset };
+  return { init, onChange, getSession, user, isLocal, isConfigured, signInWithGoogle, signOut, accessToken, reset };
 })();
 
 /* ------------------------------------------------------------------ */
 /* OCR proxy client                                                    */
 /* ------------------------------------------------------------------ */
 
-const Proxy = (() => {
+const OcrProxy = (() => {
   function base() {
     const url = Settings.get().supabaseUrl;
     return url ? url.replace(/\/+$/, '') + '/functions/v1/ocr' : null;
   }
 
   function isConfigured() { return Boolean(base() && Settings.get().supabaseAnonKey); }
+
+  async function authFailure() {
+    await Auth.signOut();
+    const error = new Error('Your Google session expired. Sign in again to continue.');
+    error.code = 'AUTH_REQUIRED';
+    return error;
+  }
 
   async function call(payload) {
     const endpoint = base();
@@ -402,13 +450,17 @@ const Proxy = (() => {
     };
     const token = await Auth.accessToken();
     if (token) headers.Authorization = 'Bearer ' + token;
-    else headers.Authorization = 'Bearer ' + Settings.get().supabaseAnonKey;
+    else if (payload.mode === 'ping') headers.Authorization = 'Bearer ' + Settings.get().supabaseAnonKey;
+    else throw await authFailure();
 
     const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
     let data = null;
     try { data = await res.json(); } catch (e) { data = null; }
     if (!res.ok) {
       const msg = (data && (data.error || data.message)) || ('The proxy replied with ' + res.status + '.');
+      if (res.status === 401 && /session is not valid|signed-in user|missing credentials/i.test(msg)) {
+        throw await authFailure();
+      }
       throw new Error(msg);
     }
     if (data && data.ok === false) throw new Error(data.error || 'The proxy could not read that report.');
@@ -440,60 +492,6 @@ function parseReportUrl(input) {
   const playerId = url.searchParams.get('player_id') || url.searchParams.get('playerId') || null;
   const language = url.searchParams.get('language') || url.searchParams.get('lang') || null;
   return { ok: true, url: url.toString(), playerId, language, host: url.hostname };
-}
-
-/* ------------------------------------------------------------------ */
-/* Sample seed (clearly labelled, removable)                           */
-/* ------------------------------------------------------------------ */
-
-function sampleReadings() {
-  const base = { weight: 74.8, bodyFat: 19.4, muscleMass: 57.1, bodyWater: 57.2, visceralFat: 8, bmr: 1712, metabolicAge: 33, muscleQuality: 84 };
-  const drift = [
-    { weight: 0.9,  bodyFat: 0.6,  muscleMass: -0.3, visceralFat: 0 },
-    { weight: 0.4,  bodyFat: 0.3,  muscleMass: -0.1, visceralFat: 0 },
-    { weight: -0.2, bodyFat: -0.2, muscleMass: 0.2,  visceralFat: -1 },
-    { weight: -0.6, bodyFat: -0.5, muscleMass: 0.4,  visceralFat: 0 },
-    { weight: -0.9, bodyFat: -0.8, muscleMass: 0.7,  visceralFat: -1 },
-    { weight: -1.3, bodyFat: -1.1, muscleMass: 0.9,  visceralFat: 0 },
-    { weight: -1.1, bodyFat: -1.4, muscleMass: 1.2,  visceralFat: -1 },
-    { weight: -1.6, bodyFat: -1.9, muscleMass: 1.5,  visceralFat: 0 }
-  ];
-  const now = Date.now();
-  return drift.map((d, i) => {
-    const daysAgo = (drift.length - 1 - i) * 9;
-    const at = new Date(now - daysAgo * 86400000);
-    at.setHours(7, 20, 0, 0);
-    const weight = Number((base.weight + d.weight).toFixed(1));
-    const bodyFat = Number((base.bodyFat + d.bodyFat).toFixed(1));
-    const muscleMass = Number((base.muscleMass + d.muscleMass).toFixed(1));
-    const fatFree = Number((weight - (weight * bodyFat) / 100).toFixed(1));
-    return {
-      id: 'sample-' + i,
-      createdAt: at.toISOString(),
-      measuredAt: at.toISOString(),
-      source: 'manual',
-      sample: true,
-      playerId: null,
-      language: null,
-      reportUrl: null,
-      note: 'Sample reading, loaded so the charts have something to draw.',
-      confidence: null,
-      raw: null,
-      metrics: {
-        weight,
-        bodyFat,
-        muscleMass,
-        fatFreeMass: fatFree,
-        bodyWater: Number((base.bodyWater + (i - 3) * 0.2).toFixed(1)),
-        boneMass: 3.1,
-        visceralFat: base.visceralFat + d.visceralFat,
-        bmi: Number((weight / (1.78 * 1.78)).toFixed(1)),
-        bmr: base.bmr + i * -4,
-        metabolicAge: base.metabolicAge - Math.round(i / 2),
-        muscleQuality: base.muscleQuality + i
-      }
-    };
-  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -843,7 +841,7 @@ function renderDashboard() {
   const hasSample = CACHE.some((r) => r.sample);
 
   $('#banner-sample').hidden = !hasSample;
-  $('#banner-setup').hidden = Proxy.isConfigured();
+  $('#banner-setup').hidden = true;
   $('#empty-dashboard').hidden = has;
   $('#hero').hidden = !has;
   $('#block-deltas').hidden = !has;
@@ -1273,6 +1271,9 @@ function renderDetail(id) {
     host.appendChild(note);
   }
 
+  const structuredDetails = reportDetails(reading.report);
+  if (structuredDetails) host.appendChild(structuredDetails);
+
   const actions = el('div', 'od-cluster');
   actions.style.marginTop = 'var(--s-5)';
   const del = el('button', 'btn btn--danger btn--small', 'Delete reading');
@@ -1304,8 +1305,8 @@ function renderDetail(id) {
 
 function renderSettings() {
   const user = Auth.user();
-  $('#account-name').textContent = user ? (user.user_metadata && user.user_metadata.full_name) || (Auth.isLocal() ? 'Local mode' : 'Signed in') : 'Not signed in';
-  $('#account-email').textContent = user && user.email ? user.email : (Auth.isLocal() ? 'Readings stay on this device' : 'No account connected');
+  $('#account-name').textContent = user ? (user.user_metadata && user.user_metadata.full_name) || 'Signed in' : 'Not signed in';
+  $('#account-email').textContent = user && user.email ? user.email : 'No account connected';
   $('#btn-account').textContent = user ? 'Sign out' : 'Sign in';
   $('#account-avatar').textContent = user ? (Auth.isLocal() ? 'L' : (user.email || 'U').slice(0, 1).toUpperCase()) : '?';
 
@@ -1322,13 +1323,13 @@ function renderSettings() {
   try { bytes = new Blob([JSON.stringify(CACHE)]).size; } catch (e) { bytes = 0; }
   $('#stat-size').textContent = bytes > 1024 * 1024 ? (bytes / 1024 / 1024).toFixed(2) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
 
-  const configured = Proxy.isConfigured();
+  const configured = OcrProxy.isConfigured();
   const pill = $('#proxy-pill');
-  pill.textContent = configured ? 'Connected' : 'Local mode';
+  pill.textContent = configured ? 'Connected' : 'Not configured';
   pill.className = 'pill' + (configured ? ' pill--ok' : ' pill--warn');
   $('#proxy-sub').textContent = configured
     ? 'Readings are read by Gemini inside your own Supabase project. The key never reaches this app.'
-    : 'Readings are entered by hand. Add your Supabase URL and anon key, then deploy the OCR function.';
+    : 'Configure Supabase before using the OCR proxy.';
 
   $('#install-sub').textContent = isStandalone()
     ? 'Installed. Camera and offline use are available.'
@@ -1569,16 +1570,16 @@ const Capture = (() => {
         $('#proc-body').textContent = 'Sending ' + job.file.name + ' straight to Gemini — no fetching needed.';
         previewUrl = job.file.type && job.file.type.indexOf('image/') === 0 ? URL.createObjectURL(job.file) : null;
         const data = await fileToBase64(job.file);
-        result = await Proxy.fromDocument(job.file.type || 'application/octet-stream', data);
+        result = await OcrProxy.fromDocument(job.file.type || 'application/octet-stream', data);
         note = 'Read from ' + job.file.name;
       } else if (job.mode === 'report-url') {
-        if (!Proxy.isConfigured()) throw new Error('The OCR proxy is not configured, so the report cannot be fetched or read. Add your Supabase details in Settings, or enter the numbers by hand.');
-        result = await Proxy.fromReportUrl(job.url);
+        if (!OcrProxy.isConfigured()) throw new Error('The OCR proxy is not configured, so the report cannot be fetched or read. Add your Supabase details in Settings, or enter the numbers by hand.');
+        result = await OcrProxy.fromReportUrl(job.url);
         note = 'Fetched from ' + parseReportUrl(job.url).host;
       } else if (job.mode === 'player-id') {
         const built = 'http://13.251.17.127/tanita/selftestfitnesscorner/?player_id=' + encodeURIComponent(job.playerId) + '&language=' + encodeURIComponent(job.language || 'en');
-        if (!Proxy.isConfigured()) throw new Error('Only a player id was found. The full report link is needed, and the proxy must be configured to fetch it.');
-        result = await Proxy.fromReportUrl(built);
+        if (!OcrProxy.isConfigured()) throw new Error('Only a player id was found. The full report link is needed, and the proxy must be configured to fetch it.');
+        result = await OcrProxy.fromReportUrl(built);
         note = 'Fetched from player ' + job.playerId;
       } else {
         result = { metrics: {}, measuredAt: new Date().toISOString() };
@@ -1588,6 +1589,7 @@ const Capture = (() => {
       setStep('done', 'active');
     } catch (err) {
       hideProcessing();
+      if (err && err.code === 'AUTH_REQUIRED') return;
       const message = err && err.message ? err.message : 'The report could not be read.';
       const proceed = window.confirm(message + '\n\nOpen the review screen and type the numbers instead?');
       if (!proceed) return;
@@ -1598,6 +1600,7 @@ const Capture = (() => {
     hideProcessing();
     openReview({
       metrics: normaliseMetrics(result.metrics || {}),
+      report: result.report || null,
       measuredAt: result.measuredAt || new Date().toISOString(),
       confidence: typeof result.confidence === 'number' ? result.confidence : null,
       raw: result.text || result.raw || null,
@@ -1657,16 +1660,63 @@ const Capture = (() => {
 
 let reviewState = null;
 
+function reportFieldLabel(key) {
+  if (REPORT_FIELD_LABELS[key]) return REPORT_FIELD_LABELS[key];
+  return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function reportFieldValue(key, value) {
+  const text = typeof value === 'number' ? String(value) : String(value);
+  const unit = REPORT_FIELD_UNITS[key];
+  return unit ? text + ' ' + unit : text;
+}
+
+function appendReportRows(host, value) {
+  Object.keys(value || {}).forEach((key) => {
+    if (key === 'leg_muscle_score') return;
+    const item = value[key];
+    if (item == null || item === '') return;
+    if (item && typeof item === 'object' && !Array.isArray(item)) {
+      const heading = el('div', 'rev__title', reportFieldLabel(key));
+      heading.style.marginTop = 'var(--s-3)';
+      host.appendChild(heading);
+      appendReportRows(host, item);
+      return;
+    }
+    const row = el('div', 'detail__row');
+    row.appendChild(el('span', 'detail__k', reportFieldLabel(key)));
+    row.appendChild(el('span', 'detail__v', reportFieldValue(key, item)));
+    host.appendChild(row);
+  });
+}
+
+function reportDetails(report) {
+  if (!report) return null;
+  const details = el('details');
+  details.open = true;
+  details.style.marginTop = 'var(--s-4)';
+  details.appendChild(el('summary', 'linkbtn', 'Structured report data'));
+
+  const body = el('div');
+  body.style.marginTop = 'var(--s-3)';
+  Object.keys(REPORT_SECTION_LABELS).forEach((key) => {
+    const section = report[key];
+    if (!section || typeof section !== 'object') return;
+    const grid = el('div', 'detail__grid');
+    appendReportRows(grid, section);
+    if (!grid.childElementCount) return;
+    body.appendChild(el('div', 'rev__title', REPORT_SECTION_LABELS[key]));
+    body.appendChild(grid);
+  });
+  if (!body.childElementCount) return null;
+  details.appendChild(body);
+  return details;
+}
+
 function openReview(state) {
   reviewState = Object.assign({ extras: [] }, state);
   const host = $('#review-body');
   clear(host);
-
-  const sourceChip = el('span', 'chip chip--soft', SOURCE_LABEL[state.source] || 'Reading');
-  const head = el('div', 'od-cluster');
-  head.appendChild(sourceChip);
-  if (state.confidence != null) head.appendChild(el('span', 'chip chip--soft', 'OCR confidence ' + Math.round(state.confidence * 100) + '%'));
-  host.appendChild(head);
 
   if (state.note) {
     const p = el('p', 'rev__hint');
@@ -1685,6 +1735,9 @@ function openReview(state) {
     wrap.appendChild(img);
     host.appendChild(wrap);
   }
+
+  const structuredDetails = reportDetails(state.report);
+  if (structuredDetails) host.appendChild(structuredDetails);
 
   const form = el('form', 'rev');
   form.id = 'review-form';
@@ -1747,18 +1800,7 @@ function openReview(state) {
   errBox.hidden = true;
   host.appendChild(errBox);
 
-  if (state.raw) {
-    const details = el('details');
-    details.style.marginTop = 'var(--s-4)';
-    details.appendChild(el('summary', 'linkbtn', 'What Gemini returned'));
-    details.appendChild(el('div', 'rawbox', typeof state.raw === 'string' ? state.raw : JSON.stringify(state.raw, null, 2)));
-    host.appendChild(details);
-  }
-
   $('#view-review').hidden = false;
-  $('#review-sub').textContent = state.failed
-    ? 'The report could not be read, so the fields are empty. Fill in what you know and save.'
-    : 'Correct anything Gemini misread before it is saved.';
   const first = $('#rev-grid input');
   if (first) first.focus();
 }
@@ -1780,11 +1822,7 @@ function reviewField(key, value) {
   input.max = String(meta.max);
   input.inputMode = 'decimal';
   input.value = value == null || value === '' ? '' : String(value);
-  input.setAttribute('aria-describedby', id + '-hint');
   field.appendChild(input);
-  const hint = el('span', 'rev__hint', 'Typical range ' + meta.min + '–' + meta.max + (meta.unit ? ' ' + meta.unit : '') + '.');
-  hint.id = id + '-hint';
-  field.appendChild(hint);
   return field;
 }
 
@@ -1852,6 +1890,7 @@ async function saveReview() {
     note: reviewState.notes || reviewState.note || '',
     confidence: reviewState.confidence,
     raw: reviewState.raw,
+    report: reviewState.report || null,
     metrics
   };
 
@@ -2067,15 +2106,12 @@ function bindEvents() {
       $('#auth-note').textContent = 'Opening Google…';
       await Auth.signInWithGoogle();
     } catch (err) {
-      $('#auth-note').textContent = err && err.message ? err.message : 'Sign-in could not start. Use local mode instead.';
+      $('#auth-note').textContent = err && err.message ? err.message : 'Sign-in could not start. Check the Supabase Google provider and redirect URL.';
     }
   });
 
-  $('#btn-demo').addEventListener('click', () => { Auth.signInLocal('Local mode'); });
-
   $('#btn-scan-top').addEventListener('click', () => Capture.openScanner());
   $('#opt-scan').addEventListener('click', () => Capture.openScanner());
-  $('#fab-add').addEventListener('click', () => Capture.openSheet());
   $('#opt-share').addEventListener('click', () => $('#file-picker').click());
   $('#opt-manual').addEventListener('click', () => {
     Capture.closeSheet();
@@ -2176,10 +2212,10 @@ function bindEvents() {
       supabaseUrl: $('#in-supa-url').value.trim().replace(/\/+$/, ''),
       supabaseAnonKey: $('#in-supa-key').value.trim()
     });
-    if (!Proxy.isConfigured()) { toast('Add the URL and anon key first', 'error'); return; }
+    if (!OcrProxy.isConfigured()) { toast('Add the URL and anon key first', 'error'); return; }
     toast('Testing the proxy…');
     try {
-      const res = await Proxy.ping();
+      const res = await OcrProxy.ping();
       toast('Proxy is live' + (res && res.model ? ' · ' + res.model : ''));
     } catch (err) {
       toast(err && err.message ? err.message : 'The proxy did not answer', 'error');
@@ -2243,9 +2279,7 @@ function showAuth() {
   $('#view-auth').hidden = false;
   const note = $('#auth-note');
   if (!Auth.isConfigured()) {
-    note.textContent = 'Supabase is not configured yet, so Google sign-in is off. Use local mode — everything below still works, and the README shows how to switch it on.';
-  } else {
-    note.textContent = 'Signed in accounts can mirror readings to your own Supabase project.';
+    note.textContent = 'Google sign-in is unavailable until Supabase is configured.';
   }
 }
 
@@ -2263,15 +2297,6 @@ async function boot() {
 
   bindEvents();
   await loadReadings();
-
-  if (!localStorage.getItem(LS.seeded) && CACHE.length === 0) {
-    const samples = sampleReadings();
-    try {
-      await Store.bulkPut(samples);
-      CACHE = samples;
-      localStorage.setItem(LS.seeded, '1');
-    } catch (e) { /* seeding is optional */ }
-  }
 
   const session = await Auth.init();
   Auth.onChange((s) => { if (s) showApp(); else showAuth(); });
