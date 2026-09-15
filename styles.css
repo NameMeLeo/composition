@@ -978,7 +978,6 @@ button.tile { border: 1px solid var(--c-line-soft); }
   font-weight: 700;
   letter-spacing: -.02em;
 }
-.detail__sub { font-size: var(--fs-xs); color: var(--c-muted); }
 .detail__grid { display: grid; gap: var(--s-1); margin-top: var(--s-4); }
 .detail__row {
   display: flex;
@@ -998,21 +997,6 @@ button.tile { border: 1px solid var(--c-line-soft); }
   white-space: nowrap;
 }
 .detail__meta { margin-top: var(--s-4); font-size: var(--fs-micro); color: var(--c-muted); word-break: break-all; }
-
-.rawbox {
-  margin-top: var(--s-3);
-  padding: var(--s-3);
-  border: 1px solid var(--c-line-soft);
-  border-radius: var(--r-control);
-  background: var(--c-surface-2);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: var(--fs-micro);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 240px;
-  overflow: auto;
-}
 
 /* =====================================================================
    Sheets, overlays, scanner, toast

@@ -1277,12 +1277,6 @@ function renderDetail(id) {
 
   const card = el('div', 'detail__hero');
   card.appendChild(el('div', 'detail__date', fmtDate(reading.measuredAt, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })));
-  const sub = el('div', 'detail__sub');
-  const row = el('div', 'od-cluster');
-  row.appendChild(el('span', 'chip chip--soft', SOURCE_LABEL[reading.source] || 'Reading'));
-  if (reading.confidence != null) row.appendChild(el('span', 'chip chip--soft', 'OCR confidence ' + Math.round(reading.confidence * 100) + '%'));
-  sub.appendChild(row);
-  card.appendChild(sub);
 
   const grid = el('div', 'detail__grid');
   METRIC_ORDER.forEach((key) => {
@@ -1326,16 +1320,6 @@ function renderDetail(id) {
   });
   actions.appendChild(del);
   host.appendChild(actions);
-
-  if (reading.raw) {
-    const details = el('details');
-    details.style.marginTop = 'var(--s-5)';
-    const summary = el('summary', 'linkbtn', 'Raw text returned by the reader');
-    details.appendChild(summary);
-    const pre = el('div', 'rawbox', typeof reading.raw === 'string' ? reading.raw : JSON.stringify(reading.raw, null, 2));
-    details.appendChild(pre);
-    host.appendChild(details);
-  }
 }
 
 /* ------------------------------------------------------------------ */
