@@ -1,0 +1,54 @@
+{
+  "id": "com.composition.app",
+  "name": "Composition — body composition tracker",
+  "short_name": "Composition",
+  "description": "Scan a Tanita report QR code or share a PDF, read it with Gemini, and keep every body composition measurement on your own phone.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f6f8fa",
+  "theme_color": "#0b7285",
+  "categories": ["health", "fitness", "medical"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan a report QR code",
+      "short_name": "Scan",
+      "url": "./#dashboard",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ],
+  "share_target": {
+    "action": "./share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "report",
+          "accept": ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/heic"]
+        }
+      ]
+    }
+  }
+}

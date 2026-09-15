@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Composition">
+  <rect width="512" height="512" fill="#0b7285"/>
+  <g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" transform="translate(256 256) scale(0.62) translate(-256 -256)">
+    <path d="M256 104c-52 0-94 42-94 94 0 62 58 96 94 128 36-32 94-66 94-128 0-52-42-94-94-94Z" opacity=".28"/>
+    <path d="M256 176a52 52 0 0 1 52 52c0 34-32 53-52 71-20-18-52-37-52-71a52 52 0 0 1 52-52Z"/>
+    <path d="M152 388h208" opacity=".55"/>
+    <path d="M196 388h44M272 388h44" opacity=".85"/>
+  </g>
+</svg>
