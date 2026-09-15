@@ -557,6 +557,64 @@ a { color: var(--c-primary); }
 .tabbar__scan:active { transform: scale(.94); }
 @media (hover: hover) { .tabbar__scan:hover { background: color-mix(in srgb, var(--c-primary) 86%, #000); } }
 
+/* Radial actions: the scan button is the hub, the options fan out above it.
+   The wrapper is a zero-size point pinned to the button centre, so each item
+   is placed purely by --dx/--dy (set from JS) around that origin. */
+.scanfan {
+  position: fixed;
+  left: 0; top: 0;
+  width: 0; height: 0;
+  z-index: 40;
+}
+.scanfan[data-open="false"] { pointer-events: none; }
+.scanfan__item {
+  position: absolute;
+  left: 0; top: 0;
+  display: grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  padding: 0;
+  border: 0;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.4);
+  transition: transform 240ms var(--ease-out), opacity 150ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 30ms);
+}
+.scanfan[data-open="true"] .scanfan__item {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(calc(var(--dx, 0px) - 50%), calc(var(--dy, 0px) - 50%)) scale(1);
+}
+.scanfan__disc {
+  display: grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  border: 1px solid var(--c-line);
+  border-radius: 50%;
+  background: var(--c-surface);
+  color: var(--c-primary);
+  box-shadow: var(--shadow-2);
+  transition: transform var(--d-fast) var(--ease-out), background-color var(--d-fast) var(--ease-out);
+}
+@media (hover: hover) { .scanfan__item:hover .scanfan__disc { background: var(--c-primary-soft); } }
+.scanfan__item:active .scanfan__disc { transform: scale(.94); }
+.scanfan__label {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: var(--shadow-1);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .rail { display: none !important; }
 
 /* The scan action lives in the tab bar at every viewport width. */

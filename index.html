@@ -406,7 +406,7 @@
           <div class="od-row">
             <div class="od-field od-fill">
               <span class="row__title">Cloud mirror</span>
-              <span class="row__sub">Copy readings to your own Supabase project so a reinstall doesn't lose them.</span>
+              <span class="row__sub">Sync to cloud</span>
             </div>
             <label class="switch od-fixed">
               <input type="checkbox" id="chk-mirror">
@@ -461,6 +461,34 @@
       <span>Settings</span>
     </button>
   </nav>
+
+  <!-- Radial actions around the scan button: hover (mouse) or long-press (touch). -->
+  <div class="scanfan" id="scan-fan" data-open="false">
+    <button class="scanfan__item" data-scan-fan="scan" type="button" aria-label="Scan the report QR code">
+      <span class="scanfan__disc">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M3 12h18"/></svg>
+      </span>
+      <span class="scanfan__label">Scan</span>
+    </button>
+    <button class="scanfan__item" data-scan-fan="upload" type="button" aria-label="Upload a PDF or photo">
+      <span class="scanfan__disc">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
+      </span>
+      <span class="scanfan__label">Upload</span>
+    </button>
+    <button class="scanfan__item" data-scan-fan="link" type="button" aria-label="Paste the report link">
+      <span class="scanfan__disc">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+      </span>
+      <span class="scanfan__label">Link</span>
+    </button>
+    <button class="scanfan__item" data-scan-fan="manual" type="button" aria-label="Type the numbers">
+      <span class="scanfan__disc">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h9"/></svg>
+      </span>
+      <span class="scanfan__label">Type</span>
+    </button>
+  </div>
 </div>
 
 <!-- ---------------------- CAPTURE SHEET ---------------------- -->

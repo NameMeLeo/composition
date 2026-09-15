@@ -2,7 +2,7 @@
    Cache-first for the app shell so the tracker opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v9';
+const CACHE = 'composition-v10';
 const ASSETS = [
   './',
   './index.html',
