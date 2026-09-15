@@ -77,7 +77,7 @@
 
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• AUTH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- AUTH ---------------------- -->
 <section id="view-auth" class="auth" hidden>
   <div class="auth__panel">
     <div class="brand">
@@ -108,7 +108,7 @@
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• APP SHELL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- APP SHELL ---------------------- -->
 <div id="shell" class="shell" hidden>
 
   <header class="topbar">
@@ -425,14 +425,14 @@
           <div class="od-row">
             <div class="od-field od-fill">
               <span class="row__title">Installable app</span>
-              <span class="row__sub" id="install-sub">Add to your home screen for camera access and offline use.</span>
+              <span class="row__sub" id="install-sub"></span>
             </div>
             <button class="btn btn--ghost btn--small od-fixed" id="btn-install" type="button" hidden>Install</button>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
               <span class="row__title">Cloud mirror</span>
-              <span class="row__sub">Copy readings to your own Supabase project so a reinstall doesn't lose them.</span>
+              <span class="row__sub">Sync to cloud</span>
             </div>
             <label class="switch od-fixed">
               <input type="checkbox" id="chk-mirror">
@@ -443,7 +443,7 @@
           <div class="od-row">
             <div class="od-field od-fill">
               <span class="row__title">Samsung Health export</span>
-              <span class="row__sub">A CSV shaped for import. Samsung Health has no public write API, so this is the honest route in.</span>
+              <span class="row__sub"></span>
             </div>
             <button class="btn btn--ghost btn--small od-fixed" id="btn-export-samsung" type="button">CSV</button>
           </div>
@@ -493,7 +493,7 @@
   </nav>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CAPTURE SHEET â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- CAPTURE SHEET ---------------------- -->
 <div class="sheet" id="sheet-capture" hidden>
   <div class="sheet__scrim" data-close-sheet></div>
   <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="capture-title">
@@ -565,7 +565,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SCANNER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- SCANNER ---------------------- -->
 <div class="scanner" id="view-scanner" hidden>
   <div class="scanner__stage">
     <video id="scanner-video" playsinline muted></video>
@@ -593,7 +593,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PROCESSING â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- PROCESSING ---------------------- -->
 <div class="overlay" id="overlay-processing" hidden>
   <div class="overlay__panel" role="status" aria-live="polite">
     <span class="spinner" aria-hidden="true"></span>
@@ -607,7 +607,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• REVIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ---------------------- REVIEW ---------------------- -->
 <div class="sheet sheet--full" id="view-review" hidden>
   <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="review-title">
     <header class="sheet__head">
