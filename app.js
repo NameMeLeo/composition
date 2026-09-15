@@ -1356,7 +1356,7 @@ function renderSettings() {
 
   $('#install-sub').textContent = isStandalone()
     ? 'Installed. Camera and offline use are available.'
-    : 'Add to your home screen for camera access and offline use.';
+    : '';
 }
 
 function describeMirrorSync() {
@@ -1955,11 +1955,14 @@ function openReview(state) {
   form.noValidate = true;
   form.style.marginTop = 'var(--s-3)';
 
+  /* Block one: the values that get saved. */
+  const measuring = el('div', 'rev__block');
   const h = el('div', 'rev__head');
   h.appendChild(el('div', 'rev__title', 'Measurement'));
-  form.appendChild(h);
+  measuring.appendChild(h);
 
   const dateField = el('div', 'rev__field');
+  dateField.style.marginTop = 'var(--s-3)';
   const dateLabel = el('label', 'rev__label', 'Measured at');
   dateLabel.setAttribute('for', 'rev-date');
   dateField.appendChild(dateLabel);
@@ -1969,12 +1972,11 @@ function openReview(state) {
   dateInput.id = 'rev-date';
   dateInput.value = toLocalInput(state.measuredAt);
   dateField.appendChild(dateInput);
-  form.appendChild(dateField);
+  measuring.appendChild(dateField);
 
   const grid = el('div', 'rev__grid');
   grid.id = 'rev-grid';
-  grid.style.marginTop = 'var(--s-3)';
-  form.appendChild(grid);
+  measuring.appendChild(grid);
 
   Object.keys(state.metrics).forEach((key) => { grid.appendChild(reviewField(key, state.metrics[key])); });
 
@@ -2003,28 +2005,47 @@ function openReview(state) {
     select.value = '';
   });
   addRow.appendChild(select);
-  form.appendChild(addRow);
+  measuring.appendChild(addRow);
+  form.appendChild(measuring);
 
-  /* The rest of the extracted report, edited in this same form. */
+  /* Block two: the extracted report. Its metadata is context rather than data you
+     would retype, so it reads back as plain text; the rest stays editable. */
   if (state.report) {
+    const metadata = reportLeaves(state.report.metadata, 'metadata', '', []);
     const sections = Object.keys(REPORT_SECTION_LABELS)
+      .filter((key) => key !== 'metadata')
       .map((key) => ({ key, leaves: reportLeaves(state.report[key], key, '', []) }))
       .filter((entry) => entry.leaves.length);
 
-    if (sections.length) {
-      const heading = el('div', 'rev__title', 'Report details');
-      heading.style.marginTop = 'var(--s-5)';
-      form.appendChild(heading);
+    if (metadata.length || sections.length) {
+      const reportBlock = el('div', 'rev__block');
+      const rh = el('div', 'rev__head');
+      rh.appendChild(el('div', 'rev__title', 'From the report'));
+      reportBlock.appendChild(rh);
+
+      if (metadata.length) {
+        const readout = el('div', 'rev__readout');
+        const metaGrid = el('div', 'detail__grid');
+        metadata.forEach((leaf) => {
+          const row = el('div', 'detail__row');
+          row.appendChild(el('span', 'detail__k', leaf.label));
+          row.appendChild(el('span', 'detail__v', String(leaf.value)));
+          metaGrid.appendChild(row);
+        });
+        readout.appendChild(metaGrid);
+        reportBlock.appendChild(readout);
+      }
 
       sections.forEach((entry) => {
-        const sub = el('div', 'rev__title', REPORT_SECTION_LABELS[entry.key]);
-        sub.style.marginTop = 'var(--s-3)';
-        form.appendChild(sub);
+        const group = el('div', 'rev__group');
+        group.appendChild(el('div', 'rev__subtitle', REPORT_SECTION_LABELS[entry.key]));
         const reportGrid = el('div', 'rev__grid');
-        reportGrid.style.marginTop = 'var(--s-2)';
         entry.leaves.forEach((leaf) => reportGrid.appendChild(reviewReportField(leaf)));
-        form.appendChild(reportGrid);
+        group.appendChild(reportGrid);
+        reportBlock.appendChild(group);
       });
+
+      form.appendChild(reportBlock);
     }
   }
 

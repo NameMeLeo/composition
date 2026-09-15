@@ -142,6 +142,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Scrollbars are hidden app-wide for a cleaner surface. Every scroll container
+   still scrolls by wheel, touch, keyboard and drag — only the bar is gone. */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -1296,6 +1301,42 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .rev__input:focus { outline: none; border-color: var(--c-primary); box-shadow: var(--ring); }
 .rev__hint { font-size: var(--fs-micro); color: var(--c-muted); }
 .rev__error { font-size: var(--fs-micro); color: var(--c-red); font-weight: 600; }
+
+/* The form is one card. These keep the saved values and the extracted report as
+   two clearly separated halves instead of nesting a second card inside the first. */
+.rev__block + .rev__block {
+  margin-top: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--c-line-soft);
+}
+.rev__block .rev__grid { margin-top: var(--s-3); }
+.rev__group + .rev__group { margin-top: var(--s-4); }
+.rev__subtitle {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+/* Report labels are long ("Muscle mass · Left arm · kg"), so give them room and
+   stop grid items overflowing their track — without min-width:0 the labels drew
+   at max-content and collided with the next column. */
+.rev__group > .rev__grid {
+  margin-top: var(--s-2);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+.rev__grid > * { min-width: 0; }
+.rev__field > * { min-width: 0; }
+.rev__label { overflow-wrap: anywhere; }
+/* Report metadata is context, not something to retype, so it reads as plain rows. */
+.rev__readout {
+  margin-top: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-control);
+  background: var(--c-surface-2);
+}
+.rev__readout .detail__grid { margin-top: 0; }
+.rev__readout .detail__v { white-space: normal; text-align: right; }
 
 .rev__preview {
   margin-top: var(--s-3);
