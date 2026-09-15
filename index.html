@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Composition &mdash; body composition tracker</title>
-<meta name="description" content="Scan a Tanita report, read it with Gemini, keep every measurement on your own phone.">
+<meta name="description" content="Scan a Tanita report, keep every measurement on your own phone.">
 <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1418" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -107,12 +107,6 @@
   <header class="topbar">
     <div class="topbar__lead">
       <h1 class="topbar__title" id="page-title">Today</h1>
-      <p class="topbar__sub" id="page-sub">Your latest reading</p>
-    </div>
-    <div class="topbar__actions">
-      <button class="iconbtn" id="btn-theme" type="button" aria-label="Switch colour theme" title="Switch colour theme">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-      </button>
     </div>
   </header>
 
@@ -138,7 +132,7 @@
   <main id="main" class="main" tabindex="-1">
 
     <!-- DASHBOARD -->
-    <section class="view" id="view-dashboard" data-title="Today" data-sub="Your latest reading">
+    <section class="view" id="view-dashboard" data-title="Today">
 
       <div class="callout callout--info" id="banner-setup" hidden>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
@@ -152,7 +146,6 @@
       <section class="hero" id="hero" hidden>
         <div class="hero__head">
           <p class="hero__eyebrow" id="hero-eyebrow">Latest reading</p>
-          <span class="chip chip--soft" id="hero-source">QR scan</span>
         </div>
         <div class="hero__body">
           <figure class="ring" id="hero-ring">
@@ -226,9 +219,9 @@
     </section>
 
     <!-- TRENDS -->
-    <section class="view" id="view-trends" data-title="Trends" data-sub="Direction over time" hidden>
-      <div class="od-rail railchips" id="metric-rail" role="tablist" aria-label="Choose a metric"></div>
-      <div class="od-rail railchips" id="range-rail" role="tablist" aria-label="Choose a time range"></div>
+    <section class="view" id="view-trends" data-title="Trends" hidden>
+      <div class="chipgroup" id="metric-rail" role="tablist" aria-label="Choose a metric"></div>
+      <div class="chipgroup chipgroup--minor" id="range-rail" role="tablist" aria-label="Choose a time range"></div>
 
       <section class="card card--stat">
         <div class="stathead">
@@ -265,7 +258,7 @@
     </section>
 
     <!-- HISTORY -->
-    <section class="view" id="view-history" data-title="History" data-sub="Every reading on this device" hidden>
+    <section class="view" id="view-history" data-title="History" hidden>
       <div class="history__tools">
         <label class="srch">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -283,7 +276,7 @@
     </section>
 
     <!-- DETAIL -->
-    <section class="view" id="view-detail" data-title="Reading" data-sub="" hidden>
+    <section class="view" id="view-detail" data-title="Reading" hidden>
       <button class="linkbtn linkbtn--back" id="btn-detail-back" type="button">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
         Back
@@ -292,7 +285,7 @@
     </section>
 
     <!-- SETTINGS -->
-    <section class="view" id="view-settings" data-title="Settings" data-sub="Storage, account and deployment" hidden>
+    <section class="view" id="view-settings" data-title="Settings" hidden>
 
       <section class="block">
         <div class="block__head"><h2 class="block__title">Account</h2></div>
@@ -375,7 +368,7 @@
           <div class="od-row">
             <span class="pill" id="proxy-pill">Not configured</span>
             <div class="od-field od-fill">
-              <span class="row__title">Gemini proxy</span>
+              <span class="row__title">Report reader</span>
               <span class="row__sub" id="proxy-sub">Readings are entered by hand. The API key never ships in the app.</span>
             </div>
           </div>
@@ -509,7 +502,7 @@
         </span>
         <span class="od-field od-fill">
           <span class="opt__title">Share a PDF or photo</span>
-          <span class="opt__sub">Skip the fetch entirely &mdash; the attachment goes straight to Gemini.</span>
+          <span class="opt__sub">Skip the fetch entirely &mdash; the attachment is read directly from your phone.</span>
         </span>
         <svg class="opt__chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
       </button>
@@ -576,7 +569,7 @@
   <div class="overlay__panel" role="status" aria-live="polite">
     <span class="spinner" aria-hidden="true"></span>
     <p class="overlay__title" id="proc-title">Reading the report</p>
-    <p class="overlay__body" id="proc-body">Fetching the page, then handing it to Gemini.</p>
+    <p class="overlay__body" id="proc-body">Fetching the page, then reading it.</p>
     <ol class="steps" id="proc-steps">
       <li data-step="fetch">Fetching the report</li>
       <li data-step="ocr">Reading the numbers</li>

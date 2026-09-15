@@ -476,11 +476,6 @@ a { color: var(--c-primary); }
   line-height: 1.2;
   letter-spacing: -.02em;
 }
-.topbar__sub {
-  font-size: var(--fs-micro);
-  color: var(--c-muted);
-}
-.topbar__actions { display: flex; gap: var(--s-2); flex: none; }
 
 .main {
   min-height: 0;
@@ -836,12 +831,15 @@ button.tile { border: 1px solid var(--c-line-soft); }
   color: var(--c-muted);
 }
 
-.railchips {
-  --od-gap: 8px;
-  --od-rail-pad: 0px;
+/* Metric and range pickers: every option stays visible and wraps onto as many
+   rows as it needs. A hidden horizontal scroll left options undiscoverable. */
+.chipgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
   margin-bottom: var(--s-3);
 }
-.railchips > button { flex: none; }
+.chipgroup--minor { margin-bottom: var(--s-4); }
 .chipbtn {
   min-height: 40px;
   padding: 0 var(--s-4);
@@ -857,6 +855,18 @@ button.tile { border: 1px solid var(--c-line-soft); }
   background: var(--c-ink);
   border-color: var(--c-ink);
   color: var(--c-canvas);
+}
+/* The time range is a secondary filter, so it reads quieter than the metrics. */
+.chipbtn--minor {
+  min-height: 32px;
+  padding: 0 var(--s-3);
+  border-color: transparent;
+  background: var(--c-surface-2);
+  font-size: var(--fs-micro);
+}
+.chipbtn--minor[aria-selected="true"] {
+  border-color: var(--c-ink);
+  background: var(--c-ink);
 }
 @media (hover: hover) { .chipbtn:hover { border-color: var(--c-muted); } }
 
@@ -950,6 +960,7 @@ button.tile { border: 1px solid var(--c-line-soft); }
   font-variant-numeric: tabular-nums;
 }
 .hitem__mon { font-size: var(--fs-micro); color: var(--c-muted); text-transform: uppercase; letter-spacing: .06em; }
+.hitem__time { font-size: var(--fs-micro); color: var(--c-muted); font-variant-numeric: tabular-nums; }
 .hitem__mid { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; }
 .hitem__figures { display: flex; gap: var(--s-3); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--c-muted); }
 .hitem__figures b { color: var(--c-ink); font-variant-numeric: tabular-nums; }

@@ -133,6 +133,12 @@ function fmtDate(value, opts) {
   return new Intl.DateTimeFormat(undefined, opts || { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 }
 
+function fmtTime(value) {
+  const d = toDate(value);
+  if (!d) return '';
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(d);
+}
+
 function fmtDateTime(value) {
   const d = toDate(value);
   if (!d) return '—';
@@ -757,7 +763,6 @@ const Route = (() => {
     });
     const active = $('#view-' + name);
     $('#page-title').textContent = active ? active.dataset.title || '' : '';
-    $('#page-sub').textContent = active ? active.dataset.sub || '' : '';
     const hash = param ? '#' + name + '/' + param : '#' + name;
     if (window.location.hash !== hash) {
       history.pushState(null, '', hash);
@@ -872,7 +877,6 @@ function renderDashboard() {
   html('#hero-weight', w.text + (w.unit ? ' ' + w.unit : ''));
   html('#hero-muscle', m.text + (m.unit ? ' ' + m.unit : ''));
   html('#hero-visceral', last.metrics.visceralFat != null ? String(last.metrics.visceralFat) : '—');
-  $('#hero-source').textContent = SOURCE_LABEL[last.source] || 'Reading';
   $('#hero-eyebrow').textContent = 'Latest reading';
   $('#hero-meta').textContent = fmtDateTime(last.measuredAt) + ' · ' + relDays(last.measuredAt) +
     (last.playerId ? ' · player ' + last.playerId : '') +
@@ -1002,6 +1006,51 @@ function renderInsights() {
 
 const Trends = { metric: 'weight', range: '90d' };
 
+// Builds a wrapping tablist. Options are all visible instead of hidden behind a
+// horizontal scroll, arrow keys move between them, and the chosen tab keeps
+// focus across the re-render so keyboard navigation keeps working.
+function fillTabs(host, items, selectedId, onPick) {
+  clear(host);
+
+  const buttons = items.map((item) => {
+    const btn = el('button', 'chipbtn' + (item.minor ? ' chipbtn--minor' : ''), item.label);
+    btn.type = 'button';
+    btn.setAttribute('role', 'tab');
+    const selected = item.id === selectedId;
+    btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+    btn.tabIndex = selected ? 0 : -1;
+    btn.addEventListener('click', () => onPick(item.id));
+    host.appendChild(btn);
+    return btn;
+  });
+
+  if (host.dataset.focusPending === 'true') {
+    host.dataset.focusPending = 'false';
+    const index = items.findIndex((item) => item.id === selectedId);
+    const active = index === -1 ? null : buttons[index];
+    if (active) active.focus();
+  }
+
+  // Re-attach rather than stack a new listener on every render.
+  if (host.__tabKeys) host.removeEventListener('keydown', host.__tabKeys);
+  host.__tabKeys = (event) => {
+    const step = (event.key === 'ArrowRight' || event.key === 'ArrowDown') ? 1
+      : (event.key === 'ArrowLeft' || event.key === 'ArrowUp') ? -1
+        : 0;
+    const from = buttons.indexOf(document.activeElement);
+    if (from === -1) return;
+    let to = null;
+    if (event.key === 'Home') to = 0;
+    else if (event.key === 'End') to = buttons.length - 1;
+    else if (step) to = (from + step + buttons.length) % buttons.length;
+    if (to == null) return;
+    event.preventDefault();
+    host.dataset.focusPending = 'true';
+    onPick(items[to].id);
+  };
+  host.addEventListener('keydown', host.__tabKeys);
+}
+
 function renderTrends() {
   const available = METRIC_ORDER.filter((key) => seriesFor(key, 'all').length > 0);
   if (!available.length) {
@@ -1019,27 +1068,19 @@ function renderTrends() {
   }
   if (available.indexOf(Trends.metric) === -1) Trends.metric = available[0];
 
-  const rail = $('#metric-rail');
-  clear(rail);
-  available.forEach((key) => {
-    const btn = el('button', 'chipbtn', METRICS[key].label);
-    btn.type = 'button';
-    btn.setAttribute('role', 'tab');
-    btn.setAttribute('aria-selected', key === Trends.metric ? 'true' : 'false');
-    btn.addEventListener('click', () => { Trends.metric = key; renderTrends(); });
-    rail.appendChild(btn);
-  });
+  fillTabs(
+    $('#metric-rail'),
+    available.map((key) => ({ id: key, label: METRICS[key].label })),
+    Trends.metric,
+    (id) => { Trends.metric = id; renderTrends(); }
+  );
 
-  const rangeRail = $('#range-rail');
-  clear(rangeRail);
-  RANGES.forEach((range) => {
-    const btn = el('button', 'chipbtn', range.label);
-    btn.type = 'button';
-    btn.setAttribute('role', 'tab');
-    btn.setAttribute('aria-selected', range.id === Trends.range ? 'true' : 'false');
-    btn.addEventListener('click', () => { Trends.range = range.id; renderTrends(); });
-    rangeRail.appendChild(btn);
-  });
+  fillTabs(
+    $('#range-rail'),
+    RANGES.map((range) => ({ id: range.id, label: range.label, minor: true })),
+    Trends.range,
+    (id) => { Trends.range = id; renderTrends(); }
+  );
 
   const key = Trends.metric;
   const meta = METRICS[key];
@@ -1185,6 +1226,8 @@ function renderHistory() {
     const date = el('div', 'hitem__date');
     date.appendChild(el('span', 'hitem__day', d ? String(d.getDate()) : '—'));
     date.appendChild(el('span', 'hitem__mon', d ? new Intl.DateTimeFormat(undefined, { month: 'short' }).format(d) : ''));
+    // Several readings can share a day, so the time is what tells them apart.
+    date.appendChild(el('span', 'hitem__time', d ? fmtTime(d) : ''));
     btn.appendChild(date);
 
     const mid = el('div', 'hitem__mid');
@@ -1287,7 +1330,7 @@ function renderDetail(id) {
   if (reading.raw) {
     const details = el('details');
     details.style.marginTop = 'var(--s-5)';
-    const summary = el('summary', 'linkbtn', 'Raw text returned by Gemini');
+    const summary = el('summary', 'linkbtn', 'Raw text returned by the reader');
     details.appendChild(summary);
     const pre = el('div', 'rawbox', typeof reading.raw === 'string' ? reading.raw : JSON.stringify(reading.raw, null, 2));
     details.appendChild(pre);
@@ -1324,7 +1367,7 @@ function renderSettings() {
   pill.textContent = configured ? 'Connected' : 'Not configured';
   pill.className = 'pill' + (configured ? ' pill--ok' : ' pill--warn');
   $('#proxy-sub').textContent = configured
-    ? 'Readings are read by Gemini inside your own Supabase project. The key never reaches this app.'
+    ? 'Readings are read inside your own Supabase project. The key never reaches this app.'
     : 'Configure Supabase before using the OCR proxy.';
 
   $('#install-sub').textContent = isStandalone()
@@ -1553,7 +1596,7 @@ const Capture = (() => {
       return;
     }
 
-    showProcessing('Reading the report', 'Fetching the page for you, then handing it to Gemini.', ['fetch']);
+    showProcessing('Reading the report', 'Fetching the page for you, then reading it.', ['fetch']);
     let result = null;
     let previewUrl = null;
     let note = '';
@@ -1563,7 +1606,7 @@ const Capture = (() => {
         setStep('fetch', 'done');
         setStep('ocr', 'active');
         $('#proc-title').textContent = 'Reading the attachment';
-        $('#proc-body').textContent = 'Sending ' + job.file.name + ' straight to Gemini — no fetching needed.';
+        $('#proc-body').textContent = 'Sending ' + job.file.name + ' straight for reading — no fetching needed.';
         previewUrl = job.file.type && job.file.type.indexOf('image/') === 0 ? URL.createObjectURL(job.file) : null;
         const data = await fileToBase64(job.file);
         result = await OcrProxy.fromDocument(job.file.type || 'application/octet-stream', data);
@@ -2165,12 +2208,6 @@ function bindEvents() {
   $('#btn-review-close').addEventListener('click', closeReview);
   $('#btn-review-cancel').addEventListener('click', closeReview);
   $('#btn-review-save').addEventListener('click', saveReview);
-
-  $('#btn-theme').addEventListener('click', () => {
-    const now = document.documentElement.getAttribute('data-theme');
-    Settings.save({ theme: now === 'dark' ? 'light' : 'dark' });
-    applyTheme();
-  });
 
   $('#btn-detail-back').addEventListener('click', () => Route.back());
 
