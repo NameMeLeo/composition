@@ -154,4 +154,4 @@ Then open <http://localhost:8000>. Camera access requires `localhost` or HTTPS.
 
 - The Gemini model id is a single secret, `GEMINI_MODEL`. Rename it there if you switch models.
 - The OCR prompt is schema-driven and was written without a sample report attached, so it targets the standard Tanita layout. The review screen exists precisely because extraction can be wrong; if a field comes back empty the app leaves it empty rather than guessing.
-- New installs start with no readings. Older browser profiles that already contain the previous sample readings still show the sample banner, and **Remove** on the dashboard clears only those sample records.
+- New installs start with no readings, and nothing is seeded. Earlier builds created eight demo readings; those are deleted automatically on load, so no device shows sample data any more.

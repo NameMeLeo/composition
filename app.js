@@ -838,9 +838,7 @@ function tile(key, reading) {
 function renderDashboard() {
   const has = CACHE.length > 0;
   const last = latest();
-  const hasSample = CACHE.some((r) => r.sample);
 
-  $('#banner-sample').hidden = !hasSample;
   $('#banner-setup').hidden = true;
   $('#empty-dashboard').hidden = has;
   $('#hero').hidden = !has;
@@ -875,7 +873,7 @@ function renderDashboard() {
   html('#hero-muscle', m.text + (m.unit ? ' ' + m.unit : ''));
   html('#hero-visceral', last.metrics.visceralFat != null ? String(last.metrics.visceralFat) : '—');
   $('#hero-source').textContent = SOURCE_LABEL[last.source] || 'Reading';
-  $('#hero-eyebrow').textContent = last.sample ? 'Sample reading' : 'Latest reading';
+  $('#hero-eyebrow').textContent = 'Latest reading';
   $('#hero-meta').textContent = fmtDateTime(last.measuredAt) + ' · ' + relDays(last.measuredAt) +
     (last.playerId ? ' · player ' + last.playerId : '') +
     ' · ' + CACHE.length + ' reading' + (CACHE.length === 1 ? '' : 's') + ' on this device';
@@ -1192,7 +1190,6 @@ function renderHistory() {
     const mid = el('div', 'hitem__mid');
     const titleRow = el('div', 'od-row');
     titleRow.appendChild(el('span', 'row__title', SOURCE_LABEL[reading.source] || 'Reading'));
-    if (reading.sample) titleRow.appendChild(el('span', 'chip chip--soft', 'Sample'));
     mid.appendChild(titleRow);
 
     const figures = el('div', 'hitem__figures');
@@ -1240,7 +1237,6 @@ function renderDetail(id) {
   const sub = el('div', 'detail__sub');
   const row = el('div', 'od-cluster');
   row.appendChild(el('span', 'chip chip--soft', SOURCE_LABEL[reading.source] || 'Reading'));
-  if (reading.sample) row.appendChild(el('span', 'chip chip--soft', 'Sample'));
   if (reading.confidence != null) row.appendChild(el('span', 'chip chip--soft', 'OCR confidence ' + Math.round(reading.confidence * 100) + '%'));
   sub.appendChild(row);
   card.appendChild(sub);
@@ -1883,7 +1879,6 @@ async function saveReview() {
     createdAt: new Date().toISOString(),
     measuredAt: measuredAt.toISOString(),
     source: reviewState.source || 'manual',
-    sample: false,
     playerId: reviewState.playerId || null,
     language: reviewState.language || null,
     reportUrl: reviewState.reportUrl || null,
@@ -2083,6 +2078,13 @@ async function consumeShareToken() {
 async function loadReadings() {
   try {
     CACHE = await Store.all();
+    // Older builds seeded eight demo readings. Nothing creates them any more, so
+    // any that are still on the device are cleared instead of being shown again.
+    const stale = CACHE.filter((r) => r.sample);
+    if (stale.length) {
+      for (const s of stale) await Store.remove(s.id);
+      CACHE = CACHE.filter((r) => !r.sample);
+    }
   } catch (err) {
     CACHE = [];
     toast('Local storage is unavailable in this browser. Readings cannot be saved.', 'error');
@@ -2168,14 +2170,6 @@ function bindEvents() {
     const now = document.documentElement.getAttribute('data-theme');
     Settings.save({ theme: now === 'dark' ? 'light' : 'dark' });
     applyTheme();
-  });
-
-  $('#btn-clear-sample').addEventListener('click', async () => {
-    const samples = CACHE.filter((r) => r.sample);
-    for (const s of samples) await Store.remove(s.id);
-    CACHE = CACHE.filter((r) => !r.sample);
-    toast('Sample data removed');
-    renderDashboard();
   });
 
   $('#btn-detail-back').addEventListener('click', () => Route.back());
