@@ -3,15 +3,15 @@
    its latest value beside the highest, lowest and average for the chosen window.
    Tapping a card charts it, so the grid is both the readout and the picker. */
 
-import { $, el, clear } from '../dom.js';
-import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../metrics.js';
-import { metricText, fmtDate, axisFormat, bucketLabel } from '../format.js';
-import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../store.js';
+import { $, el, clear } from '../core/dom.js';
+import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
+import { metricText, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
+import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../data/store.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { fillWheel } from '../components/wheel.js';
 import { metricCard } from '../components/tile.js';
-import { Route } from '../router.js';
+import { Route } from '../core/router.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
 const selection = { metric: 'weight', range: 'month', tab: 'composition' };

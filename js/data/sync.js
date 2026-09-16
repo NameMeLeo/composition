@@ -2,8 +2,8 @@
    Readings live on the device first; this only copies them into the user's own
    Supabase project, resolving conflicts by whichever copy was touched last. */
 
-import { Auth } from './auth.js';
-import { Settings } from './settings.js';
+import { Auth } from '../services/auth.js';
+import { Settings } from '../core/settings.js';
 import { Store, setReadings } from './store.js';
 
 /** The tiebreak key used to decide which of two copies of a reading wins. */

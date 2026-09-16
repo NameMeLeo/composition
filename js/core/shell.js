@@ -1,7 +1,7 @@
 /* Composition — swapping between the sign-in screen and the app shell. */
 
 import { $ } from './dom.js';
-import { Auth } from './auth.js';
+import { Auth } from '../services/auth.js';
 import { Route, parse } from './router.js';
 
 export function showAuth() {

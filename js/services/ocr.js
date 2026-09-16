@@ -1,7 +1,7 @@
 /* Composition — client for the Supabase Edge Function that reads reports.
    The Gemini API key lives in the function's environment, never here. */
 
-import { Settings } from './settings.js';
+import { Settings } from '../core/settings.js';
 import { Auth } from './auth.js';
 
 function base() {

@@ -1,10 +1,10 @@
 /* Composition — one reading in full, with the raw report fields behind it. */
 
-import { $, el, clear, toast } from '../dom.js';
-import { METRICS, METRIC_ORDER } from '../metrics.js';
-import { fmtDate, fmtDateTime, metricText } from '../format.js';
-import { getReadings, deleteReading } from '../store.js';
-import { Route } from '../router.js';
+import { $, el, clear, toast } from '../core/dom.js';
+import { METRICS, METRIC_ORDER } from '../core/metrics.js';
+import { fmtDate, fmtDateTime, metricText } from '../core/format.js';
+import { getReadings, deleteReading } from '../data/store.js';
+import { Route } from '../core/router.js';
 
 export function renderDetail(id) {
   const host = $('#detail-body');

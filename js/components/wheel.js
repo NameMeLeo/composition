@@ -2,7 +2,7 @@
    The chevrons, the arrow keys and a horizontal swipe all step through items and
    wrap around at both ends. */
 
-import { el, clear } from '../dom.js';
+import { el, clear } from '../core/dom.js';
 
 function wheelArrow(direction) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

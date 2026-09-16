@@ -6,50 +6,52 @@
    colour of a change chip: 'up' or 'down', or null when direction is neutral. */
 export const METRICS = {
   weight:         { label: 'Weight',          unit: 'kg',   digits: 1, group: 'composition', accent: 'var(--c-primary)', better: null,   min: 20,  max: 400 },
-  bodyFat:        { label: 'Body fat',        unit: '%',    digits: 1, group: 'composition', accent: 'var(--c-amber)',   better: 'down', min: 2,   max: 70 },
-  muscleMass:     { label: 'Muscle mass',     unit: 'kg',   digits: 1, group: 'composition', accent: 'var(--c-green)',   better: 'up',   min: 1,   max: 200 },
+  bodyFat:        { label: 'Body fat',        unit: '%',    digits: 1, group: 'fat',         accent: 'var(--c-amber)',   better: 'down', min: 2,   max: 70 },
+  muscleMass:     { label: 'Muscle mass',     unit: 'kg',   digits: 1, group: 'muscle',      accent: 'var(--c-green)',   better: 'up',   min: 1,   max: 200 },
   fatFreeMass:    { label: 'Fat-free mass',   unit: 'kg',   digits: 1, group: 'composition', accent: 'var(--c-teal)',    better: null,   min: 1,   max: 200 },
-  bodyWater:      { label: 'Body water',      unit: '%',    digits: 1, group: 'composition', accent: 'var(--c-blue)',    better: 'up',   min: 5,   max: 80 },
+  bodyWater:      { label: 'Body water',      unit: '%',    digits: 1, group: 'water',       accent: 'var(--c-blue)',    better: 'up',   min: 5,   max: 80 },
   boneMass:       { label: 'Bone mass',       unit: 'kg',   digits: 2, group: 'composition', accent: 'var(--c-slate)',   better: null,   min: 0.5, max: 10 },
   visceralFat:    { label: 'Visceral fat',    unit: '',     digits: 0, group: 'risk',        accent: 'var(--c-red)',     better: 'down', min: 1,   max: 60 },
   bmi:            { label: 'BMI',             unit: '',     digits: 1, group: 'risk',        accent: 'var(--c-violet)',  better: null,   min: 5,   max: 90 },
   bmr:            { label: 'BMR',             unit: 'kcal', digits: 0, group: 'energy',      accent: 'var(--c-orange)',  better: null,   min: 400, max: 6000 },
   metabolicAge:   { label: 'Metabolic age',   unit: 'yrs',  digits: 0, group: 'energy',      accent: 'var(--c-teal)',    better: 'down', min: 5,   max: 120 },
-  muscleQuality:  { label: 'Muscle quality',  unit: '',     digits: 0, group: 'performance', accent: 'var(--c-green)',   better: 'up',   min: 0,   max: 200 },
-  physiqueRating: { label: 'Physique rating', unit: '',     digits: 0, group: 'performance', accent: 'var(--c-primary)', better: null,   min: 1,   max: 9 },
+  muscleQuality:  { label: 'Muscle quality',  unit: '',     digits: 0, group: 'muscle',      accent: 'var(--c-green)',   better: 'up',   min: 0,   max: 200 },
+  physiqueRating: { label: 'Physique rating', unit: '',     digits: 0, group: 'composition', accent: 'var(--c-primary)', better: null,   min: 1,   max: 9 },
 
   /* Segmental breakdown. The report splits the body into trunk, both arms and both
      legs, and gives each part its own muscle mass, fat mass and fat percentage.
      These arrive nested in the report, so they need promoting to first-class
      metrics before they can be charted like anything else. */
-  segMuscleTrunk:     { label: 'Trunk muscle',      unit: 'kg', digits: 1, group: 'segmental', accent: 'var(--c-green)',  better: 'up',   min: 1,   max: 120 },
-  segMuscleLeftArm:   { label: 'Left arm muscle',   unit: 'kg', digits: 1, group: 'segmental', accent: 'var(--c-green)',  better: 'up',   min: 0.1, max: 30 },
-  segMuscleRightArm:  { label: 'Right arm muscle',  unit: 'kg', digits: 1, group: 'segmental', accent: 'var(--c-green)',  better: 'up',   min: 0.1, max: 30 },
-  segMuscleLeftLeg:   { label: 'Left leg muscle',   unit: 'kg', digits: 1, group: 'segmental', accent: 'var(--c-green)',  better: 'up',   min: 0.5, max: 80 },
-  segMuscleRightLeg:  { label: 'Right leg muscle',  unit: 'kg', digits: 1, group: 'segmental', accent: 'var(--c-green)',  better: 'up',   min: 0.5, max: 80 },
-  segFatTrunk:        { label: 'Trunk fat',         unit: 'kg', digits: 2, group: 'segmental', accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 120 },
-  segFatLeftArm:      { label: 'Left arm fat',      unit: 'kg', digits: 2, group: 'segmental', accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 30 },
-  segFatRightArm:     { label: 'Right arm fat',     unit: 'kg', digits: 2, group: 'segmental', accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 30 },
-  segFatLeftLeg:      { label: 'Left leg fat',      unit: 'kg', digits: 2, group: 'segmental', accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 50 },
-  segFatRightLeg:     { label: 'Right leg fat',     unit: 'kg', digits: 2, group: 'segmental', accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 50 },
-  segFatRateTrunk:    { label: 'Trunk fat rate',    unit: '%',  digits: 1, group: 'segmental', accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
-  segFatRateLeftArm:  { label: 'Left arm fat rate', unit: '%',  digits: 1, group: 'segmental', accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
-  segFatRateRightArm: { label: 'Right arm fat rate', unit: '%', digits: 1, group: 'segmental', accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
-  segFatRateLeftLeg:  { label: 'Left leg fat rate', unit: '%',  digits: 1, group: 'segmental', accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
-  segFatRateRightLeg: { label: 'Right leg fat rate', unit: '%', digits: 1, group: 'segmental', accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 }
+  segMuscleTrunk:     { label: 'Trunk muscle',      unit: 'kg', digits: 1, group: 'muscle',    accent: 'var(--c-green)',  better: 'up',   min: 1,   max: 120 },
+  segMuscleLeftArm:   { label: 'Left arm muscle',   unit: 'kg', digits: 1, group: 'muscle',    accent: 'var(--c-green)',  better: 'up',   min: 0.1, max: 30 },
+  segMuscleRightArm:  { label: 'Right arm muscle',  unit: 'kg', digits: 1, group: 'muscle',    accent: 'var(--c-green)',  better: 'up',   min: 0.1, max: 30 },
+  segMuscleLeftLeg:   { label: 'Left leg muscle',   unit: 'kg', digits: 1, group: 'muscle',    accent: 'var(--c-green)',  better: 'up',   min: 0.5, max: 80 },
+  segMuscleRightLeg:  { label: 'Right leg muscle',  unit: 'kg', digits: 1, group: 'muscle',    accent: 'var(--c-green)',  better: 'up',   min: 0.5, max: 80 },
+  segFatTrunk:        { label: 'Trunk fat',         unit: 'kg', digits: 2, group: 'fat',       accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 120 },
+  segFatLeftArm:      { label: 'Left arm fat',      unit: 'kg', digits: 2, group: 'fat',       accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 30 },
+  segFatRightArm:     { label: 'Right arm fat',     unit: 'kg', digits: 2, group: 'fat',       accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 30 },
+  segFatLeftLeg:      { label: 'Left leg fat',      unit: 'kg', digits: 2, group: 'fat',       accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 50 },
+  segFatRightLeg:     { label: 'Right leg fat',     unit: 'kg', digits: 2, group: 'fat',       accent: 'var(--c-amber)',  better: 'down', min: 0.1, max: 50 },
+  segFatRateTrunk:    { label: 'Trunk fat rate',    unit: '%',  digits: 1, group: 'fat',       accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
+  segFatRateLeftArm:  { label: 'Left arm fat rate', unit: '%',  digits: 1, group: 'fat',       accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
+  segFatRateRightArm: { label: 'Right arm fat rate', unit: '%', digits: 1, group: 'fat',       accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
+  segFatRateLeftLeg:  { label: 'Left leg fat rate', unit: '%',  digits: 1, group: 'fat',       accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 },
+  segFatRateRightLeg: { label: 'Right leg fat rate', unit: '%', digits: 1, group: 'fat',       accent: 'var(--c-violet)', better: 'down', min: 2,   max: 70 }
 };
 
 export const METRIC_ORDER = Object.keys(METRICS);
 
-/* The tabs on the trends page. Order here is the order they are shown in, and a
-   metric joins a tab by naming it in its `group`. Segmental sits last because it
-   is the most detailed view of the same body. */
+/* The tabs on the trends page, in the order they are shown. A metric joins a tab
+   by naming it in its `group`, and appears inside that tab in `METRIC_ORDER`, which
+   is the order of the catalogue above. A tab whose metrics all lack data is dropped
+   by the trends page rather than rendered empty. */
 export const METRIC_GROUPS = [
   { id: 'composition', label: 'Composition' },
-  { id: 'risk',        label: 'Risk' },
+  { id: 'muscle',      label: 'Muscle' },
+  { id: 'fat',         label: 'Fat' },
+  { id: 'water',       label: 'Water' },
   { id: 'energy',      label: 'Energy' },
-  { id: 'performance', label: 'Performance' },
-  { id: 'segmental',   label: 'Segmental' }
+  { id: 'risk',        label: 'Risk' }
 ];
 
 export const metricsInGroup = (groupId) => METRIC_ORDER.filter((key) => METRICS[key].group === groupId);

@@ -2,9 +2,9 @@
    Four ways to add a reading, fanned out on an arc. Hover opens it on a pointer
    device, a long press opens it on touch, and Escape or a tap outside closes it. */
 
-import { $ } from './dom.js';
+import { $ } from '../core/dom.js';
 import { Capture } from './capture.js';
-import { Route } from './router.js';
+import { Route } from '../core/router.js';
 
 const RADIUS = 104;        // distance from the hub out to each option
 const FROM = 150;          // degrees: left end of the arc

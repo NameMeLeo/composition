@@ -6,7 +6,7 @@
    the only input that needs one of its own is a bare player id, which falls back to
    the base configured in Settings. */
 
-import { Settings } from './settings.js';
+import { Settings } from '../core/settings.js';
 
 /* The report site treats a missing `language` as its own default, which is
    Traditional Chinese. So the way to ask for Chinese is to leave the parameter

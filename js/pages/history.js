@@ -1,12 +1,12 @@
 /* Composition — History.
    Every reading, newest first, searchable by date, source, player id or note. */
 
-import { $, el, clear } from '../dom.js';
-import { METRICS, SOURCE_LABEL } from '../metrics.js';
-import { fmtDate, fmtTime, metricText, toDate } from '../format.js';
-import { getReadings, sortedDesc } from '../store.js';
-import { exportCSV } from '../export.js';
-import { Route } from '../router.js';
+import { $, el, clear } from '../core/dom.js';
+import { METRICS, SOURCE_LABEL } from '../core/metrics.js';
+import { fmtDate, fmtTime, metricText, toDate } from '../core/format.js';
+import { getReadings, sortedDesc } from '../data/store.js';
+import { exportCSV } from '../data/export.js';
+import { Route } from '../core/router.js';
 
 let filter = '';
 

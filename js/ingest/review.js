@@ -2,17 +2,17 @@
    Everything the reader extracted lands here for a human to confirm before it is
    written to the device. This is the only place a reading is created. */
 
-import { $, $$, el, clear, uid, toast } from './dom.js';
+import { $, $$, el, clear, uid, toast } from '../core/dom.js';
 import {
   METRICS, METRIC_ORDER,
   REPORT_SECTION_LABELS, REPORT_FIELD_LABELS, REPORT_FIELD_UNITS
-} from './metrics.js';
-import { parseNumber, toDate } from './format.js';
-import { addReading } from './store.js';
-import { Settings } from './settings.js';
-import { Auth } from './auth.js';
-import { mirrorSync } from './sync.js';
-import { Route } from './router.js';
+} from '../core/metrics.js';
+import { parseNumber, toDate } from '../core/format.js';
+import { addReading } from '../data/store.js';
+import { Settings } from '../core/settings.js';
+import { Auth } from '../services/auth.js';
+import { mirrorSync } from '../data/sync.js';
+import { Route } from '../core/router.js';
 
 let reviewState = null;
 

@@ -3,10 +3,10 @@
    derived selectors (latest, series, deltas). Mutating the set fires a
    'readings' event so the mounted page can re-render itself. */
 
-import { DB_NAME, DB_VERSION, STORE } from './constants.js';
-import { rangeById, SEGMENTAL_REPORT_PATHS } from './metrics.js';
-import { toast } from './dom.js';
-import { emit } from './events.js';
+import { DB_NAME, DB_VERSION, STORE } from '../core/constants.js';
+import { rangeById, SEGMENTAL_REPORT_PATHS } from '../core/metrics.js';
+import { toast } from '../core/dom.js';
+import { emit } from '../core/events.js';
 
 let dbPromise = null;
 

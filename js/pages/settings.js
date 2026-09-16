@@ -2,17 +2,17 @@
    Account, appearance, the optional cloud mirror, the OCR proxy, device storage
    and every export, plus the wiring for all of the controls on this page. */
 
-import { $, toast } from '../dom.js';
-import { Settings } from '../settings.js';
-import { Auth } from '../auth.js';
-import { OcrProxy } from '../ocr.js';
-import { mirrorSync } from '../sync.js';
-import { getReadings, setReadings, Store } from '../store.js';
-import { applyTheme, applyMotion, isStandalone } from '../theme.js';
-import { fmtDateTime, relDays } from '../format.js';
-import { exportJSON, exportCSV, exportSamsung, copySummary } from '../export.js';
-import { Route } from '../router.js';
-import { showAuth } from '../shell.js';
+import { $, toast } from '../core/dom.js';
+import { Settings } from '../core/settings.js';
+import { Auth } from '../services/auth.js';
+import { OcrProxy } from '../services/ocr.js';
+import { mirrorSync } from '../data/sync.js';
+import { getReadings, setReadings, Store } from '../data/store.js';
+import { applyTheme, applyMotion, isStandalone } from '../core/theme.js';
+import { fmtDateTime, relDays } from '../core/format.js';
+import { exportJSON, exportCSV, exportSamsung, copySummary } from '../data/export.js';
+import { Route } from '../core/router.js';
+import { showAuth } from '../core/shell.js';
 
 function describeMirrorSync() {
   const at = Settings.get().mirrorSyncedAt;

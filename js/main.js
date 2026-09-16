@@ -8,19 +8,19 @@
    part of any single page, and then hands over to the router.
    ===================================================================== */
 
-import { $, toast } from './dom.js';
-import { Settings } from './settings.js';
-import { Auth } from './auth.js';
-import { Route } from './router.js';
-import { applyTheme, applyMotion } from './theme.js';
-import { loadReadings } from './store.js';
-import { on } from './events.js';
-import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from './report-url.js';
-import { Capture } from './capture.js';
-import { ScanFan } from './scanfan.js';
-import { closeReview, saveReview } from './review.js';
-import { consumeShareToken } from './share.js';
-import { showApp, showAuth } from './shell.js';
+import { $, toast } from './core/dom.js';
+import { Settings } from './core/settings.js';
+import { Auth } from './services/auth.js';
+import { Route } from './core/router.js';
+import { applyTheme, applyMotion } from './core/theme.js';
+import { loadReadings } from './data/store.js';
+import { on } from './core/events.js';
+import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from './services/report-url.js';
+import { Capture } from './ingest/capture.js';
+import { ScanFan } from './ingest/scanfan.js';
+import { closeReview, saveReview } from './ingest/review.js';
+import { consumeShareToken } from './services/share.js';
+import { showApp, showAuth } from './core/shell.js';
 
 // Importing a page registers its render function with the router.
 import { initHistory } from './pages/history.js';

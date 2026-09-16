@@ -1,8 +1,8 @@
 /* Composition — the SVG line chart.
    Draws into a host element and wires pointer scrubbing when asked for it. */
 
-import { el, clear } from '../dom.js';
-import { metricText, fmtDate } from '../format.js';
+import { el, clear } from '../core/dom.js';
+import { metricText, fmtDate } from '../core/format.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 

@@ -2,8 +2,8 @@
    The client library is pulled from esm.sh on demand so nothing auth-related is
    bundled, and no session is ever written by this file. */
 
-import { LS } from './constants.js';
-import { Settings } from './settings.js';
+import { LS } from '../core/constants.js';
+import { Settings } from '../core/settings.js';
 
 let client = null;
 let session = null;

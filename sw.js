@@ -2,7 +2,7 @@
    Cache-first for the app shell so the tracker opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v19';
+const CACHE = 'composition-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -11,29 +11,39 @@ const ASSETS = [
   './icons/icon.svg',
   './icons/maskable.svg',
   './js/main.js',
-  './js/constants.js',
-  './js/metrics.js',
-  './js/dom.js',
-  './js/events.js',
-  './js/settings.js',
-  './js/format.js',
-  './js/store.js',
-  './js/auth.js',
-  './js/ocr.js',
-  './js/report-url.js',
-  './js/router.js',
-  './js/theme.js',
-  './js/shell.js',
-  './js/sync.js',
-  './js/review.js',
-  './js/capture.js',
-  './js/scanfan.js',
-  './js/export.js',
-  './js/share.js',
+
+  /* Plumbing shared by everything. */
+  './js/core/constants.js',
+  './js/core/dom.js',
+  './js/core/events.js',
+  './js/core/format.js',
+  './js/core/metrics.js',
+  './js/core/router.js',
+  './js/core/settings.js',
+  './js/core/shell.js',
+  './js/core/theme.js',
+
+  /* The readings themselves, and where they are kept. */
+  './js/data/store.js',
+  './js/data/sync.js',
+  './js/data/export.js',
+
+  /* Everything that talks to a system we do not own. */
+  './js/services/auth.js',
+  './js/services/ocr.js',
+  './js/services/report-url.js',
+  './js/services/share.js',
+
+  /* The add-a-reading flow. */
+  './js/ingest/capture.js',
+  './js/ingest/review.js',
+  './js/ingest/scanfan.js',
+
   './js/components/chart.js',
   './js/components/chip.js',
   './js/components/tile.js',
   './js/components/wheel.js',
+
   './js/pages/dashboard.js',
   './js/pages/trends.js',
   './js/pages/history.js',

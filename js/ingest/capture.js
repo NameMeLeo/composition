@@ -3,11 +3,11 @@
    file. All of them end in the same place — an extraction handed to the review
    screen, or a failed fetch that offers manual entry instead. */
 
-import { $, $$, toast } from './dom.js';
-import { METRICS } from './metrics.js';
-import { parseNumber } from './format.js';
-import { OcrProxy } from './ocr.js';
-import { parseReportUrl, playerReportUrl, reportBase, DEFAULT_REPORT_LANGUAGE } from './report-url.js';
+import { $, $$, toast } from '../core/dom.js';
+import { METRICS } from '../core/metrics.js';
+import { parseNumber } from '../core/format.js';
+import { OcrProxy } from '../services/ocr.js';
+import { parseReportUrl, playerReportUrl, reportBase, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.js';
 import { openReview } from './review.js';
 
 let stream = null;

@@ -5,10 +5,10 @@
    has a whole time range behind it: the latest value set large, with the highest,
    lowest and average for the window tucked beside it in small type. */
 
-import { METRICS } from '../metrics.js';
-import { el } from '../dom.js';
-import { metricDisplay, axisFormat } from '../format.js';
-import { deltaFor, rawPoints } from '../store.js';
+import { METRICS } from '../core/metrics.js';
+import { el } from '../core/dom.js';
+import { metricDisplay, axisFormat } from '../core/format.js';
+import { deltaFor, rawPoints } from '../data/store.js';
 import { deltaChip } from './chip.js';
 import { scheduleChart } from './chart.js';
 

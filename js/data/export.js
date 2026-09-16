@@ -1,9 +1,9 @@
 /* Composition — getting readings back out of the app. */
 
-import { $, toast } from './dom.js';
-import { APP_VERSION } from './constants.js';
-import { METRICS, METRIC_ORDER } from './metrics.js';
-import { fmtDateTime, metricText } from './format.js';
+import { $, toast } from '../core/dom.js';
+import { APP_VERSION } from '../core/constants.js';
+import { METRICS, METRIC_ORDER } from '../core/metrics.js';
+import { fmtDateTime, metricText } from '../core/format.js';
 import { latest, sortedAsc, getReadings } from './store.js';
 
 function download(filename, text, mime) {

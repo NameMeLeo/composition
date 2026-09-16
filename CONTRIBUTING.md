@@ -28,29 +28,36 @@ index.html      Shell markup: every view, sheet and overlay
 styles.css      Design tokens and all styling
 sw.js           Offline app shell
 js/
-  main.js       Entry point: boot, global chrome, page registration
-  constants.js  Storage keys, storage names, deployment defaults
-  metrics.js    Metric catalogue, tabs, time ranges, report vocabulary
-  dom.js        $, el, clear, toast, uid
-  format.js     Dates, numbers, unit-aware measurement text
-  events.js     Tiny pub/sub for "the readings changed"
-  settings.js   localStorage preferences
-  store.js      IndexedDB, the in-memory cache, and the derived selectors
-  auth.js       Supabase Google sign-in
-  ocr.js        Client for the OCR Edge Function
-  report-url.js Turning pasted text into a report URL
-  sync.js       Optional two-way cloud mirror
-  router.js     Hash routing; pages register themselves
-  shell.js      Sign-in screen vs app shell
-  theme.js      Theme, motion, installed-app detection
-  capture.js    Link sheet, QR scanner, extraction pipeline
-  review.js     The review screen; the only place a reading is created
-  scanfan.js    Radial menu on the scan button
-  export.js     JSON, CSV, Samsung Health, copy summary
-  share.js      Shared-in reports (?share= token)
-  components/   chart.js, wheel.js, chip.js, tile.js
-  pages/        dashboard.js, trends.js, history.js, detail.js, settings.js
+  main.js         Entry point: boot, global chrome, page registration
+  core/           Shared plumbing and the app's vocabulary
+    constants.js  Storage keys, storage names, deployment defaults
+    metrics.js    Metric catalogue, tabs, time ranges, report vocabulary
+    dom.js        $, el, clear, toast, uid
+    format.js     Dates, numbers, unit-aware measurement text
+    events.js     Tiny pub/sub for "the readings changed"
+    settings.js   localStorage preferences
+    router.js     Hash routing; pages register themselves
+    shell.js      Sign-in screen vs app shell
+    theme.js      Theme, motion, installed-app detection
+  data/           The readings and their lifecycle
+    store.js      IndexedDB, the in-memory cache, and the derived selectors
+    sync.js       Optional two-way cloud mirror
+    export.js     JSON, CSV, Samsung Health, copy summary
+  services/       Everything that talks to a system we do not own
+    auth.js       Supabase Google sign-in
+    ocr.js        Client for the OCR Edge Function
+    report-url.js Turning pasted text into a report URL
+    share.js      Shared-in reports (?share= token)
+  ingest/         The add-a-reading flow
+    capture.js    Link sheet, QR scanner, extraction pipeline
+    review.js     The review screen; the only place a reading is created
+    scanfan.js    Radial menu on the scan button
+  components/     chart.js, wheel.js, chip.js, tile.js
+  pages/          dashboard.js, trends.js, history.js, detail.js, settings.js
 ```
+
+`main.js` is the only module left at the root of `js/`, because `index.html` and
+`sw.js` both name it directly.
 
 Adding a page means creating `js/pages/your-page.js`, registering it with
 `Route.page('your-page', render)`, importing it from `main.js` for its side effect,

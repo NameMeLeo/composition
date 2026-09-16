@@ -2,14 +2,14 @@
    Latest reading, the four headline deltas, a 90-day mini trend, every metric
    that has ever been recorded, and the plain-language insights. */
 
-import { $, el, clear, clamp } from '../dom.js';
-import { METRICS, METRIC_ORDER, rangeById } from '../metrics.js';
-import { metricDisplay, metricText, fmtDateTime, relDays, massValue, axisFormat, bucketLabel } from '../format.js';
-import { getReadings, latest, deltaFor, seriesFor, rawPoints, sortedAsc } from '../store.js';
+import { $, el, clear, clamp } from '../core/dom.js';
+import { METRICS, METRIC_ORDER, rangeById } from '../core/metrics.js';
+import { metricDisplay, metricText, fmtDateTime, relDays, massValue, axisFormat, bucketLabel } from '../core/format.js';
+import { getReadings, latest, deltaFor, seriesFor, rawPoints, sortedAsc } from '../data/store.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { tile } from '../components/tile.js';
-import { Route } from '../router.js';
+import { Route } from '../core/router.js';
 
 function html(sel, markup) {
   const node = $(sel);

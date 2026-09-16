@@ -1,8 +1,8 @@
 /* Composition — the change chip shown next to a metric. */
 
-import { METRICS } from '../metrics.js';
-import { el } from '../dom.js';
-import { massValue, isMassMetric } from '../format.js';
+import { METRICS } from '../core/metrics.js';
+import { el } from '../core/dom.js';
+import { massValue, isMassMetric } from '../core/format.js';
 
 /**
  * Builds the "▲ 0.8 kg" / "No change" chip for one metric.

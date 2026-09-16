@@ -2,9 +2,9 @@
    The share inbox hands back a one-shot token in ?share=..., so this runs at boot
    and immediately strips the token from the URL before anything else reads it. */
 
-import { toast } from './dom.js';
+import { toast } from '../core/dom.js';
 import { parseReportUrl } from './report-url.js';
-import { Capture } from './capture.js';
+import { Capture } from '../ingest/capture.js';
 
 async function readToken(token) {
   const res = await fetch('./share/' + encodeURIComponent(token), { cache: 'no-store' });
