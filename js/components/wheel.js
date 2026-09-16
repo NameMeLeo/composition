@@ -4,7 +4,7 @@
 
 import { el, clear } from '../core/dom.js';
 
-function wheelArrow(direction) {
+export function wheelArrow(direction) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('width', '20');
@@ -19,6 +19,54 @@ function wheelArrow(direction) {
   path.setAttribute('d', direction < 0 ? 'M14.5 5 7.5 12l7 7' : 'm9.5 5 7 7-7 7');
   svg.appendChild(path);
   return svg;
+}
+
+/** Adds the same horizontal gesture used by the picker to another surface. */
+export function bindHorizontalSwipe(host, onStep, options) {
+  const config = options || {};
+  if (!host) return;
+
+  if (host.__swipeHandlers) {
+    host.removeEventListener('pointerdown', host.__swipeHandlers.down);
+    host.removeEventListener('pointerup', host.__swipeHandlers.up);
+    host.removeEventListener('pointercancel', host.__swipeHandlers.cancel);
+  }
+
+  let startX = null;
+  let startY = null;
+  let startTarget = null;
+  const ignored = (target) => config.ignoreSelector && target instanceof Element
+    && target.closest(config.ignoreSelector);
+
+  const down = (event) => {
+    if (ignored(event.target)) return;
+    startX = event.clientX;
+    startY = event.clientY;
+    startTarget = event.target;
+  };
+
+  const reset = () => {
+    startX = null;
+    startY = null;
+    startTarget = null;
+  };
+
+  const up = (event) => {
+    if (startX == null || ignored(startTarget)) { reset(); return; }
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    reset();
+    // A mostly-vertical drag belongs to page scrolling, not metric selection.
+    if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    event.preventDefault();
+    onStep(dx < 0 ? 1 : -1);
+  };
+
+  const cancel = reset;
+  host.__swipeHandlers = { down, up, cancel };
+  host.addEventListener('pointerdown', down);
+  host.addEventListener('pointerup', up);
+  host.addEventListener('pointercancel', cancel);
 }
 
 /**

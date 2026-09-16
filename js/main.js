@@ -155,7 +155,9 @@ function bindShellEvents() {
    on a slow first paint. Offline support is optional, so failures are ignored. */
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((registration) => registration.update())
+    .catch(() => {});
 }
 
 async function boot() {

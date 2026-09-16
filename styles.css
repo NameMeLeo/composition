@@ -794,52 +794,6 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .tile--empty .tile__value { color: var(--c-muted); }
 .tile__spark { height: 34px; margin-top: 2px; min-width: 0; }
 
-/* The metric card on Trends: the latest value set large, with the highest, lowest
-   and average for the chosen window in small type beside it. Two columns rather
-   than a stack, so the headline stays the thing the eye lands on. */
-.tile--card {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--s-3);
-}
-.tile--card .tile__head { display: grid; gap: 2px; min-width: 0; }
-.tile--card .tile__value--lead { font-size: 2rem; }
-.tile--card .tile__side {
-  display: grid;
-  gap: 2px;
-  padding-left: var(--s-3);
-  border-left: 1px solid var(--c-line-soft);
-}
-.tile__stat { display: flex; align-items: baseline; gap: var(--s-2); justify-content: space-between; }
-.tile__stat-label { font-size: var(--fs-micro); color: var(--c-muted); }
-.tile__stat-value { font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
-.tile__stat-empty { font-size: var(--fs-micro); color: var(--c-muted); }
-
-/* The open card is ringed in its own accent, which is also the colour of the line
-   the chart draws for it, so the link between card and chart needs no label. */
-.tile--active {
-  border-color: var(--tile-accent);
-  background: var(--c-surface);
-  box-shadow: 0 0 0 1px var(--tile-accent) inset, var(--shadow-1);
-}
-
-/* Two columns work while there is room. On a phone the High/Low/Avg column would
-   take most of a two-up card and squeeze the headline value until it spilled out
-   of the tile, so the card stacks and the stats move under the value. */
-@media (max-width: 600px) {
-  .tile--card {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    gap: var(--s-2);
-  }
-  .tile--card .tile__value--lead { font-size: 1.5rem; }
-  .tile--card .tile__side {
-    padding: var(--s-2) 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--c-line-soft);
-  }
-}
-
 .insight {
   display: flex;
   align-items: flex-start;
@@ -963,16 +917,14 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .trend-controls { display: grid; gap: var(--s-3); margin-bottom: var(--s-4); }
 .trend-controls > .wheel { margin-bottom: 0; }
 
-/* The tab strip scrolls sideways rather than wrapping, so the row keeps a single
-   height however many groups a person's own data supports. */
+/* Keep every measure group reachable within the available screen width. */
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s-2);
-  overflow-x: auto;
+  overflow: visible;
   padding-bottom: 2px;
-  scrollbar-width: none;
 }
-.tabs::-webkit-scrollbar { display: none; }
 .tab {
   flex: none;
   padding: var(--s-2) var(--s-4);
@@ -1070,6 +1022,76 @@ button.tile { border: 1px solid var(--c-line-soft); }
   line-height: 1.05;
   letter-spacing: -.03em;
   font-variant-numeric: tabular-nums;
+}
+
+.trend-card {
+  overflow: hidden;
+  border-color: var(--trend-accent, var(--c-line-soft));
+  box-shadow: 0 0 0 1px var(--trend-accent, transparent) inset, var(--shadow-1);
+  touch-action: pan-y;
+}
+.trend-card__head {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: start;
+  gap: var(--s-3);
+}
+.trend-card__head .stathead {
+  min-width: 0;
+  margin-bottom: 0;
+}
+.trend-card__head .stathead__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trend-card__head .stathead__value .unit { display: inline-block; line-height: 1.2; }
+.trend-card__nav {
+  border-radius: 50%;
+}
+.trend-card__nav svg { width: 20px; height: 20px; }
+.trend-card__nav:disabled { opacity: .35; pointer-events: none; }
+.trend-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+  margin: var(--s-4) 0 var(--s-3);
+  padding: var(--s-3) 0;
+  border-top: 1px solid var(--c-line-soft);
+  border-bottom: 1px solid var(--c-line-soft);
+}
+.trend-card__stat {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.trend-card__stat + .trend-card__stat {
+  padding-left: var(--s-3);
+  border-left: 1px solid var(--c-line-soft);
+}
+.trend-card__stat-label { font-size: var(--fs-micro); color: var(--c-muted); }
+.trend-card__stat-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.trend-card__stat-value .unit {
+  margin-left: 3px;
+  color: var(--c-muted);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .trend-card { padding: var(--s-4) var(--s-3) var(--s-3); }
+  .trend-card__head { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: var(--s-2); }
+  .trend-card__nav { width: 36px; height: 36px; }
+  .trend-card .stathead__value { font-size: 1.8rem; }
+  .trend-card__stats { gap: var(--s-2); }
+  .trend-card__stat + .trend-card__stat { padding-left: var(--s-2); }
 }
 
 .split { display: grid; gap: var(--s-4); }

@@ -17,7 +17,7 @@
 //                    Supabase user is then required for every OCR call
 //   MAX_BYTES        optional — largest report accepted, defaults to 12 MB
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { createClient } from '@supabase/supabase-js';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite';

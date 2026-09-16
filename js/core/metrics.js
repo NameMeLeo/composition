@@ -84,10 +84,10 @@ export const LB_PER_KG = 2.2046226218;
    and one point for every calendar year on record. Each reading inside a bucket is
    averaged into the single point that bucket contributes. */
 export const RANGES = [
-  { id: 'day',   label: '7 days',    bucket: 'day',   span: 7  },
-  { id: 'week',  label: '4 weeks',   bucket: 'week',  span: 4  },
-  { id: 'month', label: '12 months', bucket: 'month', span: 12 },
-  { id: 'year',  label: 'All years', bucket: 'year',  span: null }
+  { id: 'day',   label: 'Days',    bucket: 'day',   span: 7  },
+  { id: 'week',  label: 'Weeks',   bucket: 'week',  span: 4  },
+  { id: 'month', label: 'Months', bucket: 'month', span: 12 },
+  { id: 'year',  label: 'Years', bucket: 'year',  span: null }
 ];
 
 /* Falls back to the widest window, so an id left over from an older build still

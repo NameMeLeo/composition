@@ -33,8 +33,10 @@ export function drawChart(host, options) {
 
   clear(host);
   const pts = (opts.points || []).filter((p) => p && isFinite(p.v));
-  const width = Math.max(240, Math.round(host.clientWidth || (host.parentElement && host.parentElement.clientWidth) || 320));
+  const width = Math.max(1, Math.round(host.clientWidth || (host.parentElement && host.parentElement.clientWidth) || 320));
   const height = opts.height;
+  const padLeft = Math.min(opts.padLeft, Math.max(0, width - opts.padRight - 1));
+  const padRight = Math.min(opts.padRight, Math.max(0, width - padLeft - 1));
 
   const wrap = el('div', 'chart-wrap');
   host.appendChild(wrap);
@@ -69,9 +71,9 @@ export function drawChart(host, options) {
   const maxT = Math.max.apply(null, xs);
   const spanT = Math.max(1, maxT - minT);
 
-  const plotW = width - opts.padLeft - opts.padRight;
+  const plotW = Math.max(1, width - padLeft - padRight);
   const plotH = height - opts.padTop - opts.padBottom;
-  const xAt = (t) => opts.padLeft + ((t - minT) / spanT) * plotW;
+  const xAt = (t) => padLeft + ((t - minT) / spanT) * plotW;
   const yAt = (v) => opts.padTop + (1 - (v - lo) / (hi - lo)) * plotH;
 
   const svg = svgEl('svg');
@@ -98,15 +100,15 @@ export function drawChart(host, options) {
       const y = opts.padTop + (plotH / 3) * i;
 
       const line = svgEl('line');
-      line.setAttribute('x1', String(opts.padLeft));
-      line.setAttribute('x2', String(width - opts.padRight));
+      line.setAttribute('x1', String(padLeft));
+      line.setAttribute('x2', String(width - padRight));
       line.setAttribute('y1', String(y));
       line.setAttribute('y2', String(y));
       g.appendChild(line);
 
       const label = svgEl('text');
       label.setAttribute('class', 'chart__label');
-      label.setAttribute('x', String(opts.padLeft - 6));
+      label.setAttribute('x', String(Math.max(0, padLeft - 6)));
       label.setAttribute('y', String(y + 3));
       label.setAttribute('text-anchor', 'end');
       const value = hi - ((hi - lo) / 3) * i;
@@ -202,13 +204,19 @@ export function drawChart(host, options) {
    of them, and each needs the host to be laid out first to know its width. */
 const jobs = new Map();
 let frame = null;
+let fallback = null;
 
 export function scheduleChart(host, options) {
   jobs.set(host, options);
   if (frame) return;
-  frame = requestAnimationFrame(() => {
+  const flush = () => {
+    if (frame) cancelAnimationFrame(frame);
     frame = null;
+    if (fallback) clearTimeout(fallback);
+    fallback = null;
     jobs.forEach((opts, node) => { if (node.isConnected) drawChart(node, opts); });
     jobs.clear();
-  });
+  };
+  frame = requestAnimationFrame(flush);
+  fallback = setTimeout(flush, 100);
 }

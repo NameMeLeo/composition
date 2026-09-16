@@ -224,28 +224,40 @@
       </div>
 
       <section class="block">
-        <div class="block__head">
-          <h2 class="block__title">Measures</h2>
-          <span class="block__hint">Tap a card to chart it</span>
-        </div>
-        <div class="od-grid tiles" id="trend-cards" style="--od-cols:2"></div>
-      </section>
-
-      <section class="card card--stat">
-        <div class="stathead">
-          <div class="od-stat">
-            <span class="stathead__label" id="trend-label">Weight</span>
-            <span class="stathead__value od-nowrap" id="trend-latest">&mdash;</span>
+        <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
+          <div class="trend-card__head">
+            <button class="trend-card__nav iconbtn" id="trend-prev" type="button" aria-label="Previous measure" title="Previous measure"></button>
+            <div class="stathead">
+              <div class="od-stat">
+                <span class="stathead__label" id="trend-label">Weight</span>
+                <span class="stathead__value od-nowrap" id="trend-latest">&mdash;</span>
+              </div>
+              <span class="delta" id="trend-delta">&mdash;</span>
+            </div>
+            <button class="trend-card__nav iconbtn" id="trend-next" type="button" aria-label="Next measure" title="Next measure"></button>
           </div>
-          <span class="delta" id="trend-delta">&mdash;</span>
-        </div>
-        <div class="chart chart--tall" id="trend-chart"></div>
-        <div class="chart__axis">
-          <span id="axis-start">&mdash;</span>
-          <span id="axis-mid">&mdash;</span>
-          <span id="axis-end">&mdash;</span>
-        </div>
-        <p class="block__hint" id="trend-range-note"></p>
+          <div class="trend-card__stats" aria-label="Selected measure summary">
+            <div class="trend-card__stat">
+              <span class="trend-card__stat-label">High</span>
+              <strong class="trend-card__stat-value" id="trend-stat-high">&mdash;</strong>
+            </div>
+            <div class="trend-card__stat">
+              <span class="trend-card__stat-label">Low</span>
+              <strong class="trend-card__stat-value" id="trend-stat-low">&mdash;</strong>
+            </div>
+            <div class="trend-card__stat">
+              <span class="trend-card__stat-label">Avg</span>
+              <strong class="trend-card__stat-value" id="trend-stat-avg">&mdash;</strong>
+            </div>
+          </div>
+          <div class="chart chart--tall" id="trend-chart"></div>
+          <div class="chart__axis">
+            <span id="axis-start">&mdash;</span>
+            <span id="axis-mid">&mdash;</span>
+            <span id="axis-end">&mdash;</span>
+          </div>
+          <p class="block__hint" id="trend-range-note"></p>
+        </article>
       </section>
 
       <section class="block" id="block-composition">

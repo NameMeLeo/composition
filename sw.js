@@ -1,8 +1,9 @@
 /* Composition — service worker
-   Cache-first for the app shell so the tracker opens offline.
+  Network-first for the app shell so installed clients receive site updates
+  while the tracker still opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v21';
+const CACHE = 'composition-v23';
 const ASSETS = [
   './',
   './index.html',
@@ -93,14 +94,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((hit) => {
-      if (hit) return hit;
-      return fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (!response || response.status !== 200 || response.type !== 'basic') return response;
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(request).then((hit) => hit || Response.error()))
   );
 });

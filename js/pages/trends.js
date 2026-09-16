@@ -5,12 +5,11 @@
 
 import { $, el, clear } from '../core/dom.js';
 import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
-import { metricText, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
+import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
 import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../data/store.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
-import { fillWheel } from '../components/wheel.js';
-import { metricCard } from '../components/tile.js';
+import { bindHorizontalSwipe, fillWheel, wheelArrow } from '../components/wheel.js';
 import { Route } from '../core/router.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
@@ -35,13 +34,13 @@ export function renderTrends() {
   const groups = METRIC_GROUPS.filter((group) => metricsInGroup(group.id).some(hasData));
 
   if (!groups.length) {
-    [
-      '#trend-tabs', '#trend-cards', '#range-rail', '#trend-chart', '#composition-split'
-    ].forEach((id) => clear($(id)));
+    $('#trend-card').hidden = true;
+    ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split'].forEach((id) => clear($(id)));
     $('#trend-label').textContent = 'Trends';
     $('#trend-latest').textContent = '—';
     $('#trend-range-note').textContent = '';
-    ['#axis-start', '#axis-mid', '#axis-end'].forEach((id) => { $(id).textContent = '—'; });
+    ['#axis-start', '#axis-mid', '#axis-end', '#trend-stat-high', '#trend-stat-low', '#trend-stat-avg']
+      .forEach((id) => { $(id).textContent = '—'; });
     return;
   }
 
@@ -66,8 +65,7 @@ export function renderTrends() {
     { noun: 'range', listLabel: 'Choose a time range' }
   );
 
-  renderCards(group);
-  renderChart();
+  renderTrendCard(group);
   renderCompositionSplit();
 }
 
@@ -94,25 +92,64 @@ function renderTabs(groups) {
   });
 }
 
-/* One card per metric in the open tab. The card's own numbers are computed from the
-   same bucketed series the chart draws, so a value on a card and the line under it
-   can never disagree. */
-function renderCards(group) {
-  const host = $('#trend-cards');
-  clear(host);
+function metricItems(group) {
+  return metricsInGroup(group.id).filter(hasData);
+}
 
-  metricsInGroup(group.id).filter(hasData).forEach((key) => {
-    host.appendChild(metricCard(key, {
-      points: seriesFor(key, selection.range),
-      latest: latestWith(key),
-      active: key === selection.metric,
-      onSelect: (id) => {
-        if (id === selection.metric) return;
-        selection.metric = id;
-        renderTrends();
-      }
-    }));
+function selectAdjacentMetric(group, step) {
+  const items = metricItems(group);
+  if (items.length < 2) return;
+  const index = items.indexOf(selection.metric);
+  selection.metric = items[(Math.max(0, index) + step + items.length) % items.length];
+  renderTrends();
+}
+
+function renderTrendCard(group) {
+  const card = $('#trend-card');
+  const items = metricItems(group);
+  const meta = METRICS[selection.metric];
+  card.hidden = false;
+  card.style.setProperty('--trend-accent', meta.accent);
+  card.setAttribute('aria-label', meta.label + ' trend');
+
+  const previous = $('#trend-prev');
+  previous.replaceChildren(wheelArrow(-1));
+  previous.disabled = items.length < 2;
+  previous.setAttribute('aria-label', 'Previous measure');
+  previous.title = 'Previous measure';
+  previous.onclick = () => selectAdjacentMetric(group, -1);
+
+  const next = $('#trend-next');
+  next.replaceChildren(wheelArrow(1));
+  next.disabled = items.length < 2;
+  next.setAttribute('aria-label', 'Next measure');
+  next.title = 'Next measure';
+  next.onclick = () => selectAdjacentMetric(group, 1);
+
+  bindHorizontalSwipe(card, (step) => selectAdjacentMetric(group, step), {
+    ignoreSelector: '.trend-card__nav, button'
   });
+  renderChart();
+}
+
+function setMetricValue(node, key, value) {
+  clear(node);
+  const shown = metricDisplay(key, value);
+  node.appendChild(document.createTextNode(shown.text));
+  if (shown.unit) node.appendChild(el('span', 'unit', shown.unit));
+}
+
+function spread(values) {
+  if (!values.length) return null;
+  let min = values[0];
+  let max = values[0];
+  let sum = 0;
+  values.forEach((value) => {
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+    sum += value;
+  });
+  return { min, max, mean: sum / values.length };
 }
 
 function renderChart() {
@@ -123,7 +160,12 @@ function renderChart() {
   const label = (point) => bucketLabel(range.bucket, point.t);
 
   $('#trend-label').textContent = meta.label;
-  $('#trend-latest').textContent = metricText(key, latestWith(key));
+  setMetricValue($('#trend-latest'), key, latestWith(key));
+
+  const stats = spread(pts.map((point) => point.v));
+  setMetricValue($('#trend-stat-high'), key, stats ? stats.max : null);
+  setMetricValue($('#trend-stat-low'), key, stats ? stats.min : null);
+  setMetricValue($('#trend-stat-avg'), key, stats ? stats.mean : null);
 
   const deltaHost = $('#trend-delta');
   deltaHost.replaceWith(Object.assign(deltaChip(key, deltaFor(key)), { id: 'trend-delta' }));
