@@ -152,46 +152,33 @@ function toLocalInput(iso) {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
-/**
- * Opens the review screen.
- * @param {object} state Extraction result: metrics, report, measuredAt, source…
- */
-export function openReview(state) {
-  reviewState = Object.assign({ extras: [] }, state);
-  const host = $('#review-body');
-  clear(host);
+/** The read-only report metadata, as plain rows. It sits above the form because it
+    is context for the numbers below, not something you would retype. */
+function metadataCard(leaves) {
+  const card = el('div', 'rev__meta');
 
-  if (state.note) {
-    const p = el('p', 'rev__hint');
-    p.style.marginTop = 'var(--s-2)';
-    p.textContent = state.note;
-    host.appendChild(p);
-  }
+  const head = el('div', 'rev__metahead');
+  head.appendChild(el('span', 'rev__metatitle', 'Report metadata'));
+  head.appendChild(el('span', 'rev__metanote', 'Read only'));
+  card.appendChild(head);
 
-  if (state.previewUrl) {
-    const wrap = el('div', 'rev__preview');
-    const img = document.createElement('img');
-    img.src = state.previewUrl;
-    img.alt = 'The attachment being read';
-    img.width = 800;
-    img.height = 600;
-    wrap.appendChild(img);
-    host.appendChild(wrap);
-  }
+  const grid = el('div', 'detail__grid');
+  leaves.forEach((leaf) => {
+    const row = el('div', 'detail__row');
+    row.appendChild(el('span', 'detail__k', leaf.label));
+    row.appendChild(el('span', 'detail__v', String(leaf.value)));
+    grid.appendChild(row);
+  });
+  card.appendChild(grid);
+  return card;
+}
 
-  const form = el('form', 'rev');
-  form.id = 'review-form';
-  form.noValidate = true;
-  form.style.marginTop = 'var(--s-3)';
-
-  /* Block one: the values that get saved. */
-  const measuring = el('div', 'rev__block');
-  const h = el('div', 'rev__head');
-  h.appendChild(el('div', 'rev__title', 'Measurement'));
-  measuring.appendChild(h);
+/** The date plus the editable metric grid, with a picker for anything the reader
+    did not find. */
+function measurementPanel(state) {
+  const body = el('div', 'rev__body');
 
   const dateField = el('div', 'rev__field');
-  dateField.style.marginTop = 'var(--s-3)';
   const dateLabel = el('label', 'rev__label', 'Measured at');
   dateLabel.setAttribute('for', 'rev-date');
   dateField.appendChild(dateLabel);
@@ -202,17 +189,15 @@ export function openReview(state) {
   dateInput.id = 'rev-date';
   dateInput.value = toLocalInput(state.measuredAt);
   dateField.appendChild(dateInput);
-  measuring.appendChild(dateField);
+  body.appendChild(dateField);
 
   const grid = el('div', 'rev__grid');
   grid.id = 'rev-grid';
-  measuring.appendChild(grid);
+  body.appendChild(grid);
 
   Object.keys(state.metrics).forEach((key) => { grid.appendChild(reviewField(key, state.metrics[key])); });
 
   const addRow = el('div', 'od-row');
-  addRow.style.marginTop = 'var(--s-3)';
-
   const select = document.createElement('select');
   select.className = 'rev__input od-fill';
   select.id = 'rev-add';
@@ -236,56 +221,129 @@ export function openReview(state) {
     select.value = '';
   });
   addRow.appendChild(select);
-  measuring.appendChild(addRow);
-  form.appendChild(measuring);
+  body.appendChild(addRow);
 
-  /* Block two: the extracted report. Its metadata is context rather than data you
-     would retype, so it reads back as plain text; the rest stays editable. */
-  if (state.report) {
-    const metadata = reportLeaves(state.report.metadata, 'metadata', '', []);
-    const sections = Object.keys(REPORT_SECTION_LABELS)
-      .filter((key) => key !== 'metadata')
-      .map((key) => ({ key, leaves: reportLeaves(state.report[key], key, '', []) }))
-      .filter((entry) => entry.leaves.length);
+  return body;
+}
 
-    if (metadata.length || sections.length) {
-      const reportBlock = el('div', 'rev__block');
-      const rh = el('div', 'rev__head');
-      rh.appendChild(el('div', 'rev__title', 'From the report'));
-      reportBlock.appendChild(rh);
+/** One report section's editable fields. Report labels run long ("Muscle mass ·
+    Left arm · kg"), so they get wider tracks than the metric grid. */
+function reportPanel(leaves) {
+  const grid = el('div', 'rev__grid rev__grid--wide');
+  leaves.forEach((leaf) => grid.appendChild(reviewReportField(leaf)));
+  return grid;
+}
 
-      if (metadata.length) {
-        const readout = el('div', 'rev__readout');
-        const metaGrid = el('div', 'detail__grid');
-        metadata.forEach((leaf) => {
-          const row = el('div', 'detail__row');
-          row.appendChild(el('span', 'detail__k', leaf.label));
-          row.appendChild(el('span', 'detail__v', String(leaf.value)));
-          metaGrid.appendChild(row);
-        });
-        readout.appendChild(metaGrid);
-        reportBlock.appendChild(readout);
-      }
+/** Opens a collapsed section so an error is never reported against a field the
+    reader cannot see. */
+function revealPanel(panelId) {
+  const panel = $('#' + panelId);
+  if (!panel || !panel.hidden) return;
+  const tab = $('#rev-tabs [aria-controls="' + panelId + '"]');
+  if (tab) tab.click();
+}
 
-      sections.forEach((entry) => {
-        const group = el('div', 'rev__group');
-        group.appendChild(el('div', 'rev__subtitle', REPORT_SECTION_LABELS[entry.key]));
-        const reportGrid = el('div', 'rev__grid');
-        entry.leaves.forEach((leaf) => reportGrid.appendChild(reviewReportField(leaf)));
-        group.appendChild(reportGrid);
-        reportBlock.appendChild(group);
-      });
+function revealField(node) {
+  const panel = node.closest('.rev__section');
+  if (panel) revealPanel(panel.id);
+  node.scrollIntoView({ block: 'center' });
+}
 
-      form.appendChild(reportBlock);
-    }
+/**
+ * Opens the review screen.
+ * @param {object} state Extraction result: metrics, report, measuredAt, source…
+ */
+export function openReview(state) {
+  reviewState = Object.assign({ extras: [] }, state);
+  const host = $('#review-body');
+  clear(host);
+
+  if (state.note) {
+    const p = el('p', 'rev__hint');
+    p.textContent = state.note;
+    host.appendChild(p);
   }
 
-  host.appendChild(form);
+  if (state.previewUrl) {
+    const wrap = el('div', 'rev__preview');
+    const img = document.createElement('img');
+    img.src = state.previewUrl;
+    img.alt = 'The attachment being read';
+    img.width = 800;
+    img.height = 600;
+    wrap.appendChild(img);
+    host.appendChild(wrap);
+  }
+
+  /* The extracted report's own metadata is read-only, and it frames every number
+     that follows, so it leads the screen. */
+  if (state.report) {
+    const metadata = reportLeaves(state.report.metadata, 'metadata', '', []);
+    if (metadata.length) host.appendChild(metadataCard(metadata));
+  }
+
+  const rail = el('div', 'tabs rev__tabs');
+  rail.id = 'rev-tabs';
+  rail.setAttribute('role', 'tablist');
+  rail.setAttribute('aria-label', 'Sections of this reading');
+
+  const form = el('form', 'rev');
+  form.id = 'review-form';
+  form.noValidate = true;
+
+  /* Each pill wears the trends tab style and folds its own section, so several can
+     stand open together while the rest stay out of the way. Every section stays in
+     the DOM either way — saveReview reads the whole form. */
+  const addSection = (id, label, body, open) => {
+    const panelId = 'rev-sec-' + id;
+
+    const tab = el('button', 'tab', label);
+    tab.type = 'button';
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-controls', panelId);
+
+    const panel = el('section', 'rev__section');
+    panel.id = panelId;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-label', label);
+    panel.appendChild(body);
+
+    const setOpen = (next) => {
+      panel.hidden = !next;
+      tab.classList.toggle('tab--on', next);
+      tab.setAttribute('aria-selected', next ? 'true' : 'false');
+      tab.setAttribute('aria-expanded', next ? 'true' : 'false');
+    };
+    tab.addEventListener('click', () => setOpen(panel.hidden));
+    setOpen(open);
+
+    rail.appendChild(tab);
+    form.appendChild(panel);
+  };
+
+  /* The values that get saved lead, because they are the ones that matter. */
+  addSection('measurement', 'Measurement', measurementPanel(state), true);
+
+  if (state.report) {
+    Object.keys(REPORT_SECTION_LABELS)
+      .filter((key) => key !== 'metadata')
+      .map((key) => ({ key, leaves: reportLeaves(state.report[key], key, '', []) }))
+      .filter((entry) => entry.leaves.length)
+      .forEach((entry) => addSection(entry.key, REPORT_SECTION_LABELS[entry.key], reportPanel(entry.leaves), false));
+  }
+
+  /* The rail and the error line travel together, so a problem never scrolls out of
+     sight while the field it names is somewhere below. */
+  const sticky = el('div', 'rev__sticky');
+  sticky.appendChild(rail);
 
   const errBox = el('p', 'rev__error');
   errBox.id = 'rev-error';
   errBox.hidden = true;
-  host.appendChild(errBox);
+  sticky.appendChild(errBox);
+
+  host.appendChild(sticky);
+  host.appendChild(form);
 
   $('#view-review').hidden = false;
   const first = $('#rev-grid input');
@@ -305,6 +363,14 @@ export async function saveReview() {
   const errs = [];
   const metrics = {};
 
+  /* The first field to fail is the one the reader is sent back to, so a bad value
+     in a collapsed section still opens that section rather than failing quietly. */
+  let firstBad = null;
+  const flag = (input) => {
+    input.setAttribute('aria-invalid', 'true');
+    if (!firstBad) firstBad = input;
+  };
+
   $$('#rev-grid input[data-metric]').forEach((input) => {
     const key = input.dataset.metric;
     const meta = METRICS[key];
@@ -314,12 +380,12 @@ export async function saveReview() {
     const value = parseNumber(input.value);
     if (value == null || isNaN(value)) {
       errs.push(meta.label + ' is not a number.');
-      input.setAttribute('aria-invalid', 'true');
+      flag(input);
       return;
     }
     if (value < meta.min || value > meta.max) {
       errs.push(meta.label + ' should sit between ' + meta.min + ' and ' + meta.max + (meta.unit ? ' ' + meta.unit : '') + '.');
-      input.setAttribute('aria-invalid', 'true');
+      flag(input);
       return;
     }
     metrics[key] = value;
@@ -336,7 +402,7 @@ export async function saveReview() {
       const value = parseNumber(raw);
       if (value == null || isNaN(value)) {
         errs.push(reportFieldLabel(path.split('.').pop()) + ' is not a number.');
-        input.setAttribute('aria-invalid', 'true');
+        flag(input);
         return;
       }
       reportEdits[path] = value;
@@ -345,18 +411,23 @@ export async function saveReview() {
     reportEdits[path] = raw === '' ? null : raw;
   });
 
-  const measuredAt = toDate($('#rev-date').value);
-  if (!measuredAt) errs.push('The measurement date is missing.');
+  const dateInput = $('#rev-date');
+  const measuredAt = toDate(dateInput.value);
+  if (!measuredAt) {
+    errs.push('The measurement date is missing.');
+    flag(dateInput);
+  }
 
   if (errs.length) {
     errBox.hidden = false;
     errBox.textContent = errs.join(' ');
-    errBox.scrollIntoView({ block: 'nearest' });
+    if (firstBad) revealField(firstBad);
     return;
   }
   if (!Object.keys(metrics).length) {
     errBox.hidden = false;
     errBox.textContent = 'Add at least one measurement before saving.';
+    revealPanel('rev-sec-measurement');
     return;
   }
 

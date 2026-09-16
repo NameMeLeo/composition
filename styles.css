@@ -752,6 +752,10 @@ a { color: var(--c-primary); }
 .tile {
   position: relative;
   display: grid;
+  /* One shrinkable column. Without minmax(0, …) the column is sized to the widest
+     thing inside it, and a chart's intrinsic width would push the tile out of the
+     grid track it was given. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-1);
   padding: var(--s-4);
   border: 1px solid var(--c-line-soft);
@@ -788,7 +792,7 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .tile__value .unit { font-size: var(--fs-xs); font-weight: 600; color: var(--c-muted); margin-left: 3px; }
 .tile__foot { font-size: var(--fs-micro); color: var(--c-muted); }
 .tile--empty .tile__value { color: var(--c-muted); }
-.tile__spark { height: 34px; margin-top: 2px; }
+.tile__spark { height: 34px; margin-top: 2px; min-width: 0; }
 
 /* The metric card on Trends: the latest value set large, with the highest, lowest
    and average for the chosen window in small type beside it. Two columns rather
@@ -817,6 +821,23 @@ button.tile { border: 1px solid var(--c-line-soft); }
   border-color: var(--tile-accent);
   background: var(--c-surface);
   box-shadow: 0 0 0 1px var(--tile-accent) inset, var(--shadow-1);
+}
+
+/* Two columns work while there is room. On a phone the High/Low/Avg column would
+   take most of a two-up card and squeeze the headline value until it spilled out
+   of the tile, so the card stacks and the stats move under the value. */
+@media (max-width: 600px) {
+  .tile--card {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--s-2);
+  }
+  .tile--card .tile__value--lead { font-size: 1.5rem; }
+  .tile--card .tile__side {
+    padding: var(--s-2) 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--c-line-soft);
+  }
 }
 
 .insight {
@@ -881,8 +902,8 @@ button.tile { border: 1px solid var(--c-line-soft); }
    Charts
    ===================================================================== */
 
-.chart { width: 100%; }
-.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart { width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; max-width: 100%; height: auto; overflow: visible; }
 .chart--tall svg { height: auto; }
 
 .chart__grid line { stroke: var(--c-line-soft); stroke-width: 1; }
@@ -1359,15 +1380,12 @@ button.tile { border: 1px solid var(--c-line-soft); }
 /* review form */
 .rev {
   display: grid;
-  gap: var(--s-2);
+  gap: var(--s-4);
   padding: var(--s-4);
   border: 1px solid var(--c-line-soft);
   border-radius: var(--r-card);
   background: var(--c-surface);
 }
-.rev + .rev { margin-top: var(--s-3); }
-.rev__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
-.rev__title { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 700; }
 .rev__grid { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 .rev__field { display: grid; gap: 4px; }
 .rev__label { font-size: var(--fs-micro); font-weight: 600; color: var(--c-muted); letter-spacing: .02em; }
@@ -1376,44 +1394,74 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .rev__hint { font-size: var(--fs-micro); color: var(--c-muted); }
 .rev__error { font-size: var(--fs-micro); color: var(--c-red); font-weight: 600; }
 
-/* The form is one card. These keep the saved values and the extracted report as
-   two clearly separated halves instead of nesting a second card inside the first. */
-.rev__block + .rev__block {
-  margin-top: var(--s-2);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--c-line-soft);
+/* A field that failed validation. saveReview has always set aria-invalid, but with
+   nothing styling it the message pointed at a field you could not pick out. */
+.rev__input[aria-invalid="true"] {
+  border-color: var(--c-red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-red) 18%, transparent);
 }
-.rev__block .rev__grid { margin-top: var(--s-3); }
-.rev__group + .rev__group { margin-top: var(--s-4); }
-.rev__subtitle {
+
+/* The review sheet stacks its blocks here rather than each carrying its own
+   margin, so the spacing survives sections being added or reordered. The top inset
+   rides on the first block instead of the sheet, which lets the section rail below
+   pin flush to the top edge with nothing showing above it. */
+#review-body { display: grid; gap: var(--s-3); align-content: start; padding-top: 0; }
+#review-body > :first-child { margin-top: var(--s-4); }
+
+/* Sections are disclosed by pills wearing the trends tab style. Unlike the trends
+   rail these are independent toggles, so any number can stand open at once. The
+   negative inline margin bleeds the bar across the sheet's padding so nothing
+   scrolls past in the strips beside it. */
+.rev__sticky {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  gap: var(--s-2);
+  margin-inline: calc(var(--s-4) * -1);
+  padding: var(--s-2) var(--s-4);
+  background: var(--c-surface);
+}
+.rev__section { display: grid; gap: var(--s-3); }
+.rev__section[hidden] { display: none; }
+.rev__body { display: grid; gap: var(--s-3); }
+/* Report labels run long ("Muscle mass · Left arm · kg"), so give them room and
+   stop grid items overflowing their track — without min-width:0 the labels drew
+   at max-content and collided with the next column. */
+.rev__grid--wide { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.rev__grid > * { min-width: 0; }
+.rev__field > * { min-width: 0; }
+.rev__label { overflow-wrap: anywhere; }
+
+/* Report metadata is context rather than something to retype, so it leads the
+   screen and reads as plain rows under a read-only marker. */
+.rev__meta {
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-line-soft);
+  border-radius: var(--r-card);
+  background: var(--c-surface-2);
+}
+.rev__meta .detail__grid { margin-top: var(--s-1); }
+.rev__meta .detail__row { padding: var(--s-2) 0; }
+.rev__meta .detail__v { white-space: normal; text-align: right; overflow-wrap: anywhere; }
+.rev__metahead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.rev__metatitle {
   font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--c-muted);
 }
-/* Report labels are long ("Muscle mass · Left arm · kg"), so give them room and
-   stop grid items overflowing their track — without min-width:0 the labels drew
-   at max-content and collided with the next column. */
-.rev__group > .rev__grid {
-  margin-top: var(--s-2);
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.rev__metanote { font-size: var(--fs-micro); color: var(--c-muted); }
+
+/* A phone gets one column of fields; a desktop gets a wider sheet, and the grids
+   inside pick up their extra columns on their own. */
+@media (min-width: 900px) {
+  .sheet--full .sheet__body,
+  .sheet--full .sheet__foot { max-width: 880px; }
 }
-.rev__grid > * { min-width: 0; }
-.rev__field > * { min-width: 0; }
-.rev__label { overflow-wrap: anywhere; }
-/* Report metadata is context, not something to retype, so it reads as plain rows. */
-.rev__readout {
-  margin-top: var(--s-3);
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-control);
-  background: var(--c-surface-2);
-}
-.rev__readout .detail__grid { margin-top: 0; }
-.rev__readout .detail__v { white-space: normal; text-align: right; }
 
 .rev__preview {
-  margin-top: var(--s-3);
   border: 1px solid var(--c-line-soft);
   border-radius: var(--r-control);
   overflow: hidden;
