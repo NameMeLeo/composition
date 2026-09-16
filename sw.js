@@ -2,15 +2,43 @@
    Cache-first for the app shell so the tracker opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v14';
+const CACHE = 'composition-v18';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
-  './app.js',
   './manifest.webmanifest',
   './icons/icon.svg',
-  './icons/maskable.svg'
+  './icons/maskable.svg',
+  './js/main.js',
+  './js/constants.js',
+  './js/metrics.js',
+  './js/dom.js',
+  './js/events.js',
+  './js/settings.js',
+  './js/format.js',
+  './js/store.js',
+  './js/auth.js',
+  './js/ocr.js',
+  './js/report-url.js',
+  './js/router.js',
+  './js/theme.js',
+  './js/shell.js',
+  './js/sync.js',
+  './js/review.js',
+  './js/capture.js',
+  './js/scanfan.js',
+  './js/export.js',
+  './js/share.js',
+  './js/components/chart.js',
+  './js/components/chip.js',
+  './js/components/tile.js',
+  './js/components/wheel.js',
+  './js/pages/dashboard.js',
+  './js/pages/trends.js',
+  './js/pages/history.js',
+  './js/pages/detail.js',
+  './js/pages/settings.js'
 ];
 
 self.addEventListener('install', (event) => {

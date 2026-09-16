@@ -370,6 +370,21 @@ async function fetchReport(url: string) {
   return { contentType, buffer };
 }
 
+function sniffMimeType(buffer: Uint8Array, contentType: string): string | null {
+  const startsWith = (...bytes: number[]) => bytes.every((byte, index) => buffer[index] === byte);
+  const asciiAt = (offset: number, value: string) => value.split('').every((char, index) => buffer[offset + index] === char.charCodeAt(0));
+
+  if (asciiAt(0, '%PDF-')) return 'application/pdf';
+  if (startsWith(0xff, 0xd8, 0xff)) return 'image/jpeg';
+  if (startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png';
+  if (asciiAt(0, 'GIF87a') || asciiAt(0, 'GIF89a')) return 'image/gif';
+  if (asciiAt(0, 'RIFF') && asciiAt(8, 'WEBP')) return 'image/webp';
+
+  if (contentType.includes('pdf')) return 'application/pdf';
+  if (contentType.includes('image/')) return contentType.split(';')[0].trim();
+  return null;
+}
+
 function base64(bytes: Uint8Array): string {
   let binary = '';
   const chunk = 0x8000;
@@ -416,8 +431,9 @@ Deno.serve(async (req: Request) => {
 
       const { contentType, buffer } = await fetchReport(url);
 
-      if (contentType.includes('pdf') || contentType.includes('image/')) {
-        const mimeType = contentType.split(';')[0].trim() || 'application/pdf';
+      const binaryMimeType = sniffMimeType(buffer, contentType);
+      if (binaryMimeType) {
+        const mimeType = binaryMimeType;
         const result = await callGemini([
           { text: PROMPT },
           { inline_data: { mime_type: mimeType, data: base64(buffer) } }

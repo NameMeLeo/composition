@@ -893,45 +893,80 @@ button.tile { border: 1px solid var(--c-line-soft); }
   font-size: var(--fs-micro);
   color: var(--c-muted);
 }
+.dashboard-chart { margin-top: var(--s-3); }
 
-/* Metric and range pickers: every option stays visible and wraps onto as many
-   rows as it needs. A hidden horizontal scroll left options undiscoverable. */
-.chipgroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+/* The metric and range rails share one row so both stay in view at once. */
+.rail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--s-3);
+  align-items: center;
   margin-bottom: var(--s-3);
 }
-.chipgroup--minor { margin-bottom: var(--s-4); }
-.chipbtn {
-  min-height: 40px;
-  padding: 0 var(--s-4);
+.rail-row > .wheel { margin-bottom: 0; }
+@media (max-width: 720px) {
+  .rail-row { grid-template-columns: 100%; }
+}
+
+/* One-at-a-time picker shared by the metric rail and the time-range rail.
+   The arrows, the arrow keys and a horizontal swipe all step through items. */
+.wheel {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.wheel__nav {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 1px solid var(--c-line);
-  border-radius: var(--r-pill);
+  border-radius: 50%;
   background: var(--c-surface);
-  color: var(--c-muted);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  transition: background-color var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
+  color: var(--c-ink);
+  transition: background-color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out), transform var(--d-fast) var(--ease-out);
 }
-.chipbtn[aria-selected="true"] {
-  background: var(--c-ink);
-  border-color: var(--c-ink);
-  color: var(--c-canvas);
+.wheel__nav:active { transform: scale(.94); }
+.wheel__viewport {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: var(--s-1) var(--s-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  touch-action: pan-y;
+  user-select: none;
 }
-/* The time range is a secondary filter, so it reads quieter than the metrics. */
-.chipbtn--minor {
-  min-height: 32px;
+.wheel__item {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
   padding: 0 var(--s-3);
-  border-color: transparent;
-  background: var(--c-surface-2);
-  font-size: var(--fs-micro);
+  border: 0;
+  background: transparent;
+  color: var(--c-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
-.chipbtn--minor[aria-selected="true"] {
-  border-color: var(--c-ink);
-  background: var(--c-ink);
+@media (hover: hover) {
+  .wheel__nav:hover { border-color: var(--c-muted); background: var(--c-primary-soft); }
 }
-@media (hover: hover) { .chipbtn:hover { border-color: var(--c-muted); } }
+
+/* The time range is a secondary filter, so its wheel runs a size down. */
+.wheel--minor { grid-template-columns: 36px minmax(0, 1fr) 36px; }
+.wheel--minor .wheel__nav { width: 36px; height: 36px; }
+.wheel--minor .wheel__nav svg { width: 16px; height: 16px; }
+.wheel--minor .wheel__viewport { padding: var(--s-1) var(--s-3); }
+.wheel--minor .wheel__item { min-height: 32px; font-size: var(--fs-sm); }
 
 .stathead {
   display: flex;
@@ -1119,33 +1154,6 @@ button.tile { border: 1px solid var(--c-line-soft); }
   }
   .sheet--full .sheet__panel { position: absolute; inset: 0; }
 }
-
-.opt {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  padding: var(--s-4);
-  border: 1px solid var(--c-line-soft);
-  border-radius: var(--r-card);
-  background: var(--c-surface);
-  text-align: left;
-  transition: background-color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
-}
-@media (hover: hover) { .opt:hover { background: var(--c-surface-2); border-color: var(--c-line); } }
-.opt__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px; height: 44px;
-  flex: none;
-  border-radius: 11px;
-  background: var(--c-primary-soft);
-  color: var(--c-primary);
-}
-.opt__title { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 600; }
-.opt__sub { font-size: var(--fs-xs); color: var(--c-muted); }
-.opt__chev { flex: none; color: var(--c-muted); }
 
 .urlform {
   padding: var(--s-4);

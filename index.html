@@ -49,8 +49,8 @@
   /* data text only â€” authored copy is rewritten to its budget instead */
   .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-  .od-clamp-2 { -webkit-line-clamp: 2; }
-  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
   .od-lines-2 { min-height: calc(2 * 1.4em); }   /* block-level reservation for a shared baseline */
   .od-nowrap  { white-space: nowrap; }           /* æ•°å­—+å•ä½ Â· ä»·æ ¼+èµ· Â· æ—¥æœŸ+æ˜ŸæœŸ */
   .od-keep    { word-break: keep-all; overflow-wrap: anywhere; } /* CJK labels break at spaces / <wbr> first */
@@ -198,9 +198,7 @@
           <h2 class="block__title">Recent shape</h2>
           <button class="linkbtn" data-route="trends" type="button">All trends</button>
         </div>
-        <div class="card card--chart">
-          <div class="chart" id="mini-chart"></div>
-        </div>
+        <div class="chart dashboard-chart" id="mini-chart"></div>
       </section>
 
       <section class="block" id="block-insights" hidden>
@@ -220,8 +218,10 @@
 
     <!-- TRENDS -->
     <section class="view" id="view-trends" data-title="Trends" hidden>
-      <div class="chipgroup" id="metric-rail" role="tablist" aria-label="Choose a metric"></div>
-      <div class="chipgroup chipgroup--minor" id="range-rail" role="tablist" aria-label="Choose a time range"></div>
+      <div class="rail-row">
+        <div class="wheel" id="metric-rail" role="group" aria-label="Choose a metric"></div>
+        <div class="wheel wheel--minor" id="range-rail" role="group" aria-label="Choose a time range"></div>
+      </div>
 
       <section class="card card--stat">
         <div class="stathead">
@@ -509,67 +509,22 @@
       </button>
     </header>
     <div class="sheet__body od-stack" style="--od-gap:10px">
-      <button class="opt" id="opt-scan" type="button">
-        <span class="opt__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M3 12h18"/></svg>
-        </span>
-        <span class="od-field od-fill">
-          <span class="opt__title">Scan the report QR code</span>
-          <span class="opt__sub">Point the camera at the code printed on the Tanita sheet. The report is fetched for you.</span>
-        </span>
-        <svg class="opt__chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-
-      <button class="opt" id="opt-url" type="button">
-        <span class="opt__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
-        </span>
-        <span class="od-field od-fill">
-          <span class="opt__title">Paste the report link</span>
-          <span class="opt__sub">When the camera isn't handy. Same fetch, same parse.</span>
-        </span>
-        <svg class="opt__chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-
-      <button class="opt" id="opt-share" type="button">
-        <span class="opt__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
-        </span>
-        <span class="od-field od-fill">
-          <span class="opt__title">Upload a PDF or photo</span>
-          <span class="opt__sub">Choose a file from this device. It is read directly, with no fetch needed.</span>
-        </span>
-        <svg class="opt__chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-
-      <button class="opt" id="opt-manual" type="button">
-        <span class="opt__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h9"/></svg>
-        </span>
-        <span class="od-field od-fill">
-          <span class="opt__title">Type the numbers</span>
-          <span class="opt__sub">Opens the same review screen with empty fields.</span>
-        </span>
-        <svg class="opt__chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-
-
-      <form class="od-stack urlform" id="url-form" hidden style="--od-gap:8px">
+      <form class="od-stack urlform" id="url-form" style="--od-gap:8px">
         <label class="od-field">
-          <span class="row__title">Report URL</span>
-          <span class="row__sub">Anything containing player_id, or a direct Tanita report link.</span>
+          <span class="row__title">Paste a report link</span>
+          <span class="row__sub">Paste the link from your report. Composition fetches and reads it for you.</span>
         </label>
-        <input class="input" id="in-report-url" type="url" inputmode="url" placeholder="http://<Address>/tanita/selftestfitnesscorner/?player_id=&hellip;" autocomplete="off" spellcheck="false">
+        <input class="input" id="in-report-url" type="text" inputmode="url" placeholder="Paste the report link here" autocomplete="off" spellcheck="false">
         <div class="od-cluster" style="--od-gap:8px">
-          <button class="btn btn--primary btn--small" type="submit">Fetch and read</button>
-          <button class="btn btn--ghost btn--small" type="button" id="btn-url-cancel">Cancel</button>
+          <button class="btn btn--primary btn--small" type="submit">Fetch report</button>
         </div>
       </form>
-
-      <input type="file" id="file-picker" accept="image/*,application/pdf" hidden>
     </div>
   </div>
 </div>
+
+<!-- Kept outside the capture sheet: the scan menu's upload action opens this. -->
+<input type="file" id="file-picker" accept="image/*,application/pdf" hidden>
 
 <!-- ---------------------- SCANNER ---------------------- -->
 <div class="scanner" id="view-scanner" hidden>
@@ -636,6 +591,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="app.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
