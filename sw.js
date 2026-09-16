@@ -3,7 +3,7 @@
   while the tracker still opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v23';
+const CACHE = 'composition-v26';
 const ASSETS = [
   './',
   './index.html',

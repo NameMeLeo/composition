@@ -1205,6 +1205,54 @@ button.tile { border: 1px solid var(--c-line-soft); }
 }
 .detail__meta { margin-top: var(--s-4); font-size: var(--fs-micro); color: var(--c-muted); word-break: break-all; }
 
+/* A reference range rides under the measurement it belongs to, so a value can be read
+   against the range the report printed for it without leaving the row. */
+.detail__v--ref { display: grid; justify-items: end; gap: 2px; white-space: normal; }
+.detail__val { font: inherit; }
+.detail__ref {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: var(--c-muted);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* The whole extracted report, below the metric grid. It is the same record the review
+   screen showed before saving, so a reading never loses the fields the app has no chart
+   for — reference ranges, instrument codes, the segmental breakdown. */
+.detail__report {
+  margin-top: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--c-line-soft);
+  border-radius: var(--r-screen);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-1);
+}
+.detail__reporthead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.detail__reporttitle {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.detail__reportnote { font-size: var(--fs-micro); color: var(--c-muted); }
+.detail__reportsec { margin-top: var(--s-5); }
+.detail__reportsec:first-of-type { margin-top: var(--s-3); }
+.detail__reportsectitle {
+  display: block;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+/* Report labels run long ("Muscle balance scores · Left arm"), so the label takes the
+   slack and wraps rather than pushing the value off the edge of the row. */
+.detail__reportsec .detail__k { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.detail__reportsec .detail__v { flex: 0 1 auto; min-width: 0; }
+
 /* =====================================================================
    Sheets, overlays, scanner, toast
    ===================================================================== */
@@ -1415,6 +1463,40 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .rev__input:focus { outline: none; border-color: var(--c-primary); box-shadow: var(--ring); }
 .rev__hint { font-size: var(--fs-micro); color: var(--c-muted); }
 .rev__error { font-size: var(--fs-micro); color: var(--c-red); font-weight: 600; }
+.rev__summary {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-line-soft);
+  border-radius: var(--r-card);
+  background: var(--c-surface-2);
+}
+.rev__summaryhead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.rev__summarytitle,
+.rev__warningtitle,
+.rev__grouptitle {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.rev__summarynote { font-size: var(--fs-micro); color: var(--c-muted); }
+.rev__summarygrid { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rev__summaryitem { display: grid; gap: 4px; min-width: 0; }
+.rev__summarylabel { font-size: var(--fs-micro); color: var(--c-muted); }
+.rev__summaryvalue { min-width: 0; color: var(--c-ink); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.rev__summarylink { color: var(--c-primary); text-decoration: underline; text-underline-offset: 2px; }
+.rev__warning {
+  display: grid;
+  gap: 4px;
+  padding: var(--s-3);
+  border: 1px solid color-mix(in srgb, var(--c-amber) 38%, var(--c-line));
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--c-amber) 10%, var(--c-surface));
+}
+.rev__warningtitle { color: var(--c-amber); }
+.rev__warningtext { font-size: var(--fs-sm); color: var(--c-ink); overflow-wrap: anywhere; }
 
 /* A field that failed validation. saveReview has always set aria-invalid, but with
    nothing styling it the message pointed at a field you could not pick out. */
@@ -1447,6 +1529,24 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .rev__section { display: grid; gap: var(--s-3); }
 .rev__section[hidden] { display: none; }
 .rev__body { display: grid; gap: var(--s-3); }
+.rev__report { display: grid; gap: var(--s-3); }
+.rev__group { min-width: 0; margin: 0; padding: var(--s-3); border: 1px solid var(--c-line-soft); border-radius: var(--r-control); }
+.rev__grouptitle { padding: 0 var(--s-2); }
+.rev__field--readonly .rev__label { color: var(--c-muted); }
+.rev__readonly {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--c-line-soft);
+  border-radius: var(--r-control);
+  background: var(--c-surface-2);
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 /* Report labels run long ("Muscle mass · Left arm · kg"), so give them room and
    stop grid items overflowing their track — without min-width:0 the labels drew
    at max-content and collided with the next column. */
@@ -1463,9 +1563,12 @@ button.tile { border: 1px solid var(--c-line-soft); }
   border-radius: var(--r-card);
   background: var(--c-surface-2);
 }
-.rev__meta .detail__grid { margin-top: var(--s-1); }
-.rev__meta .detail__row { padding: var(--s-2) 0; }
-.rev__meta .detail__v { white-space: normal; text-align: right; overflow-wrap: anywhere; }
+.rev__meta .detail__grid,
+.detail__reportsec .detail__grid { margin-top: var(--s-1); }
+.rev__meta .detail__row,
+.detail__reportsec .detail__row { padding: var(--s-2) 0; }
+.rev__meta .detail__v,
+.detail__reportsec .detail__v { white-space: normal; text-align: right; overflow-wrap: anywhere; }
 .rev__metahead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
 .rev__metatitle {
   font-size: var(--fs-micro);
@@ -1481,6 +1584,12 @@ button.tile { border: 1px solid var(--c-line-soft); }
 @media (min-width: 900px) {
   .sheet--full .sheet__body,
   .sheet--full .sheet__foot { max-width: 880px; }
+}
+
+@media (max-width: 560px) {
+  .rev__summarygrid { grid-template-columns: 1fr; }
+  .rev__summaryhead { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .rev__group { padding-inline: var(--s-2); }
 }
 
 .rev__preview {

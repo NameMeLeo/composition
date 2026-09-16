@@ -4,7 +4,7 @@
 import { $, el, clear } from '../core/dom.js';
 import { METRICS, SOURCE_LABEL } from '../core/metrics.js';
 import { fmtDate, fmtTime, metricText, toDate } from '../core/format.js';
-import { getReadings, sortedDesc } from '../data/store.js';
+import { getReadings, readingSerialNumber, sortedDesc } from '../data/store.js';
 import { exportCSV } from '../data/export.js';
 import { Route } from '../core/router.js';
 
@@ -32,7 +32,7 @@ export function renderHistory() {
   const query = filter.trim().toLowerCase();
   const rows = sortedDesc(getReadings()).filter((r) => {
     if (!query) return true;
-    const hay = [fmtDate(r.measuredAt), SOURCE_LABEL[r.source] || '', r.playerId || '', r.note || ''].join(' ').toLowerCase();
+    const hay = [fmtDate(r.measuredAt), SOURCE_LABEL[r.source] || '', r.playerId || '', readingSerialNumber(r), r.note || ''].join(' ').toLowerCase();
     return hay.indexOf(query) !== -1;
   });
 

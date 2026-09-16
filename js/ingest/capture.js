@@ -8,7 +8,7 @@ import { METRICS } from '../core/metrics.js';
 import { parseNumber } from '../core/format.js';
 import { OcrProxy } from '../services/ocr.js';
 import { parseReportUrl, playerReportUrl, reportBase, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.js';
-import { openReview } from './review.js';
+import { openReview, saveReadingDirect } from './review.js';
 
 let stream = null;
 let detector = null;
@@ -227,6 +227,18 @@ function showProcessing(title, body, steps) {
 
 function hideProcessing() { $('#overlay-processing').hidden = true; }
 
+function extractionMethod(result) {
+  if (result && (result.sourceType === 'tanita-api' || result.report?.provider_details?.source === 'tanita-api')) {
+    return 'Tanita provider API (OCR not used)';
+  }
+  const format = result && result.sourceType ? ' (' + result.sourceType + ')' : '';
+  return 'OCR fallback' + format;
+}
+
+function isProviderResult(result) {
+  return Boolean(result && (result.sourceType === 'tanita-api' || result.report?.provider_details?.source === 'tanita-api'));
+}
+
 /**
  * Fetches and reads one report, then hands it to the review screen.
  * @param {{mode: 'manual'|'file'|'report-url'|'player-id', file?: File, url?: string, playerId?: string, language?: string}} job
@@ -236,7 +248,7 @@ async function startReading(job) {
     openReview({
       metrics: {}, measuredAt: new Date().toISOString(), confidence: null, raw: null, notes: '',
       playerId: null, language: null, reportUrl: null, source: 'manual', previewUrl: null,
-      note: 'Entered by hand.'
+      sourceType: null, extractionMethod: 'Manual entry', note: 'Entered by hand.'
     });
     return;
   }
@@ -255,17 +267,17 @@ async function startReading(job) {
       previewUrl = job.file.type && job.file.type.indexOf('image/') === 0 ? URL.createObjectURL(job.file) : null;
       const data = await fileToBase64(job.file);
       result = await OcrProxy.fromDocument(job.file.type || 'application/octet-stream', data);
-      note = 'Read from ' + job.file.name;
+        note = 'Read from ' + job.file.name + ' with ' + extractionMethod(result) + '.';
     } else if (job.mode === 'report-url') {
       if (!OcrProxy.isConfigured()) throw new Error('The OCR proxy is not configured, so the report cannot be fetched or read. Add your Supabase details in Settings, or enter the numbers by hand.');
       result = await OcrProxy.fromReportUrl(job.url);
-      note = 'Fetched from ' + parseReportUrl(job.url).host;
+        note = 'Fetched from ' + parseReportUrl(job.url).host + ' via ' + extractionMethod(result) + '.';
     } else if (job.mode === 'player-id') {
       if (!reportBase()) throw new Error('Only a player id was found, and no report address is configured. Add one in Settings, or paste the full report link.');
       const built = playerReportUrl(job.playerId, job.language);
       if (!OcrProxy.isConfigured()) throw new Error('Only a player id was found. The full report link is needed, and the proxy must be configured to fetch it.');
       result = await OcrProxy.fromReportUrl(built);
-      note = 'Fetched from player ' + job.playerId;
+        note = 'Fetched from player ' + job.playerId + ' via ' + extractionMethod(result) + '.';
     } else {
       result = { metrics: {}, measuredAt: new Date().toISOString() };
     }
@@ -284,7 +296,7 @@ async function startReading(job) {
   }
 
   hideProcessing();
-  openReview({
+  const review = {
     metrics: normaliseMetrics(result.metrics || {}),
     report: result.report || null,
     measuredAt: result.measuredAt || new Date().toISOString(),
@@ -295,9 +307,22 @@ async function startReading(job) {
     language: job.language || null,
     reportUrl: job.url || null,
     source: job.mode === 'file' ? 'file' : job.mode === 'report-url' ? 'link' : 'qr',
+    sourceType: result.sourceType || result.report?.provider_details?.source || null,
+    extractionMethod: result.failed ? 'Manual entry after extraction failure' : extractionMethod(result),
     previewUrl,
     note
-  });
+  };
+
+  if (isProviderResult(result)) {
+    try {
+      await saveReadingDirect(review);
+    } catch (err) {
+      toast('Could not save the provider reading: ' + (err && err.message ? err.message : 'unknown error'), 'error');
+    }
+    return;
+  }
+
+  openReview(review);
 }
 
 /** Maps whatever keys the reader returned onto our metric ids. */

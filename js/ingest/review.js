@@ -5,7 +5,8 @@
 import { $, $$, el, clear, uid, toast } from '../core/dom.js';
 import {
   METRICS, METRIC_ORDER,
-  REPORT_SECTION_LABELS, REPORT_FIELD_LABELS, REPORT_FIELD_UNITS
+  REPORT_SECTION_LABELS, REPORT_FIELD_LABELS, REPORT_FIELD_UNITS,
+  REPORT_METRIC_PATHS as METRIC_REPORT_PATHS, SEGMENTAL_REPORT_PATHS, SOURCE_LABEL
 } from '../core/metrics.js';
 import { parseNumber, toDate } from '../core/format.js';
 import { addReading } from '../data/store.js';
@@ -21,69 +22,61 @@ function reportFieldLabel(key) {
   return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-// Report values already shown by an editable metric field, keyed by their path in
-// the report. Skipped below so the same number is never shown twice.
-const REPORT_METRIC_PATHS = new Set([
-  'metadata.test_date',
-  'user_profile.weight_kg',
-  'key_indicators.bmi',
-  'key_indicators.metabolic_age',
-  'key_indicators.visceral_fat_rating',
-  'key_indicators.physique_rating',
-  'key_indicators.physique_rating_score',
-  'key_indicators.muscle_quality_score',
-  'body_composition.fat_percentage',
-  'body_composition.muscle_mass_kg',
-  'body_composition.fat_free_mass_kg',
-  'body_composition.bone_mass_kg',
-  'body_composition.total_body_water_percent',
-  'body_composition.bmr_kcal',
-  // Segmental values are editable metric fields now, so the raw report leaves
-  // would only show the same fifteen numbers a second time.
-  'segmental_analysis.muscle_mass.trunk_kg',
-  'segmental_analysis.muscle_mass.left_arm_kg',
-  'segmental_analysis.muscle_mass.right_arm_kg',
-  'segmental_analysis.muscle_mass.left_leg_kg',
-  'segmental_analysis.muscle_mass.right_leg_kg',
-  'segmental_analysis.fat_mass.trunk_kg',
-  'segmental_analysis.fat_mass.left_arm_kg',
-  'segmental_analysis.fat_mass.right_arm_kg',
-  'segmental_analysis.fat_mass.left_leg_kg',
-  'segmental_analysis.fat_mass.right_leg_kg',
-  'segmental_analysis.fat_percentage.trunk_percent',
-  'segmental_analysis.fat_percentage.left_arm_percent',
-  'segmental_analysis.fat_percentage.right_arm_percent',
-  'segmental_analysis.fat_percentage.left_leg_percent',
-  'segmental_analysis.fat_percentage.right_leg_percent'
-]);
+const METRIC_REPORT_PATH_MAP = new Map(
+  METRIC_REPORT_PATHS.map(([key, section, field]) => [key, section + '.' + field])
+    .concat(SEGMENTAL_REPORT_PATHS.map(([key, section, field]) => [key, 'segmental_analysis.' + section + '.' + field]))
+);
+const PROMOTED_REPORT_PATHS = new Set(METRIC_REPORT_PATH_MAP.values());
 
-// Flattens a report section into editable leaves, naming nested groups after their
-// parent so a segmental value reads "Muscle mass · Trunk".
+// Flattens a report section into leaves while retaining the nested group path. The
+// report view uses that path to rebuild the response's own section hierarchy.
 function reportLeaves(section, path, group, out) {
   Object.keys(section || {}).forEach((key) => {
-    if (key === 'leg_muscle_score') return;
     const item = section[key];
     if (item == null || item === '') return;
     const next = path ? path + '.' + key : key;
     if (typeof item === 'object' && !Array.isArray(item)) {
-      reportLeaves(item, next, reportFieldLabel(key), out);
+      const nextGroup = group ? group + ' · ' + reportFieldLabel(key) : reportFieldLabel(key);
+      reportLeaves(item, next, nextGroup, out);
       return;
     }
-    if (REPORT_METRIC_PATHS.has(next)) return;
     const label = reportFieldLabel(key);
-    out.push({ path: next, label: group ? group + ' · ' + label : label, value: item });
+    out.push({
+      path: next,
+      group,
+      label: group ? group + ' · ' + label : label,
+      value: item,
+      promoted: PROMOTED_REPORT_PATHS.has(next),
+      readOnly: next === 'provider_details' || next.indexOf('provider_details.') === 0
+    });
   });
   return out;
+}
+
+function reportValue(report, path) {
+  return path.split('.').reduce((value, key) => value == null ? null : value[key], report);
+}
+
+function reportValueText(value) {
+  if (Array.isArray(value)) return JSON.stringify(value);
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
 }
 
 function reviewReportField(leaf) {
   const field = el('div', 'rev__field');
   const id = 'rev-report-' + leaf.path.replace(/\./g, '-');
-  const unit = REPORT_FIELD_UNITS[leaf.path.split('.').pop()];
+  const unit = REPORT_FIELD_UNITS[leaf.path] || REPORT_FIELD_UNITS[leaf.path.split('.').pop()];
 
   const label = el('label', 'rev__label', leaf.label + (unit ? ' · ' + unit : ''));
   label.setAttribute('for', id);
   field.appendChild(label);
+
+  if (leaf.promoted || leaf.readOnly) {
+    field.classList.add('rev__field--readonly');
+    field.appendChild(el('div', 'rev__readonly', reportValueText(leaf.value)));
+    return field;
+  }
 
   const numeric = typeof leaf.value === 'number';
   const input = document.createElement('input');
@@ -100,7 +93,7 @@ function reviewReportField(leaf) {
     input.autocomplete = 'off';
     input.spellcheck = false;
   }
-  input.value = String(leaf.value);
+  input.value = reportValueText(leaf.value);
   field.appendChild(input);
   return field;
 }
@@ -152,6 +145,53 @@ function toLocalInput(iso) {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
+function buildReading(state, metrics, reportEdits, measuredAtValue) {
+  const measuredAt = toDate(measuredAtValue || state.measuredAt);
+  if (!measuredAt) throw new Error('The measurement date is missing.');
+  if (!Object.keys(metrics).length) throw new Error('Add at least one measurement before saving.');
+
+  const now = new Date().toISOString();
+  return {
+    id: uid(),
+    createdAt: now,
+    updatedAt: now,
+    measuredAt: measuredAt.toISOString(),
+    source: state.source || 'manual',
+    sourceType: state.sourceType || null,
+    extractionMethod: state.extractionMethod || null,
+    playerId: state.playerId || null,
+    language: state.language || null,
+    reportUrl: state.reportUrl || null,
+    note: state.notes || state.note || '',
+    confidence: state.confidence,
+    raw: state.raw,
+    report: applyReportEdits(state.report, reportEdits || {}),
+    metrics
+  };
+}
+
+async function persistReading(reading) {
+  const { reading: stored, outcome } = await addReading(reading);
+
+  if (outcome === 'kept') {
+    // The same report is already on the device carrying more than this extraction found,
+    // so the stored copy was left alone. Saying which happened is the difference between
+    // a silent no-op and a save the reader can trust.
+    toast('This report is already saved in more detail', 'error');
+  } else {
+    toast(outcome === 'updated' ? 'Reading updated' : 'Reading saved');
+  }
+
+  Route.go('dashboard');
+  if (Settings.get().mirror && Auth.isConfigured()) mirrorSync().catch(() => {});
+  return stored;
+}
+
+/** Saves trusted provider data without opening the human review screen. */
+export async function saveReadingDirect(state) {
+  return persistReading(buildReading(state, Object.assign({}, state.metrics || {})));
+}
+
 /** The read-only report metadata, as plain rows. It sits above the form because it
     is context for the numbers below, not something you would retype. */
 function metadataCard(leaves) {
@@ -166,7 +206,7 @@ function metadataCard(leaves) {
   leaves.forEach((leaf) => {
     const row = el('div', 'detail__row');
     row.appendChild(el('span', 'detail__k', leaf.label));
-    row.appendChild(el('span', 'detail__v', String(leaf.value)));
+    row.appendChild(el('span', 'detail__v', reportValueText(leaf.value)));
     grid.appendChild(row);
   });
   card.appendChild(grid);
@@ -226,12 +266,94 @@ function measurementPanel(state) {
   return body;
 }
 
-/** One report section's editable fields. Report labels run long ("Muscle mass ·
-    Left arm · kg"), so they get wider tracks than the metric grid. */
+/** One report section's fields, grouped by the nested objects in the response. */
 function reportPanel(leaves) {
-  const grid = el('div', 'rev__grid rev__grid--wide');
-  leaves.forEach((leaf) => grid.appendChild(reviewReportField(leaf)));
-  return grid;
+  const panel = el('div', 'rev__report');
+  const groups = new Map();
+
+  leaves.forEach((leaf) => {
+    const groupKey = leaf.group || '';
+    let group = groups.get(groupKey);
+    if (!group) {
+      const target = groupKey ? el('fieldset', 'rev__group') : panel;
+      if (groupKey) target.appendChild(el('legend', 'rev__grouptitle', groupKey));
+      const grid = el('div', 'rev__grid rev__grid--wide');
+      target.appendChild(grid);
+      if (groupKey) panel.appendChild(target);
+      group = { grid };
+      groups.set(groupKey, group);
+    }
+    group.grid.appendChild(reviewReportField(leaf));
+  });
+
+  return panel;
+}
+
+function reportSectionEntries(report) {
+  return Object.keys(report || {})
+    .filter((key) => key !== 'metadata' && key !== 'confidence' && key !== 'notes')
+    .map((key) => ({
+      key,
+      label: REPORT_SECTION_LABELS[key] || reportFieldLabel(key),
+      leaves: reportLeaves(report[key], key, '', [])
+    }))
+    .filter((entry) => entry.leaves.length);
+}
+
+function summaryValue(value) {
+  return value == null || value === '' ? '' : reportValueText(value);
+}
+
+function reviewSummary(state) {
+  const card = el('section', 'rev__summary');
+  card.setAttribute('aria-label', 'Reading source');
+
+  const head = el('div', 'rev__summaryhead');
+  head.appendChild(el('div', 'rev__summarytitle', 'Reading source'));
+  head.appendChild(el('span', 'rev__summarynote', state.report ? 'Report context' : 'Manual entry'));
+  card.appendChild(head);
+
+  const grid = el('div', 'rev__summarygrid');
+  const add = (label, value, node) => {
+    if (!value && !node) return;
+    const item = el('div', 'rev__summaryitem');
+    item.appendChild(el('span', 'rev__summarylabel', label));
+    if (node) item.appendChild(node);
+    else item.appendChild(el('span', 'rev__summaryvalue', value));
+    grid.appendChild(item);
+  };
+
+  add('Input', SOURCE_LABEL[state.source] || state.source || 'Unknown');
+  add('Extraction', state.extractionMethod || 'Unknown');
+  if (typeof state.confidence === 'number') add('Confidence', Math.round(state.confidence * 100) + '%');
+  add('Player', summaryValue(state.playerId));
+  add('Serial', summaryValue(reportValue(state.report, 'metadata.serial_number')));
+
+  if (state.reportUrl) {
+    let link = null;
+    try {
+      const url = new URL(state.reportUrl);
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        link = document.createElement('a');
+        link.href = url.toString();
+        link.target = '_blank';
+        link.rel = 'noreferrer';
+        link.className = 'rev__summaryvalue rev__summarylink';
+        link.textContent = url.toString();
+      }
+    } catch (e) { /* keep the source as plain state, without making it a link */ }
+    add('Report link', link ? '' : state.reportUrl, link);
+  }
+  card.appendChild(grid);
+
+  if (state.note) card.appendChild(el('p', 'rev__hint', state.note));
+  if (state.notes) {
+    const warning = el('div', 'rev__warning');
+    warning.appendChild(el('strong', 'rev__warningtitle', 'OCR note'));
+    warning.appendChild(el('span', 'rev__warningtext', state.notes));
+    card.appendChild(warning);
+  }
+  return card;
 }
 
 /** Opens a collapsed section so an error is never reported against a field the
@@ -258,11 +380,8 @@ export function openReview(state) {
   const host = $('#review-body');
   clear(host);
 
-  if (state.note) {
-    const p = el('p', 'rev__hint');
-    p.textContent = state.note;
-    host.appendChild(p);
-  }
+  $('#review-title').textContent = state.report ? 'Review report' : 'Check the numbers';
+  host.appendChild(reviewSummary(state));
 
   if (state.previewUrl) {
     const wrap = el('div', 'rev__preview');
@@ -275,8 +394,8 @@ export function openReview(state) {
     host.appendChild(wrap);
   }
 
-  /* The extracted report's own metadata is read-only, and it frames every number
-     that follows, so it leads the screen. */
+    /* The extracted report's own metadata is read-only, and it frames every number
+      that follows, so it leads the screen. */
   if (state.report) {
     const metadata = reportLeaves(state.report.metadata, 'metadata', '', []);
     if (metadata.length) host.appendChild(metadataCard(metadata));
@@ -321,16 +440,9 @@ export function openReview(state) {
     form.appendChild(panel);
   };
 
-  /* The values that get saved lead, because they are the ones that matter. */
-  addSection('measurement', 'Measurement', measurementPanel(state), true);
-
-  if (state.report) {
-    Object.keys(REPORT_SECTION_LABELS)
-      .filter((key) => key !== 'metadata')
-      .map((key) => ({ key, leaves: reportLeaves(state.report[key], key, '', []) }))
-      .filter((entry) => entry.leaves.length)
-      .forEach((entry) => addSection(entry.key, REPORT_SECTION_LABELS[entry.key], reportPanel(entry.leaves), false));
-  }
+  const sections = state.report ? reportSectionEntries(state.report) : [];
+  sections.forEach((entry, index) => addSection(entry.key, entry.label, reportPanel(entry.leaves), index === 0));
+  addSection('measurement', 'Measurements', measurementPanel(state), sections.length === 0);
 
   /* The rail and the error line travel together, so a problem never scrolls out of
      sight while the field it names is somewhere below. */
@@ -346,7 +458,7 @@ export function openReview(state) {
   host.appendChild(form);
 
   $('#view-review').hidden = false;
-  const first = $('#rev-grid input');
+  const first = $('#review-form input');
   if (first) first.focus();
 }
 
@@ -362,6 +474,7 @@ export async function saveReview() {
   const errBox = $('#rev-error');
   const errs = [];
   const metrics = {};
+  const metricInputs = {};
 
   /* The first field to fail is the one the reader is sent back to, so a bad value
      in a collapsed section still opens that section rather than failing quietly. */
@@ -374,6 +487,7 @@ export async function saveReview() {
   $$('#rev-grid input[data-metric]').forEach((input) => {
     const key = input.dataset.metric;
     const meta = METRICS[key];
+    metricInputs[key] = input.value.trim();
     input.removeAttribute('aria-invalid');
     if (input.value.trim() === '') return;
 
@@ -411,6 +525,12 @@ export async function saveReview() {
     reportEdits[path] = raw === '' ? null : raw;
   });
 
+  Object.keys(metricInputs).forEach((key) => {
+    const path = METRIC_REPORT_PATH_MAP.get(key);
+    if (!path) return;
+    reportEdits[path] = metricInputs[key] === '' ? null : metrics[key];
+  });
+
   const dateInput = $('#rev-date');
   const measuredAt = toDate(dateInput.value);
   if (!measuredAt) {
@@ -431,24 +551,10 @@ export async function saveReview() {
     return;
   }
 
-  const reading = {
-    id: uid(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    measuredAt: measuredAt.toISOString(),
-    source: reviewState.source || 'manual',
-    playerId: reviewState.playerId || null,
-    language: reviewState.language || null,
-    reportUrl: reviewState.reportUrl || null,
-    note: reviewState.notes || reviewState.note || '',
-    confidence: reviewState.confidence,
-    raw: reviewState.raw,
-    report: applyReportEdits(reviewState.report, reportEdits),
-    metrics
-  };
+  const reading = buildReading(reviewState, metrics, reportEdits, measuredAt);
 
   try {
-    await addReading(reading);
+    await persistReading(reading);
   } catch (err) {
     errBox.hidden = false;
     errBox.textContent = 'Could not save to this device: ' + (err && err.message ? err.message : 'unknown error');
@@ -456,7 +562,4 @@ export async function saveReview() {
   }
 
   closeReview();
-  toast('Reading saved');
-  Route.go('dashboard');
-  if (Settings.get().mirror && Auth.isConfigured()) mirrorSync().catch(() => {});
 }

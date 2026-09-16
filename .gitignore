@@ -1,5 +1,5 @@
 .env
-sample.pdf
+sample*
 
 # Supabase CLI scratch — machine specific, never deployed
 supabase/.temp/
