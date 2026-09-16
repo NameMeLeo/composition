@@ -3,9 +3,14 @@
 import { METRICS, LB_PER_KG } from './metrics.js';
 import { Settings } from './settings.js';
 
-const MASS_METRICS = ['weight', 'muscleMass', 'fatFreeMass', 'boneMass'];
-
-export function isMassMetric(key) { return MASS_METRICS.indexOf(key) !== -1; }
+/* Anything measured in kilograms converts to pounds. This reads the metric
+   catalogue rather than keeping a second hardcoded list, so a newly added mass
+   metric cannot be quietly left out of unit conversion — which is exactly what
+   happened to the segmental values before they were promoted to metrics. */
+export function isMassMetric(key) {
+  const meta = METRICS[key];
+  return Boolean(meta) && meta.unit === 'kg';
+}
 
 export function toDate(value) {
   const d = value instanceof Date ? value : new Date(value);
@@ -72,6 +77,18 @@ export function axisFormat(key) {
   if (!meta) return (v) => String(v);
   if (isMassMetric(key)) return (v) => massValue(v, meta.digits).value;
   return (v) => v.toFixed(meta.digits);
+}
+
+/* Names one plotted point of a bucketed range. Days and weeks read as the date the
+   bucket starts on, months as their name, and years as the year itself — a yearly
+   point labelled "1 Jan" would tell the reader nothing. */
+export function bucketLabel(bucket, time) {
+  if (bucket === 'year') {
+    const d = toDate(time);
+    return d ? String(d.getFullYear()) : '—';
+  }
+  if (bucket === 'month') return fmtDate(time, { month: 'short', year: '2-digit' });
+  return fmtDate(time, { day: 'numeric', month: 'short' });
 }
 
 /** Reads a number out of free text, tolerating a decimal comma and stray units. */

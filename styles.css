@@ -790,6 +790,35 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .tile--empty .tile__value { color: var(--c-muted); }
 .tile__spark { height: 34px; margin-top: 2px; }
 
+/* The metric card on Trends: the latest value set large, with the highest, lowest
+   and average for the chosen window in small type beside it. Two columns rather
+   than a stack, so the headline stays the thing the eye lands on. */
+.tile--card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+}
+.tile--card .tile__head { display: grid; gap: 2px; min-width: 0; }
+.tile--card .tile__value--lead { font-size: 2rem; }
+.tile--card .tile__side {
+  display: grid;
+  gap: 2px;
+  padding-left: var(--s-3);
+  border-left: 1px solid var(--c-line-soft);
+}
+.tile__stat { display: flex; align-items: baseline; gap: var(--s-2); justify-content: space-between; }
+.tile__stat-label { font-size: var(--fs-micro); color: var(--c-muted); }
+.tile__stat-value { font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile__stat-empty { font-size: var(--fs-micro); color: var(--c-muted); }
+
+/* The open card is ringed in its own accent, which is also the colour of the line
+   the chart draws for it, so the link between card and chart needs no label. */
+.tile--active {
+  border-color: var(--tile-accent);
+  background: var(--c-surface);
+  box-shadow: 0 0 0 1px var(--tile-accent) inset, var(--shadow-1);
+}
+
 .insight {
   display: flex;
   align-items: flex-start;
@@ -906,6 +935,43 @@ button.tile { border: 1px solid var(--c-line-soft); }
 .rail-row > .wheel { margin-bottom: 0; }
 @media (max-width: 720px) {
   .rail-row { grid-template-columns: 100%; }
+}
+
+/* Trends controls: the tab strip says which family of measures is open, and the
+   range wheel under it says how far back the numbers reach. */
+.trend-controls { display: grid; gap: var(--s-3); margin-bottom: var(--s-4); }
+.trend-controls > .wheel { margin-bottom: 0; }
+
+/* The tab strip scrolls sideways rather than wrapping, so the row keeps a single
+   height however many groups a person's own data supports. */
+.tabs {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
+}
+.tab--on {
+  border-color: transparent;
+  background: var(--c-primary);
+  color: var(--c-primary-ink);
+}
+@media (hover: hover) {
+  .tab:not(.tab--on):hover { border-color: var(--c-muted); color: var(--c-ink); }
 }
 
 /* One-at-a-time picker shared by the metric rail and the time-range rail.

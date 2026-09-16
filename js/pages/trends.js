@@ -1,78 +1,152 @@
 /* Composition — Trends.
-   One metric over one time range, chosen with two wheels that sit on a single
-   row, plus the lean/fat split for the latest reading. */
+   Metrics are grouped into tabs, and every metric in the open tab gets a card showing
+   its latest value beside the highest, lowest and average for the chosen window.
+   Tapping a card charts it, so the grid is both the readout and the picker. */
 
 import { $, el, clear } from '../dom.js';
-import { METRICS, METRIC_ORDER, RANGES } from '../metrics.js';
-import { metricText, fmtDate, axisFormat } from '../format.js';
-import { latest, deltaFor, seriesFor } from '../store.js';
+import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../metrics.js';
+import { metricText, fmtDate, axisFormat, bucketLabel } from '../format.js';
+import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../store.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { fillWheel } from '../components/wheel.js';
+import { metricCard } from '../components/tile.js';
 import { Route } from '../router.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
-const selection = { metric: 'weight', range: '90d' };
+const selection = { metric: 'weight', range: 'month', tab: 'composition' };
+// Until a range is chosen by hand, the page picks one that actually shows a line.
+let rangeChosen = false;
+
+/** A metric is only offered once at least one reading has recorded it. */
+const hasData = (key) => rawPoints(key).length > 0;
+
+/* All readings made in one month collapse to a single averaged point, which draws no
+   line and gives high, low and average the same value. So the opening range is the
+   narrowest window that still holds two points — the recent movement is what someone
+   opening Trends wants to see, and they can widen it from there. */
+function fittedRange(key) {
+  const fit = RANGES.find((range) => seriesFor(key, range.id).length >= 2);
+  return fit ? fit.id : RANGES[0].id;
+}
 
 export function renderTrends() {
-  const available = METRIC_ORDER.filter((key) => seriesFor(key, 'all').length > 0);
+  // A tab holding nothing recorded would be a dead end, so only tabs with data show.
+  const groups = METRIC_GROUPS.filter((group) => metricsInGroup(group.id).some(hasData));
 
-  if (!available.length) {
-    clear($('#metric-rail'));
-    clear($('#range-rail'));
-    clear($('#trend-chart'));
-    clear($('#trend-summary'));
-    clear($('#composition-split'));
+  if (!groups.length) {
+    [
+      '#trend-tabs', '#trend-cards', '#range-rail', '#trend-chart', '#composition-split'
+    ].forEach((id) => clear($(id)));
+    $('#trend-label').textContent = 'Trends';
     $('#trend-latest').textContent = '—';
     $('#trend-range-note').textContent = '';
-    $('#axis-start').textContent = '—';
-    $('#axis-mid').textContent = '—';
-    $('#axis-end').textContent = '—';
+    ['#axis-start', '#axis-mid', '#axis-end'].forEach((id) => { $(id).textContent = '—'; });
     return;
   }
 
-  if (available.indexOf(selection.metric) === -1) selection.metric = available[0];
+  if (!groups.some((group) => group.id === selection.tab)) selection.tab = groups[0].id;
+  const group = groups.find((entry) => entry.id === selection.tab);
 
-  fillWheel(
-    $('#metric-rail'),
-    available.map((key) => ({ id: key, label: METRICS[key].label })),
-    selection.metric,
-    (id) => { selection.metric = id; renderTrends(); },
-    { noun: 'metric', listLabel: 'Choose a metric' }
-  );
+  // The selected metric has to live in the open tab, or the chart would show
+  // something the cards are not offering.
+  if (metricsInGroup(group.id).indexOf(selection.metric) === -1) {
+    selection.metric = metricsInGroup(group.id).find(hasData) || metricsInGroup(group.id)[0];
+  }
+
+  renderTabs(groups);
+
+  if (!rangeChosen) selection.range = fittedRange(selection.metric);
 
   fillWheel(
     $('#range-rail'),
     RANGES.map((range) => ({ id: range.id, label: range.label })),
     selection.range,
-    (id) => { selection.range = id; renderTrends(); },
+    (id) => { selection.range = id; rangeChosen = true; renderTrends(); },
     { noun: 'range', listLabel: 'Choose a time range' }
   );
 
+  renderCards(group);
+  renderChart();
+  renderCompositionSplit();
+}
+
+/* The tab strip. Every tab is always offered for the groups that have data, so the
+   shape of the data is visible at a glance rather than hidden behind a menu. */
+function renderTabs(groups) {
+  const host = $('#trend-tabs');
+  clear(host);
+
+  groups.forEach((group) => {
+    const on = group.id === selection.tab;
+    const tab = el('button', 'tab' + (on ? ' tab--on' : ''), group.label);
+    tab.type = 'button';
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.addEventListener('click', () => {
+      if (group.id === selection.tab) return;
+      selection.tab = group.id;
+      const first = metricsInGroup(group.id).find(hasData);
+      if (first) selection.metric = first;
+      renderTrends();
+    });
+    host.appendChild(tab);
+  });
+}
+
+/* One card per metric in the open tab. The card's own numbers are computed from the
+   same bucketed series the chart draws, so a value on a card and the line under it
+   can never disagree. */
+function renderCards(group) {
+  const host = $('#trend-cards');
+  clear(host);
+
+  metricsInGroup(group.id).filter(hasData).forEach((key) => {
+    host.appendChild(metricCard(key, {
+      points: seriesFor(key, selection.range),
+      latest: latestWith(key),
+      active: key === selection.metric,
+      onSelect: (id) => {
+        if (id === selection.metric) return;
+        selection.metric = id;
+        renderTrends();
+      }
+    }));
+  });
+}
+
+function renderChart() {
   const key = selection.metric;
   const meta = METRICS[key];
+  const range = rangeById(selection.range);
   const pts = seriesFor(key, selection.range);
-  const allPts = seriesFor(key, 'all');
+  const label = (point) => bucketLabel(range.bucket, point.t);
 
   $('#trend-label').textContent = meta.label;
-  const latestValue = allPts.length ? allPts[allPts.length - 1].v : null;
-  $('#trend-latest').textContent = metricText(key, latestValue);
+  $('#trend-latest').textContent = metricText(key, latestWith(key));
 
   const deltaHost = $('#trend-delta');
   deltaHost.replaceWith(Object.assign(deltaChip(key, deltaFor(key)), { id: 'trend-delta' }));
 
-  $('#trend-range-note').textContent = pts.length + ' point' + (pts.length === 1 ? '' : 's');
+  // The note counts the readings behind the line, not just the points, because one
+  // monthly point standing for six readings is a different claim from a single one.
+  const readings = pts.reduce((total, point) => total + (point.readings || 1), 0);
+  const parts = [pts.length + (pts.length === 1 ? ' point' : ' points')];
+  if (readings > pts.length) parts.push(readings + ' readings averaged');
+  if (pts.length >= 2) parts.push(metricText(key, pts[pts.length - 1].v - pts[0].v) + ' over the window');
+  $('#trend-range-note').textContent = parts.join(' · ');
 
   const axis = [$('#axis-start'), $('#axis-mid'), $('#axis-end')];
   if (pts.length >= 2) {
-    const t0 = pts[0].t;
-    const t2 = pts[pts.length - 1].t;
-    const t1 = t0 + (t2 - t0) / 2;
-    axis[0].textContent = fmtDate(t0, { day: 'numeric', month: 'short' });
-    axis[1].textContent = fmtDate(t1, { day: 'numeric', month: 'short' });
-    axis[2].textContent = fmtDate(t2, { day: 'numeric', month: 'short' });
+    // Snapped to real buckets rather than an interpolated date, so the middle label
+    // always names a point that is actually plotted.
+    axis[0].textContent = label(pts[0]);
+    axis[1].textContent = label(pts[Math.floor((pts.length - 1) / 2)]);
+    axis[2].textContent = label(pts[pts.length - 1]);
+  } else if (pts.length === 1) {
+    axis.forEach((node) => { node.textContent = label(pts[0]); });
   } else {
-    axis.forEach((n) => { n.textContent = pts.length ? fmtDate(pts[0].t, { day: 'numeric', month: 'short' }) : '—'; });
+    axis.forEach((node) => { node.textContent = '—'; });
   }
 
   scheduleChart($('#trend-chart'), {
@@ -82,42 +156,8 @@ export function renderTrends() {
     digits: meta.digits,
     metricKey: key,
     padLeft: 44,
-    yFormat: axisFormat(key)
-  });
-
-  renderSummary(key, meta, pts);
-  renderCompositionSplit();
-}
-
-function renderSummary(key, meta, pts) {
-  const summary = $('#trend-summary');
-  clear(summary);
-
-  const values = pts.map((p) => p.v);
-  const cards = [];
-  if (values.length) {
-    cards.push(['Latest', metricText(key, values[values.length - 1])]);
-    cards.push(['Average', metricText(key, values.reduce((a, b) => a + b, 0) / values.length)]);
-    cards.push(['Lowest', metricText(key, Math.min.apply(null, values))]);
-    cards.push(['Highest', metricText(key, Math.max.apply(null, values))]);
-    // A change across a single point would always read as zero, so it is hidden.
-    if (values.length >= 2) {
-      cards.push(['Change over range', metricText(key, values[values.length - 1] - values[0])]);
-      cards.push(['Readings', String(values.length)]);
-    }
-  }
-
-  if (!cards.length) {
-    summary.appendChild(el('p', 'empty__body', 'No readings fall inside this range yet.'));
-    return;
-  }
-
-  cards.forEach((pair) => {
-    const card = el('div', 'tile');
-    card.style.setProperty('--tile-accent', meta.accent);
-    card.appendChild(el('span', 'tile__label', pair[0]));
-    card.appendChild(el('span', 'tile__value', pair[1]));
-    summary.appendChild(card);
+    yFormat: axisFormat(key),
+    pointLabel: label
   });
 }
 

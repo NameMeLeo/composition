@@ -1,6 +1,6 @@
 /* Composition — user preferences, persisted to localStorage. */
 
-import { LS, DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY } from './constants.js';
+import { LS, DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY, DEFAULT_REPORT_BASE } from './constants.js';
 
 const defaults = {
   theme: 'system',
@@ -8,6 +8,7 @@ const defaults = {
   reduceMotion: false,
   supabaseUrl: DEFAULT_SUPABASE_URL,
   supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
+  reportBase: DEFAULT_REPORT_BASE,
   mirror: false,
   mirrorSyncedAt: null
 };
@@ -21,6 +22,7 @@ function load() {
     // A blank URL or key in storage means "use the shipped default", not "unset".
     if (!current.supabaseUrl) current.supabaseUrl = defaults.supabaseUrl;
     if (!current.supabaseAnonKey) current.supabaseAnonKey = defaults.supabaseAnonKey;
+    if (!current.reportBase) current.reportBase = defaults.reportBase;
   } catch (e) { /* keep the defaults */ }
   return current;
 }

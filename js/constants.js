@@ -3,6 +3,11 @@
 
 export const APP_VERSION = '1.0.0';
 
+/* The report site that a bare player id is resolved against. It lives here rather
+   than inside report-url.js so the address is a deployment detail, not something
+   baked into URL parsing, and any device can override it from Settings. */
+export const DEFAULT_REPORT_BASE = 'http://13.251.17.127/tanita/selftestfitnesscorner/';
+
 export const DB_NAME = 'composition';
 export const DB_VERSION = 1;
 export const STORE = 'readings';

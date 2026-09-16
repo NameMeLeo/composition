@@ -218,10 +218,18 @@
 
     <!-- TRENDS -->
     <section class="view" id="view-trends" data-title="Trends" hidden>
-      <div class="rail-row">
-        <div class="wheel" id="metric-rail" role="group" aria-label="Choose a metric"></div>
+      <div class="trend-controls">
+        <div class="tabs" id="trend-tabs" role="tablist" aria-label="Choose a group of measures"></div>
         <div class="wheel wheel--minor" id="range-rail" role="group" aria-label="Choose a time range"></div>
       </div>
+
+      <section class="block">
+        <div class="block__head">
+          <h2 class="block__title">Measures</h2>
+          <span class="block__hint">Tap a card to chart it</span>
+        </div>
+        <div class="od-grid tiles" id="trend-cards" style="--od-cols:2"></div>
+      </section>
 
       <section class="card card--stat">
         <div class="stathead">
@@ -237,14 +245,7 @@
           <span id="axis-mid">&mdash;</span>
           <span id="axis-end">&mdash;</span>
         </div>
-      </section>
-
-      <section class="block">
-        <div class="block__head">
-          <h2 class="block__title">Summary</h2>
-          <span class="block__hint" id="trend-range-note"></span>
-        </div>
-        <div class="od-grid tiles" id="trend-summary" style="--od-cols:2"></div>
+        <p class="block__hint" id="trend-range-note"></p>
       </section>
 
       <section class="block" id="block-composition">

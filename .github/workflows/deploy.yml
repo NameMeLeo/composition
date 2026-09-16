@@ -24,9 +24,10 @@ jobs:
       - name: Prepare the static bundle
         run: |
           mkdir -p dist
-          cp index.html styles.css app.js sw.js manifest.webmanifest .nojekyll dist/
+          cp index.html styles.css sw.js manifest.webmanifest .nojekyll dist/
+          cp -r js dist/js
           cp -r icons dist/icons
-          cp README.md dist/README.md
+          cp README.md CONTRIBUTING.md dist/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -3,9 +3,9 @@
    that has ever been recorded, and the plain-language insights. */
 
 import { $, el, clear, clamp } from '../dom.js';
-import { METRICS, METRIC_ORDER } from '../metrics.js';
-import { metricDisplay, metricText, fmtDateTime, relDays, massValue, axisFormat } from '../format.js';
-import { getReadings, latest, deltaFor, seriesFor, sortedAsc } from '../store.js';
+import { METRICS, METRIC_ORDER, rangeById } from '../metrics.js';
+import { metricDisplay, metricText, fmtDateTime, relDays, massValue, axisFormat, bucketLabel } from '../format.js';
+import { getReadings, latest, deltaFor, seriesFor, rawPoints, sortedAsc } from '../store.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { tile } from '../components/tile.js';
@@ -35,7 +35,7 @@ export function renderDashboard() {
     const meta = METRICS[key];
     const raw = last && last.metrics ? last.metrics[key] : null;
     // A metric nobody has ever recorded gets no tile at all.
-    if (raw == null && seriesFor(key, 'all').length === 0) return;
+    if (raw == null && rawPoints(key).length === 0) return;
     const node = tile(key, last);
     node.style.setProperty('--tile-accent', meta.accent);
     metricGrid.appendChild(node);
@@ -86,16 +86,19 @@ export function renderDashboard() {
     deltaGrid.appendChild(card);
   });
 
-  /* mini trend */
-  const miniPts = seriesFor('weight', '90d');
+  /* mini trend — four weekly averages, falling back to every reading when there is
+     too little history to fill a single week. */
+  const miniPts = seriesFor('weight', 'week');
+  const miniRange = rangeById('week');
   $('#mini-chart').dataset.metric = 'weight';
   scheduleChart($('#mini-chart'), {
-    points: miniPts.length >= 2 ? miniPts : seriesFor('weight', 'all'),
+    points: miniPts.length >= 2 ? miniPts : rawPoints('weight'),
     height: 158,
     accent: METRICS.weight.accent,
     digits: 1,
     metricKey: 'weight',
-    yFormat: axisFormat('weight')
+    yFormat: axisFormat('weight'),
+    pointLabel: (point) => bucketLabel(miniRange.bucket, point.t)
   });
 
   renderInsights();
@@ -141,7 +144,13 @@ function renderInsights() {
     });
   }
 
-  const weights = seriesFor('weight', '90d').map((p) => p.v);
+  // Raw readings from the last 90 days, not the averaged buckets: the point of this
+  // insight is how far the measurement itself has swung between readings.
+  const since90 = Date.now() - 90 * 86400000;
+  const weights = sortedAsc(getReadings())
+    .filter((r) => r.metrics && typeof r.metrics.weight === 'number')
+    .filter((r) => new Date(r.measuredAt).getTime() >= since90)
+    .map((r) => r.metrics.weight);
   if (weights.length >= 3) {
     const spread = Math.max.apply(null, weights) - Math.min.apply(null, weights);
     items.push({

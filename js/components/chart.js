@@ -80,7 +80,14 @@ export function drawChart(host, options) {
   svg.setAttribute('height', String(height));
   svg.setAttribute('preserveAspectRatio', 'none');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', pts.length + ' readings, from ' +
+  // A bucketed series has fewer points than readings, and saying "1 readings" was
+  // wrong twice over, so the label spells out both numbers when they differ.
+  const plotted = pts.length;
+  const readings = pts.reduce((total, point) => total + (point.readings || 1), 0);
+  const described = readings > plotted
+    ? plotted + (plotted === 1 ? ' point' : ' points') + ' covering ' + readings + ' readings'
+    : plotted + (plotted === 1 ? ' reading' : ' readings');
+  svg.setAttribute('aria-label', described + ', from ' +
     metricText(opts.metricKey || '', ys[0]).trim() + ' to ' +
     metricText(opts.metricKey || '', ys[ys.length - 1]).trim());
 
@@ -171,7 +178,11 @@ export function drawChart(host, options) {
     const ratio = box.width / width;
     tip.style.left = (px * ratio) + 'px';
     tip.style.top = Math.max(26, py * ratio - 10) + 'px';
-    tip.textContent = metricText(opts.metricKey || '', point.v) + ' · ' + fmtDate(point.t, { day: 'numeric', month: 'short' });
+    // A ranged series plots one averaged point per bucket, so the label names the
+    // bucket, and says how many readings went into it when it stood for more than one.
+    const when = opts.pointLabel ? opts.pointLabel(point) : fmtDate(point.t, { day: 'numeric', month: 'short' });
+    const spread = point.readings > 1 ? ' \u00b7 ' + point.readings + ' readings' : '';
+    tip.textContent = metricText(opts.metricKey || '', point.v) + ' \u00b7 ' + when + spread;
     tip.hidden = false;
   }
 

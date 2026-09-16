@@ -15,7 +15,7 @@ import { Route } from './router.js';
 import { applyTheme, applyMotion } from './theme.js';
 import { loadReadings } from './store.js';
 import { on } from './events.js';
-import { parseReportUrl } from './report-url.js';
+import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from './report-url.js';
 import { Capture } from './capture.js';
 import { ScanFan } from './scanfan.js';
 import { closeReview, saveReview } from './review.js';
@@ -58,7 +58,12 @@ function bindShellEvents() {
   $('#url-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const parsed = parseReportUrl($('#in-report-url').value);
-    if (!parsed.ok) { toast('That does not look like a report link', 'error'); return; }
+    if (!parsed.ok) {
+      toast(parsed.reason === 'no-base'
+        ? 'A player id on its own needs a report address. Add one in Settings, or paste the full link.'
+        : 'That does not look like a report link', 'error');
+      return;
+    }
     Capture.closeSheet();
     Capture.startReading({ mode: 'report-url', url: parsed.url, playerId: parsed.playerId, language: parsed.language });
   });
@@ -89,7 +94,11 @@ function bindShellEvents() {
         // A bare player id is still useful, but anything else is not a report.
         if (/\d{6,}/.test(text)) {
           Capture.stopScanner();
-          Capture.startReading({ mode: 'player-id', playerId: text.trim(), language: 'en' });
+          if (parsed.reason === 'no-base') {
+            toast('A player id on its own needs a report address to look up. Add one in Settings.', 'error');
+            return;
+          }
+          Capture.startReading({ mode: 'player-id', playerId: text.trim(), language: DEFAULT_REPORT_LANGUAGE });
           return;
         }
         toast('That code is not a report link', 'error');

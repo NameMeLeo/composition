@@ -7,7 +7,7 @@ import { $, $$, toast } from './dom.js';
 import { METRICS } from './metrics.js';
 import { parseNumber } from './format.js';
 import { OcrProxy } from './ocr.js';
-import { parseReportUrl, playerReportUrl } from './report-url.js';
+import { parseReportUrl, playerReportUrl, reportBase, DEFAULT_REPORT_LANGUAGE } from './report-url.js';
 import { openReview } from './review.js';
 
 let stream = null;
@@ -159,7 +159,12 @@ function onDetected(text) {
   const parsed = parseReportUrl(text);
   if (!parsed.ok) {
     if (/\d{6,}/.test(text)) {
-      startReading({ mode: 'player-id', playerId: text.trim(), language: 'en' });
+      // A bare id is only resolvable if we know which report site to ask.
+      if (parsed.reason === 'no-base') {
+        toast('A player id on its own needs a report address to look up. Add one in Settings.', 'error');
+        return;
+      }
+      startReading({ mode: 'player-id', playerId: text.trim(), language: DEFAULT_REPORT_LANGUAGE });
       return;
     }
     toast('That code is not a report link: ' + text.slice(0, 60), 'error');
@@ -256,6 +261,7 @@ async function startReading(job) {
       result = await OcrProxy.fromReportUrl(job.url);
       note = 'Fetched from ' + parseReportUrl(job.url).host;
     } else if (job.mode === 'player-id') {
+      if (!reportBase()) throw new Error('Only a player id was found, and no report address is configured. Add one in Settings, or paste the full report link.');
       const built = playerReportUrl(job.playerId, job.language);
       if (!OcrProxy.isConfigured()) throw new Error('Only a player id was found. The full report link is needed, and the proxy must be configured to fetch it.');
       result = await OcrProxy.fromReportUrl(built);

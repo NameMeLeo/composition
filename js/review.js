@@ -37,7 +37,24 @@ const REPORT_METRIC_PATHS = new Set([
   'body_composition.fat_free_mass_kg',
   'body_composition.bone_mass_kg',
   'body_composition.total_body_water_percent',
-  'body_composition.bmr_kcal'
+  'body_composition.bmr_kcal',
+  // Segmental values are editable metric fields now, so the raw report leaves
+  // would only show the same fifteen numbers a second time.
+  'segmental_analysis.muscle_mass.trunk_kg',
+  'segmental_analysis.muscle_mass.left_arm_kg',
+  'segmental_analysis.muscle_mass.right_arm_kg',
+  'segmental_analysis.muscle_mass.left_leg_kg',
+  'segmental_analysis.muscle_mass.right_leg_kg',
+  'segmental_analysis.fat_mass.trunk_kg',
+  'segmental_analysis.fat_mass.left_arm_kg',
+  'segmental_analysis.fat_mass.right_arm_kg',
+  'segmental_analysis.fat_mass.left_leg_kg',
+  'segmental_analysis.fat_mass.right_leg_kg',
+  'segmental_analysis.fat_percentage.trunk_percent',
+  'segmental_analysis.fat_percentage.left_arm_percent',
+  'segmental_analysis.fat_percentage.right_arm_percent',
+  'segmental_analysis.fat_percentage.left_leg_percent',
+  'segmental_analysis.fat_percentage.right_leg_percent'
 ]);
 
 // Flattens a report section into editable leaves, naming nested groups after their

@@ -147,6 +147,17 @@ const RESPONSE_SCHEMA = {
             left_leg_kg: { type: 'NUMBER', description: 'Left leg fat mass in kg.' },
             right_leg_kg: { type: 'NUMBER', description: 'Right leg fat mass in kg.' }
           }
+        },
+        fat_percentage: {
+          type: 'OBJECT',
+          description: 'Segmental fat percentage for each body part.',
+          properties: {
+            trunk_percent: { type: 'NUMBER', description: 'Trunk fat percentage.' },
+            left_arm_percent: { type: 'NUMBER', description: 'Left arm fat percentage.' },
+            right_arm_percent: { type: 'NUMBER', description: 'Right arm fat percentage.' },
+            left_leg_percent: { type: 'NUMBER', description: 'Left leg fat percentage.' },
+            right_leg_percent: { type: 'NUMBER', description: 'Right leg fat percentage.' }
+          }
         }
       }
     },
@@ -268,6 +279,31 @@ function extractMetrics(parsed: any): Record<string, number> {
   setMetric('muscleQuality', indicators.muscle_quality_score);
   setMetric('physiqueRating', indicators.physique_rating_score ?? indicators.physique_rating);
 
+  // The segmental breakdown is the one part of the report that is nested: five body
+  // parts, each carrying its own muscle mass, fat mass and fat percentage.
+  const segment = parsed?.segmental_analysis ?? {};
+  const muscle = segment.muscle_mass ?? {};
+  const fat = segment.fat_mass ?? {};
+  const rate = segment.fat_percentage ?? {};
+
+  setMetric('segMuscleTrunk', muscle.trunk_kg);
+  setMetric('segMuscleLeftArm', muscle.left_arm_kg);
+  setMetric('segMuscleRightArm', muscle.right_arm_kg);
+  setMetric('segMuscleLeftLeg', muscle.left_leg_kg);
+  setMetric('segMuscleRightLeg', muscle.right_leg_kg);
+
+  setMetric('segFatTrunk', fat.trunk_kg);
+  setMetric('segFatLeftArm', fat.left_arm_kg);
+  setMetric('segFatRightArm', fat.right_arm_kg);
+  setMetric('segFatLeftLeg', fat.left_leg_kg);
+  setMetric('segFatRightLeg', fat.right_leg_kg);
+
+  setMetric('segFatRateTrunk', rate.trunk_percent);
+  setMetric('segFatRateLeftArm', rate.left_arm_percent);
+  setMetric('segFatRateRightArm', rate.right_arm_percent);
+  setMetric('segFatRateLeftLeg', rate.left_leg_percent);
+  setMetric('segFatRateRightLeg', rate.right_leg_percent);
+
   return metrics;
 }
 
@@ -349,6 +385,132 @@ async function callGemini(parts: unknown[]) {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/* Tanita self-test report provider                                    */
+/* ------------------------------------------------------------------ */
+/* The public report page is a canvas SPA. Its HTML is an 852-byte shell holding no
+   measurements at all, so fetching that page and reading its text leaves an OCR pass
+   with nothing to work from — it could only invent numbers. The page gets its data
+   from a POST API, so this calls that API directly and maps the reply. No model call
+   is involved, which makes this path exact, instant and free. */
+
+const TANITA_REPORT_SEGMENT = 'selftestfitnesscorner';
+const TANITA_API_FILE = 'api/get_body_by_id_tanita.php';
+// The report page ships this token in its own public JavaScript, so it is not a
+// secret. Override with the TANITA_API_TOKEN secret if the provider rotates it.
+const TANITA_API_TOKEN = Deno.env.get('TANITA_API_TOKEN') ?? '78Fx5vcOwnWhjogiTReM';
+
+/** Locates the data API that sits beside a Tanita report page, when the URL is one. */
+function tanitaApiTarget(url: URL): { api: URL; playerId: string } | null {
+  const at = url.pathname.indexOf(TANITA_REPORT_SEGMENT);
+  if (at === -1) return null;
+
+  const playerId = (url.searchParams.get('player_id') ?? url.searchParams.get('playerId') ?? '').trim();
+  if (!/^[A-Za-z0-9_-]{4,}$/.test(playerId)) return null;
+
+  try {
+    // /tanita/selftestfitnesscorner/ -> /tanita/api/get_body_by_id_tanita.php
+    return { api: new URL(url.pathname.slice(0, at) + TANITA_API_FILE, url.origin), playerId };
+  } catch {
+    return null;
+  }
+}
+
+/** Numbers arrive either as numbers or as strings carrying their unit ("26.0kg"). */
+function parseNumeric(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const match = String(value).match(/-?\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const number = Number(match[0]);
+  return Number.isFinite(number) ? number : null;
+}
+
+async function fetchTanitaReading(url: URL): Promise<Record<string, unknown> | null> {
+  const target = tanitaApiTarget(url);
+  if (!target) return null;
+
+  const res = await fetch(target.api.toString(), {
+    method: 'POST',
+    headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token: TANITA_API_TOKEN, player_id: target.playerId })
+  });
+  if (!res.ok) return null;
+
+  const payload: any = await res.json().catch(() => null);
+  if (!payload?.success || !payload?.inbodydata) return null;
+  return payload.inbodydata;
+}
+
+/* Maps the provider's flat, cryptically named payload onto the same report shape the
+   OCR path produces, so nothing downstream needs to know which path filled it.
+
+   Only fields whose meaning could be confirmed are mapped. The payload also carries
+   muscle_ratio, bodytype, musclescore, degreeofobesity and body_index, none of which
+   are documented anywhere — and because this is health data, they are left out
+   rather than guessed at from their names. */
+function mapTanitaReport(d: Record<string, unknown>) {
+  const gender = parseNumeric(d.gender);
+
+  return {
+    metadata: {
+      test_date: typeof d.date === 'string' ? d.date.replace(' ', 'T') : null,
+      serial_number: typeof d.sn === 'string' ? d.sn : null,
+      device_brand: 'Tanita'
+    },
+    user_profile: {
+      age: parseNumeric(d.age),
+      gender: gender === 1 ? 'Male' : gender === 2 ? 'Female' : null,
+      height_cm: parseNumeric(d.bodyheight),
+      weight_kg: parseNumeric(d.weight)
+    },
+    key_indicators: {
+      bmi: parseNumeric(d.bmi),
+      metabolic_age: parseNumeric(d.body_age),
+      visceral_fat_rating: parseNumeric(d.vfi),
+      sarcopenic_index_smi: parseNumeric(d.sm),
+      skeletal_muscle_mass_kg: parseNumeric(d.smm)
+    },
+    body_composition: {
+      fat_percentage: parseNumeric(d.fat_rate),
+      fat_mass_kg: parseNumeric(d.fatkg),
+      muscle_mass_kg: parseNumeric(d.muscle_weight),
+      fat_free_mass_kg: parseNumeric(d.nonfatkg),
+      bone_mass_kg: parseNumeric(d.boneweight),
+      total_body_water_kg: parseNumeric(d.water_weight),
+      total_body_water_percent: parseNumeric(d.body_water),
+      intracellular_water_kg: parseNumeric(d.water_in),
+      extracellular_water_kg: parseNumeric(d.water_out),
+      ecw_tbw_ratio_percent: parseNumeric(d.water_out_per),
+      bmr_kcal: parseNumeric(d.bmr),
+      bmr_kj: parseNumeric(d.bmr_kj)
+    },
+    segmental_analysis: {
+      muscle_mass: {
+        trunk_kg: parseNumeric(d.truck_weight),
+        left_arm_kg: parseNumeric(d.lh_weight),
+        right_arm_kg: parseNumeric(d.rh_weight),
+        left_leg_kg: parseNumeric(d.lf_weight),
+        right_leg_kg: parseNumeric(d.rf_weight)
+      },
+      fat_mass: {
+        trunk_kg: parseNumeric(d.truck_fat_weight),
+        left_arm_kg: parseNumeric(d.lh_fat_weight),
+        right_arm_kg: parseNumeric(d.rh_fat_weight),
+        left_leg_kg: parseNumeric(d.lf_fat_weight),
+        right_leg_kg: parseNumeric(d.rf_fat_weight)
+      },
+      fat_percentage: {
+        trunk_percent: parseNumeric(d.truck_fat_rate),
+        left_arm_percent: parseNumeric(d.lh_fat_rate),
+        right_arm_percent: parseNumeric(d.rh_fat_rate),
+        left_leg_percent: parseNumeric(d.lf_fat_rate),
+        right_leg_percent: parseNumeric(d.rf_fat_rate)
+      }
+    }
+  };
+}
+
 async function fetchReport(url: string) {
   let target: URL;
   try {
@@ -428,6 +590,26 @@ Deno.serve(async (req: Request) => {
     if (mode === 'report-url') {
       const url = String(body?.url ?? '').trim();
       if (!url) return respond({ ok: false, error: 'No report URL was supplied.' }, 400);
+
+      // Ask the provider's data API first. A report page on its own is an empty
+      // shell, so this is the only path that yields the real numbers for it.
+      let reportUrl: URL | null = null;
+      try { reportUrl = new URL(url); } catch { reportUrl = null; }
+
+      const reading = reportUrl ? await fetchTanitaReading(reportUrl) : null;
+      if (reading) {
+        const report = mapTanitaReport(reading);
+        const testDate: unknown = report.metadata.test_date;
+        return respond({
+          ok: true,
+          report,
+          measuredAt: typeof testDate === 'string' ? testDate : new Date().toISOString(),
+          metrics: extractMetrics(report),
+          confidence: 1,
+          notes: '',
+          sourceType: 'tanita-api'
+        });
+      }
 
       const { contentType, buffer } = await fetchReport(url);
 
