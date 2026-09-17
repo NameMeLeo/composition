@@ -27,7 +27,7 @@ jobs:
           cp index.html styles.css sw.js manifest.webmanifest .nojekyll dist/
           cp -r js dist/js
           cp -r icons dist/icons
-          cp README.md CONTRIBUTING.md dist/
+          cp README.md dist/
           # Fail loudly here rather than publishing a site with no JavaScript.
           test -f dist/index.html
           test -f dist/sw.js
