@@ -12,6 +12,7 @@ import { getReadings, setReadings, Store } from '../data/store.js';
 import { applyTheme, applyMotion, isStandalone } from '../core/theme.js';
 import { fmtDateTime, relDays } from '../core/format.js';
 import { exportJSON, exportCSV, exportSamsung, copySummary } from '../data/export.js';
+import { previewCsvImport, importReadings } from '../data/import.js';
 import { Route } from '../core/router.js';
 import { showAuth } from '../core/shell.js';
 
@@ -154,10 +155,42 @@ export function initSettings(): void {
     showAuth();
   });
 
-  ($('#btn-export-json') as HTMLButtonElement).addEventListener('click', exportJSON);
-  ($('#btn-export-csv') as HTMLButtonElement).addEventListener('click', exportCSV);
+  ($('#btn-export-json') as HTMLButtonElement).addEventListener('click', () => exportJSON());
+  ($('#btn-export-csv') as HTMLButtonElement).addEventListener('click', () => exportCSV());
   ($('#btn-export-samsung') as HTMLButtonElement).addEventListener('click', exportSamsung);
   ($('#btn-copy-summary') as HTMLButtonElement).addEventListener('click', () => void copySummary());
+
+  ($('#btn-import-csv') as HTMLButtonElement).addEventListener('click', () => {
+    ($('#import-picker') as HTMLInputElement).click();
+  });
+  ($('#import-picker') as HTMLInputElement).addEventListener('change', async (e) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > 18 * 1024 * 1024) { toast(t('shell.toobig'), 'error'); return; }
+    const text = await file.text();
+    const { staged, skipped } = previewCsvImport(text);
+    if (!staged.length) {
+      toast(skipped[0]?.reason ?? t('import.none'), 'error');
+      return;
+    }
+    const lines = [
+      t('import.confirm.title'),
+      '',
+      t('import.ready', { n: staged.length, s: staged.length === 1 ? '' : 's' })
+    ];
+    if (skipped.length) {
+      lines.push(t('import.skipped', { n: skipped.length }));
+      skipped.slice(0, 3).forEach((s) => lines.push(t('import.row', { n: s.row }) + ': ' + s.reason));
+    }
+    if (!window.confirm(lines.join('\n'))) return;
+    const res = await importReadings(staged);
+    const total = res.added + res.updated;
+    toast(t('import.done', { n: total, s: total === 1 ? '' : 's' }));
+    renderSettings();
+    Route.refresh();
+  });
 
   ($('#btn-erase') as HTMLButtonElement).addEventListener('click', async () => {
     if (!window.confirm(t('set.erase.confirm'))) return;

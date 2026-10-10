@@ -11,6 +11,7 @@ import { on } from '../core/events.js';
 import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.js';
 import { Capture } from '../ingest/capture.js';
 import { ScanFan } from '../ingest/scanfan.js';
+import { attachMenu } from '../components/menu.js';
 import { closeReview, saveReview } from '../ingest/review.js';
 import { closeReportPopup } from '../report/report-popup.js';
 import { initHistory } from '../pages/history.js';
@@ -41,6 +42,19 @@ export function bindShellEvents(): void {
   });
 
   ScanFan.init();
+
+  /* Desktop sidebar capture menu: the same four doors as the radial fan. */
+  const addBtn = $('#btn-add-top') as HTMLButtonElement | null;
+  const addMenu = $('#menu-add');
+  if (addBtn && addMenu) {
+    attachMenu(addBtn, addMenu, (action) => {
+      if (action === 'scan') void Capture.openScanner();
+      else if (action === 'upload') ($('#file-picker') as HTMLElement).click();
+      else if (action === 'link') Capture.openSheet();
+      else if (action === 'manual') void Capture.startReading({ mode: 'manual' });
+    });
+    Route.onNavigate(() => { addMenu.hidden = true; });
+  }
 
   ($('#url-form') as HTMLFormElement).addEventListener('submit', (e) => {
     e.preventDefault();
@@ -119,11 +133,62 @@ export function bindShellEvents(): void {
   });
 
   window.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (!($('#view-scanner') as HTMLElement).hidden) Capture.stopScanner();
-    else if (!($('#sheet-report') as HTMLElement).hidden) closeReportPopup();
-    else if (!($('#view-review') as HTMLElement).hidden) closeReview();
-    else if (!($('#sheet-capture') as HTMLElement).hidden) Capture.closeSheet();
+    const target = e.target as HTMLElement | null;
+    const typing = !!target?.closest?.('input, textarea, select, [contenteditable="true"]');
+    if (e.key === 'Escape') {
+      if (!($('#view-scanner') as HTMLElement).hidden) Capture.stopScanner();
+      else if (!($('#sheet-report') as HTMLElement).hidden) closeReportPopup();
+      else if (!($('#view-review') as HTMLElement).hidden) closeReview();
+      else if (!($('#sheet-capture') as HTMLElement).hidden) Capture.closeSheet();
+      return;
+    }
+    // Desktop shortcuts. Never fire while typing, and never before sign-in.
+    if (typing || e.metaKey || e.ctrlKey || e.altKey || ($('#shell') as HTMLElement).hidden) return;
+    if (e.key === '1') Route.go('dashboard');
+    else if (e.key === '2') Route.go('trends');
+    else if (e.key === '3') Route.go('history');
+    else if (e.key === '4') Route.go('settings');
+    else if (e.key === '/') {
+      const search = $('#history-search') as HTMLInputElement | null;
+      const historyVisible = !($('#view-history') as HTMLElement).hidden;
+      if (search && historyVisible) {
+        e.preventDefault();
+        search.focus();
+      }
+    }
+  });
+
+  /* Desktop drag-and-drop: a PDF or photo dropped on the window starts a file
+     reading, the same path as the upload action. Hidden while signed out. */
+  let dragDepth = 0;
+  const hasFiles = (e: DragEvent): boolean => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  window.addEventListener('dragenter', (e) => {
+    if (($('#shell') as HTMLElement).hidden || !hasFiles(e as DragEvent)) return;
+    e.preventDefault();
+    dragDepth++;
+    document.body.classList.add('is-dropping');
+  });
+  window.addEventListener('dragover', (e) => {
+    if (($('#shell') as HTMLElement).hidden || !hasFiles(e as DragEvent)) return;
+    e.preventDefault();
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e as DragEvent)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) document.body.classList.remove('is-dropping');
+  });
+  window.addEventListener('drop', (e) => {
+    dragDepth = 0;
+    document.body.classList.remove('is-dropping');
+    if (($('#shell') as HTMLElement).hidden) return;
+    const files = (e as DragEvent).dataTransfer?.files;
+    const file = files && files[0];
+    if (!file) return;
+    e.preventDefault();
+    const okType = file.type.indexOf('image/') === 0 || file.type === 'application/pdf';
+    if (!okType) { toast(t('drop.badtype'), 'error'); return; }
+    if (file.size > 18 * 1024 * 1024) { toast(t('shell.toobig'), 'error'); return; }
+    void Capture.startReading({ mode: 'file', file });
   });
 
   /* Charts size themselves from their container, so a resize needs a redraw. */

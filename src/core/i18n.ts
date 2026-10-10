@@ -27,6 +27,7 @@ const STR: Record<string, DictEntry> = {
   'nav.settings': { en: 'Settings', tc: '設定', sc: '设置' },
   'nav.primary': { en: 'Primary', tc: '主導航', sc: '主导航' },
   'nav.desktop': { en: 'Desktop primary', tc: '桌面主導航', sc: '桌面主导航' },
+  'rail.add': { en: 'Add reading', tc: '新增讀數', sc: '新增读数' },
 
   /* auth */
   'auth.title.1': { en: 'Read once.', tc: '讀一次。', sc: '读一次。' },
@@ -76,6 +77,11 @@ const STR: Record<string, DictEntry> = {
   'insights.cadence': { en: 'Cadence', tc: '量度頻率', sc: '测量频率' },
   'insights.cadence.body': { en: '{n} reading{s} in the last 30 days. The most recent was {rel}.', tc: '過去 30 天共 {n} 筆讀數，最近一次為{rel}。', sc: '过去 30 天共 {n} 笔读数，最近一次为{rel}。' },
   'insights.note': { en: 'These lines describe what your own readings show. They are not medical advice.', tc: '以上僅描述你的讀數走勢，並非醫療建議。', sc: '以上仅描述你的读数走势，并非医疗建议。' },
+  'sum.title': { en: 'Last 30 days', tc: '過去 30 天', sc: '过去 30 天' },
+  'sum.avgweight': { en: 'Avg weight', tc: '平均體重', sc: '平均体重' },
+  'sum.count': { en: 'Readings', tc: '讀數', sc: '读数' },
+  'sum.bf': { en: 'Body-fat change', tc: '體脂變化', sc: '体脂变化' },
+  'sum.muscle': { en: 'Muscle change', tc: '肌肉變化', sc: '肌肉变化' },
 
   /* relative days */
   'rel.today': { en: 'today', tc: '今天', sc: '今天' },
@@ -92,6 +98,8 @@ const STR: Record<string, DictEntry> = {
 
   /* trends */
   'trends.groups.label': { en: 'Choose a group of measures', tc: '選擇量度組別', sc: '选择量度组别' },
+  'trends.metrics': { en: 'Metrics', tc: '量度', sc: '测量' },
+  'trends.metrics.label': { en: 'Metrics in this group', tc: '此組別的量度', sc: '此组别的测量' },
   'trends.range.label': { en: 'Choose a time range', tc: '選擇時間範圍', sc: '选择时间范围' },
   'trends.prev': { en: 'Previous measure', tc: '上一項量度', sc: '上一项量度' },
   'trends.next': { en: 'Next measure', tc: '下一項量度', sc: '下一项量度' },
@@ -115,6 +123,13 @@ const STR: Record<string, DictEntry> = {
   'hist.empty': { en: 'Nothing matches', tc: '沒有相符項目', sc: '没有相符项目' },
   'hist.empty.body': { en: 'Try a different date, or clear the filter to see every reading.', tc: '試試其他日期，或清除篩選以查看全部讀數。', sc: '试试其他日期，或清除筛选以查看全部读数。' },
   'hist.clear': { en: 'Clear filter', tc: '清除篩選', sc: '清除筛选' },
+  'bulk.select': { en: 'Select', tc: '選取', sc: '选取' },
+  'bulk.count': { en: '{n} selected', tc: '已選 {n} 項', sc: '已选 {n} 项' },
+  'bulk.delete': { en: 'Delete', tc: '刪除', sc: '删除' },
+  'bulk.done': { en: 'Done', tc: '完成', sc: '完成' },
+  'bulk.pick': { en: 'Select the reading from {date}', tc: '選取 {date} 的讀數', sc: '选取 {date} 的读数' },
+  'bulk.confirm': { en: 'Delete {n} readings? This cannot be undone.', tc: '確定刪除 {n} 筆讀數？此操作無法復原。', sc: '确定删除 {n} 笔读数？此操作无法撤销。' },
+  'bulk.deleted': { en: '{n} reading{s} deleted', tc: '已刪除 {n} 筆讀數', sc: '已删除 {n} 笔读数' },
 
   /* detail */
   'detail.back': { en: 'Back', tc: '返回', sc: '返回' },
@@ -157,6 +172,17 @@ const STR: Record<string, DictEntry> = {
   'set.export.json': { en: 'Export JSON', tc: '匯出 JSON', sc: '导出 JSON' },
   'set.export.csv': { en: 'Export CSV', tc: '匯出 CSV', sc: '导出 CSV' },
   'set.export.copy': { en: 'Copy summary', tc: '複製摘要', sc: '复制摘要' },
+  'set.import.btn': { en: 'Import CSV', tc: '匯入 CSV', sc: '导入 CSV' },
+  'import.empty': { en: 'The file has no rows.', tc: '檔案沒有資料列。', sc: '文件没有数据行。' },
+  'import.noheader': { en: 'No measured_at column found — is this a Composition CSV?', tc: '找不到 measured_at 欄 — 這是 Composition 的 CSV 嗎？', sc: '找不到 measured_at 栏 — 这是 Composition 的 CSV 吗？' },
+  'import.baddate': { en: 'Bad date', tc: '日期無效', sc: '日期无效' },
+  'import.nometrics': { en: 'No usable measurements', tc: '沒有可用量度', sc: '没有可用测量' },
+  'import.none': { en: 'No importable readings found', tc: '找不到可匯入的讀數', sc: '找不到可导入的读数' },
+  'import.confirm.title': { en: 'Import readings?', tc: '匯入讀數？', sc: '导入读数？' },
+  'import.ready': { en: '{n} reading{s} ready', tc: '{n} 筆讀數就緒', sc: '{n} 笔读数就绪' },
+  'import.skipped': { en: '{n} rows skipped', tc: '略過 {n} 列', sc: '略过 {n} 行' },
+  'import.row': { en: 'Row {n}', tc: '第 {n} 列', sc: '第 {n} 行' },
+  'import.done': { en: 'Imported {n} reading{s}', tc: '已匯入 {n} 筆讀數', sc: '已导入 {n} 笔读数' },
   'set.install': { en: 'Install and sync', tc: '安裝與同步', sc: '安装与同步' },
   'set.installable': { en: 'Installable app', tc: '可安裝應用', sc: '可安装应用' },
   'set.installed': { en: 'Installed. Camera and offline use are available.', tc: '已安裝，可使用相機及離線功能。', sc: '已安装，可使用相机及离线功能。' },
@@ -294,6 +320,9 @@ const STR: Record<string, DictEntry> = {
   'shell.noqr': { en: 'No QR code found in that photo', tc: '相片中找不到二維碼', sc: '照片中找不到二维码' },
   'shell.codenotlink': { en: 'That code is not a report link', tc: '該代碼不是報告連結', sc: '该代码不是报告链接' },
   'shell.photofail': { en: 'The photo could not be read', tc: '相片無法讀取', sc: '照片无法读取' },
+  'drop.hint': { en: 'Drop a PDF or photo to read it', tc: '放開 PDF 或相片以讀取', sc: '放开 PDF 或照片以读取' },
+  'drop.badtype': { en: 'Only a PDF or photo can be read', tc: '只能讀取 PDF 或相片', sc: '只能读取 PDF 或照片' },
+  'hist.detailpane': { en: 'Reading details', tc: '讀數詳情', sc: '读数详情' },
 
   /* services */
   'svc.nosupa': { en: 'Supabase is not configured yet.', tc: 'Supabase 尚未設定。', sc: 'Supabase 尚未设置。' },
@@ -336,10 +365,13 @@ const STR: Record<string, DictEntry> = {
   /* charts */
   'chart.nodata': { en: 'No data in this range', tc: '此範圍沒有數據', sc: '此范围没有数据' },
   'chart.noreadings': { en: 'No readings in this range', tc: '此範圍沒有讀數', sc: '此范围没有读数' },
+  'chart.readings': { en: '{n} readings', tc: '{n} 筆讀數', sc: '{n} 笔读数' },
   'chart.covering': { en: '{p} point{s} covering {n} readings', tc: '{p} 點，共 {n} 筆讀數', sc: '{p} 点，共 {n} 笔读数' },
   'chart.count': { en: '{p} reading{s}', tc: '{p} 筆讀數', sc: '{p} 笔读数' },
+  'compare.label': { en: 'Compare with', tc: '對比', sc: '对比' },
+  'compare.none': { en: 'None', tc: '無', sc: '无' },
 
-  /* report popup */  'popup.title': { en: 'Report image', tc: '報告圖像', sc: '报告图像' },  'popup.rendering': { en: 'Rendering the report…', tc: '正在繪製報告…', sc: '正在绘制报告…' },
+    /* report popup */  'popup.title': { en: 'Report image', tc: '報告圖像', sc: '报告图像' },  'popup.rendering': { en: 'Rendering the report…', tc: '正在繪製報告…', sc: '正在绘制报告…' },
   'popup.fail': { en: 'The report image could not be rendered.', tc: '無法繪製報告圖像。', sc: '无法绘制报告图像。' },
   'popup.details': { en: 'View details', tc: '查看詳情', sc: '查看详情' },
   'popup.download': { en: 'Download PNG', tc: '下載 PNG', sc: '下载 PNG' },

@@ -110,7 +110,20 @@
     </div>
   </header>
 
-  <nav class="rail" aria-label="Desktop primary" data-i18n-aria="nav.desktop" hidden>
+  <nav class="rail" aria-label="Desktop primary" data-i18n-aria="nav.desktop">
+    <span class="rail__word">Composition</span>
+    <div class="rail__add">
+      <button class="btn btn--primary btn--block" id="btn-add-top" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-add">
+        <span aria-hidden="true" class="rail__plus">+</span>
+        <span data-i18n="rail.add">Add reading</span>
+      </button>
+      <div class="menu" id="menu-add" role="menu" hidden>
+        <button type="button" role="menuitem" data-add-action="scan"><span data-i18n="fan.scan">Scan</span></button>
+        <button type="button" role="menuitem" data-add-action="upload"><span data-i18n="fan.upload">Upload</span></button>
+        <button type="button" role="menuitem" data-add-action="link"><span data-i18n="fan.link">Link</span></button>
+        <button type="button" role="menuitem" data-add-action="manual"><span data-i18n="fan.type">Type</span></button>
+      </div>
+    </div>
     <button class="rail__item" data-route="dashboard" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 12 7 7"/></svg>
       <span data-i18n="nav.today">Today</span>
@@ -201,6 +214,13 @@
         <div class="chart dashboard-chart" id="mini-chart"></div>
       </section>
 
+      <section class="block" id="block-summary" hidden>
+        <div class="block__head">
+          <h2 class="block__title" data-i18n="sum.title">Last 30 days</h2>
+        </div>
+        <div class="od-grid tiles" id="summary-grid" style="--od-cols:2"></div>
+      </section>
+
       <section class="block" id="block-insights" hidden>
         <div class="block__head">
           <h2 class="block__title" data-i18n="dash.insights.title">What the numbers say</h2>
@@ -223,8 +243,10 @@
         <div class="wheel wheel--minor" id="range-rail" role="group" data-i18n-aria="trends.range.label" aria-label="Choose a time range"></div>
       </div>
 
-      <section class="block">
-        <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
+      <div class="trend-layout">
+        <div class="trend-main">
+          <section class="block">
+            <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
           <div class="trend-card__head">
             <button class="trend-card__nav iconbtn" id="trend-prev" type="button" data-i18n-aria="trends.prev" aria-label="Previous measure" data-i18n-title="trends.prev" title="Previous measure"></button>
             <div class="stathead">
@@ -251,6 +273,11 @@
             </div>
           </div>
           <div class="chart chart--tall" id="trend-chart"></div>
+          <div class="trend-compare">
+            <label class="trend-compare__label" for="trend-compare-sel" data-i18n="compare.label">Compare with</label>
+            <select class="select" id="trend-compare-sel"></select>
+          </div>
+          <div class="trend-legend" id="trend-legend" hidden></div>
           <div class="chart__axis">
             <span id="axis-start">&mdash;</span>
             <span id="axis-mid">&mdash;</span>
@@ -268,23 +295,50 @@
           <div class="split" id="composition-split"></div>
         </div>
       </section>
+        </div>
+        <aside class="trend-side" data-i18n-aria="trends.metrics.label" aria-label="Metrics in this group">
+          <section class="block">
+            <div class="block__head">
+              <h2 class="block__title" data-i18n="trends.metrics">Metrics</h2>
+            </div>
+            <div class="od-stack" id="metric-rail" style="--od-gap:8px"></div>
+          </section>
+        </aside>
+      </div>
     </section>
 
     <!-- HISTORY -->
     <section class="view" id="view-history" data-title="History" hidden>
-      <div class="history__tools">
-        <label class="srch">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <span class="srch__label" data-i18n="hist.filter">Filter readings by date or source</span>
-          <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
-        </label>
-        <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
-      </div>
-      <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
-      <div class="empty empty--inline" id="empty-history" hidden>
-        <h2 class="empty__title" data-i18n="hist.empty">Nothing matches</h2>
-        <p class="empty__body" data-i18n="hist.empty.body">Try a different date, or clear the filter to see every reading.</p>
-        <button class="btn btn--ghost" id="btn-clear-filter" type="button" data-i18n="hist.clear">Clear filter</button>
+      <div class="history-layout">
+        <div class="history-main">
+          <div class="history__tools">
+            <label class="srch">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <span class="srch__label" data-i18n="hist.filter">Filter readings by date or source</span>
+              <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
+            </label>
+            <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
+            <button class="btn btn--ghost btn--small" id="btn-select" type="button" data-i18n="bulk.select">Select</button>
+          </div>
+          <div class="bulkbar" id="bulk-bar" hidden>
+            <span class="bulkbar__count" id="bulk-count"></span>
+            <div class="od-cluster bulkbar__actions" style="--od-gap:8px">
+              <button class="btn btn--ghost btn--small" id="bulk-csv" type="button">CSV</button>
+              <button class="btn btn--ghost btn--small" id="bulk-json" type="button">JSON</button>
+              <button class="btn btn--danger btn--small" id="bulk-delete" type="button" data-i18n="bulk.delete">Delete</button>
+              <button class="btn btn--ghost btn--small" id="bulk-done" type="button" data-i18n="bulk.done">Done</button>
+            </div>
+          </div>
+          <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
+          <div class="empty empty--inline" id="empty-history" hidden>
+            <h2 class="empty__title" data-i18n="hist.empty">Nothing matches</h2>
+            <p class="empty__body" data-i18n="hist.empty.body">Try a different date, or clear the filter to see every reading.</p>
+            <button class="btn btn--ghost" id="btn-clear-filter" type="button" data-i18n="hist.clear">Clear filter</button>
+          </div>
+        </div>
+        <aside class="history-detail" id="history-detail-wrap" data-i18n-aria="hist.detailpane" aria-label="Reading details" hidden>
+          <div id="history-detail"></div>
+        </aside>
       </div>
     </section>
 
@@ -382,8 +436,10 @@
           <div class="od-cluster" style="--od-gap:8px">
             <button class="btn btn--ghost btn--small" id="btn-export-json" type="button" data-i18n="set.export.json">Export JSON</button>
             <button class="btn btn--ghost btn--small" id="btn-export-csv" type="button" data-i18n="set.export.csv">Export CSV</button>
+            <button class="btn btn--ghost btn--small" id="btn-import-csv" type="button" data-i18n="set.import.btn">Import CSV</button>
             <button class="btn btn--ghost btn--small" id="btn-copy-summary" type="button" data-i18n="set.export.copy">Copy summary</button>
           </div>
+          <input type="file" id="import-picker" accept=".csv,text/csv" hidden>
         </div>
       </section>
 
@@ -520,6 +576,10 @@
       </span>
       <span class="scanfan__label" data-i18n="fan.type">Type</span>
     </button>
+  </div>
+
+  <div class="drop-cue" id="drop-cue" aria-hidden="true">
+    <span data-i18n="drop.hint">Drop a PDF or photo to read it</span>
   </div>
 </div>
 

@@ -3,7 +3,7 @@
   while the tracker still opens offline.
    Nothing medical is cached beyond the user's own device. */
 
-const CACHE = 'composition-v28';
+const CACHE = 'composition-v29';
 const ASSETS = [
   './',
   './index.html',
@@ -37,6 +37,8 @@ const ASSETS = [
   /* The readings themselves, and where they are kept. */
   './js/data/db.js',
   './js/data/dedupe.js',
+  './js/data/export.js',
+  './js/data/import.js',
   './js/data/selectors.js',
   './js/data/store.js',
   './js/data/sync.js',
@@ -68,6 +70,7 @@ const ASSETS = [
 
   './js/components/chart.js',
   './js/components/chip.js',
+  './js/components/menu.js',
   './js/components/tile.js',
   './js/components/wheel.js',
 

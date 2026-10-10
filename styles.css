@@ -1642,3 +1642,227 @@ html[data-motion="reduced"] .view { animation: none; }
   border-radius: var(--r-md, 12px);
   background: var(--c-surface-2);
 }
+
+/* Report popup facts: chips on mobile, sticky side panel on desktop. */
+.report__facts { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-3); }
+.report__fact {
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  font-size: var(--fs-sm);
+  color: var(--c-muted);
+}
+.report__fact b { color: var(--c-ink); font-weight: 600; }
+
+/* Trends side list is desktop-only; mobile keeps the single card + swipe. */
+.trend-side { display: none; }
+.metric-rail__item { border-radius: var(--r-card); cursor: pointer; }
+.metric-rail__item.is-current { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.metric-rail__item:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+
+/* =====================================================================
+   Desktop workspace (1024px and up): labeled sidebar shell, grids instead
+   of stacks, and side-by-side analysis panes. Mobile-first is preserved —
+   everything below is min-width additions; narrow viewports are untouched.
+   ===================================================================== */
+:root { --sidebar-w: 236px; }
+
+@media (min-width: 1024px) {
+  /* shell: sidebar left, topbar + content right, no bottom tab bar */
+  .shell { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .topbar { grid-column: 2; grid-row: 1; }
+  .main { grid-column: 2; grid-row: 2; padding-bottom: var(--s-6); }
+  .tabbar { display: none; }
+
+  .rail {
+    display: flex !important;
+    flex-direction: column;
+    gap: var(--s-1);
+    grid-column: 1;
+    grid-row: 1 / -1;
+    padding: var(--s-5) var(--s-4);
+    background: var(--c-surface);
+    border-right: 1px solid var(--c-line-soft);
+    overflow-y: auto;
+  }
+  .rail__word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -.01em;
+    padding: 0 var(--s-2) var(--s-2);
+  }
+  .rail__add { position: relative; margin-bottom: var(--s-3); }
+  .rail__plus { font-size: 1.15em; line-height: 1; font-weight: 700; }
+  .rail__item {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    width: 100%;
+    min-height: 44px;
+    padding: 0 var(--s-3);
+    border: 0;
+    border-radius: var(--r-control);
+    background: none;
+    color: var(--c-muted);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-align: left;
+  }
+  .rail__item.is-current { background: var(--c-primary-soft); color: var(--c-primary); }
+
+  /* dropdown menu (sidebar capture actions) */
+  .menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    z-index: 60;
+    display: grid;
+    gap: 2px;
+    padding: 6px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-2);
+  }
+  .menu > button {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: var(--r-control);
+    background: none;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  /* dashboard: hero + deltas, trend + insights, full-width measures */
+  #view-dashboard {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 var(--s-5);
+    align-items: start;
+  }
+  #banner-setup, #empty-dashboard { grid-column: 1 / -1; }
+  #hero { grid-column: span 7; }
+  #block-deltas { grid-column: span 5; }
+  #block-trend { grid-column: span 7; }
+  #block-summary { grid-column: 1 / -1; }
+  #summary-grid.od-grid.tiles { --od-cols: 4 !important; }
+  #block-insights { grid-column: span 5; }
+  #block-all-measurements { grid-column: 1 / -1; }
+
+  /* trends: chart left, metric cards right */
+  .trend-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 0 var(--s-5);
+    align-items: start;
+  }
+  .trend-side { display: block; min-width: 0; }
+
+  /* history: denser cards, sticky filter */
+  #history-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+  .history__tools {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--c-canvas);
+    padding-block: var(--s-2);
+  }
+
+  /* settings: two columns, full-width account + danger */
+  #view-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--s-5); align-items: start; }
+  #view-settings > .block { margin-top: var(--s-5); }
+  #view-settings > .block:first-child, #view-settings > .block:last-child { grid-column: 1 / -1; }
+  #view-settings > .block:first-child { margin-top: 0; }
+
+  /* sheets breathe wider */
+  .sheet--full .sheet__body { max-width: 960px; }
+  .sheet--full .sheet__foot { max-width: 960px; }
+
+  /* report popup: canvas left, facts sticky right */
+  #report-body { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: var(--s-4); align-items: start; }
+  .report__facts { position: sticky; top: 0; display: grid; gap: var(--s-2); align-content: start; margin-bottom: 0; }
+}
+
+/* Master–detail history (1280px and up): list left, reading right. */
+.history-detail { display: none; }
+@media (min-width: 1280px) {
+  .history-layout { display: grid; grid-template-columns: minmax(0, 430px) minmax(0, 1fr); gap: 0 var(--s-5); align-items: start; }
+  .history-layout #history-list { grid-template-columns: 1fr; }
+  .history-detail { display: block; min-width: 0; }
+  .history-detail[hidden] { display: none; }
+  .history-detail > div {
+    position: sticky;
+    top: 0;
+    padding: var(--s-4);
+    border: 1px solid var(--c-line-soft);
+    border-radius: var(--r-card);
+    background: var(--c-surface);
+  }
+  .hitem.is-current { border-color: var(--c-primary); box-shadow: var(--ring); }
+}
+
+/* History bulk selection + bar. */
+.bulkbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+.bulkbar__count { font-size: var(--fs-sm); font-weight: 600; }
+.bulkbar__actions { justify-content: flex-end; }
+.hitem-row { display: flex; align-items: center; gap: var(--s-2); }
+.hitem-row .hitem { flex: 1 1 auto; min-width: 0; }
+.hitem__check { flex: none; width: 22px; height: 22px; accent-color: var(--c-primary); }
+
+/* Desktop drag-and-drop cue. */
+.drop-cue { display: none; }
+body.is-dropping .drop-cue {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: color-mix(in srgb, var(--c-primary-soft) 88%, transparent);
+  pointer-events: none;
+}
+body.is-dropping .drop-cue span {
+  padding: var(--s-4) var(--s-6);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-2);
+  font-weight: 700;
+}
+
+/* Compare overlay: dashed secondary series. */
+.chart__line--compare { fill: none; stroke-width: 2; }
+
+/* Trends compare picker + legend. */
+.trend-compare {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+.trend-compare__label { font-size: var(--fs-sm); font-weight: 600; color: var(--c-muted); flex: none; }
+.trend-compare .select { flex: 1 1 auto; min-width: 0; }
+.trend-legend { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-2); }
+.trend-legend__item { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xs); color: var(--c-muted); }
+.trend-legend__sw { width: 22px; height: 3px; border-radius: 2px; }
+.trend-legend__sw--dash { height: 0; border-top: 3px dashed; border-radius: 0; }
+
+@media (hover: hover) {
+  .rail__item:hover { background: var(--c-surface-2); }
+  .rail__item.is-current:hover { background: var(--c-primary-soft); }
+  .menu > button:hover { background: var(--c-surface-2); }
+  .metric-rail__item:hover { outline: 2px solid var(--c-line); outline-offset: 2px; }
+  .metric-rail__item.is-current:hover { outline-color: var(--c-primary); }
+}

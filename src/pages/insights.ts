@@ -103,3 +103,36 @@ export function renderInsights(): void {
   note.textContent = t('insights.note');
   host.appendChild(note);
 }
+
+/** Last-30-days stat chips: averages and net changes, no new data layer. */
+export function renderSummary(): void {
+  const host = $('#summary-grid');
+  if (!host) return;
+  clear(host);
+
+  const since = Date.now() - 30 * 86400000;
+  const rows = sortedAsc(getReadings()).filter((r) => new Date(r.measuredAt).getTime() >= since);
+
+  const stat = (label: string, value: string): void => {
+    const card = el('div', 'tile');
+    card.appendChild(el('span', 'tile__label', label));
+    card.appendChild(el('span', 'tile__value', value));
+    host.appendChild(card);
+  };
+
+  const series = (key: string): number[] =>
+    rows.filter((r) => r.metrics && typeof r.metrics[key] === 'number').map((r) => r.metrics[key] as number);
+
+  const weights = series('weight');
+  stat(t('sum.avgweight'), weights.length ? metricText('weight', weights.reduce((a, b) => a + b, 0) / weights.length) : '—');
+  stat(t('sum.count'), String(rows.length));
+
+  const net = (key: string): number | null => {
+    const vs = series(key);
+    return vs.length >= 2 ? vs[vs.length - 1] - vs[0] : null;
+  };
+  const signed = (key: string, v: number | null): string =>
+    v == null || v === 0 ? (v == null ? '—' : metricText(key, 0)) : (v < 0 ? '-' : '+') + metricText(key, Math.abs(v));
+  stat(t('sum.bf'), signed('bodyFat', net('bodyFat')));
+  stat(t('sum.muscle'), signed('muscleMass', net('muscleMass')));
+}

@@ -131,6 +131,26 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
   line.setAttribute('stroke', opts.accent);
   svg.appendChild(line);
 
+  /* Compare overlay: the secondary series is affinely mapped onto the primary
+     span (its own min anchors the bottom, its max the top), so shape can be
+     compared across units. Only the shape transfers — the axis stays primary. */
+  const cmp = opts.compare && opts.compare.points.length ? opts.compare : null;
+  let cmpAt: ((v: number) => number) | null = null;
+  if (cmp) {
+    const cvs = cmp.points.map((p) => p.v);
+    const cmin = Math.min.apply(null, cvs);
+    const cmax = Math.max.apply(null, cvs);
+    const cspan = (cmax - cmin) || 1;
+    cmpAt = (v: number): number => lo + ((v - cmin) / cspan) * (hi - lo);
+    const cPath = cmp.points.map((p, i) => (i === 0 ? 'M' : 'L') + xAt(p.t).toFixed(1) + ' ' + (cmpAt as (v: number) => number)(p.v).toFixed(1)).join(' ');
+    const cLine = svgEl('path');
+    cLine.setAttribute('class', 'chart__line chart__line--compare');
+    cLine.setAttribute('d', cPath);
+    cLine.setAttribute('stroke', cmp.accent || 'var(--c-slate)');
+    cLine.setAttribute('stroke-dasharray', '6 4');
+    svg.appendChild(cLine);
+  }
+
   if (opts.dots && pts.length <= 40) {
     pts.forEach((p) => {
       const c = svgEl('circle');
@@ -179,8 +199,18 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
     // A ranged series plots one averaged point per bucket, so the label names the
     // bucket, and says how many readings went into it when it stood for more than one.
     const when = opts.pointLabel ? opts.pointLabel(point) : fmtDate(point.t, { day: 'numeric', month: 'short' });
-    const spread = (point.readings ?? 0) > 1 ? ' · ' + point.readings + ' readings' : '';
-    tip.textContent = metricText(opts.metricKey || '', point.v) + ' · ' + when + spread;
+    const spread = (point.readings ?? 0) > 1 ? ' · ' + t('chart.readings', { n: point.readings as number }) : '';
+    let cmpText = '';
+    if (cmp) {
+      let cbest = cmp.points[0];
+      let cdist = Infinity;
+      cmp.points.forEach((p) => {
+        const d = Math.abs(xAt(p.t) - localX);
+        if (d < cdist) { cdist = d; cbest = p; }
+      });
+      if (cbest) cmpText = ' · ' + cmp.label + ': ' + cmp.format(cbest.v);
+    }
+    tip.textContent = metricText(opts.metricKey || '', point.v) + ' · ' + when + spread + cmpText;
     tip.hidden = false;
   }
 
