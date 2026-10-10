@@ -1,67 +1,31 @@
-/* Composition — the review screen.
+/* Composition — the review screen (view).
    Everything the reader extracted lands here for a human to confirm before it is
-   written to the device. This is the only place a reading is created. */
+   written to the device. Rendering lives here; validation lives in
+   review-validate.js; reading construction + persistence lives in
+   reading-builder.js; report flattening lives in domain/report.js. */
 
-import { $, $$, el, clear, uid, toast } from '../core/dom.js';
+import { $, el, clear } from '../core/dom.js';
 import {
   METRICS, METRIC_ORDER,
-  REPORT_SECTION_LABELS, REPORT_FIELD_LABELS, REPORT_FIELD_UNITS,
-  REPORT_METRIC_PATHS as METRIC_REPORT_PATHS, SEGMENTAL_REPORT_PATHS, SOURCE_LABEL
+  REPORT_SECTION_LABELS, REPORT_FIELD_UNITS,
+  SOURCE_LABEL
 } from '../core/metrics.js';
-import { parseNumber, toDate } from '../core/format.js';
-import { addReading } from '../data/store.js';
-import { Settings } from '../core/settings.js';
-import { Auth } from '../services/auth.js';
-import { mirrorSync } from '../data/sync.js';
-import { Route } from '../core/router.js';
+import {
+  reportFieldLabel,
+  reportLeaves,
+  reportValue,
+  reportValueText,
+  reportUnit
+} from '../domain/report.js';
+import { toDate } from '../core/format.js';
+import { buildReading, saveReadingDirect, persistReading } from './reading-builder.js';
+import { validateReviewForm } from './review-validate.js';
+
+/* saveReadingDirect is re-exported so the reading pipeline keeps importing from
+   this view module as before. New code may import reading-builder.js directly. */
+export { saveReadingDirect };
 
 let reviewState = null;
-
-function reportFieldLabel(key) {
-  if (REPORT_FIELD_LABELS[key]) return REPORT_FIELD_LABELS[key];
-  return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-const METRIC_REPORT_PATH_MAP = new Map(
-  METRIC_REPORT_PATHS.map(([key, section, field]) => [key, section + '.' + field])
-    .concat(SEGMENTAL_REPORT_PATHS.map(([key, section, field]) => [key, 'segmental_analysis.' + section + '.' + field]))
-);
-const PROMOTED_REPORT_PATHS = new Set(METRIC_REPORT_PATH_MAP.values());
-
-// Flattens a report section into leaves while retaining the nested group path. The
-// report view uses that path to rebuild the response's own section hierarchy.
-function reportLeaves(section, path, group, out) {
-  Object.keys(section || {}).forEach((key) => {
-    const item = section[key];
-    if (item == null || item === '') return;
-    const next = path ? path + '.' + key : key;
-    if (typeof item === 'object' && !Array.isArray(item)) {
-      const nextGroup = group ? group + ' · ' + reportFieldLabel(key) : reportFieldLabel(key);
-      reportLeaves(item, next, nextGroup, out);
-      return;
-    }
-    const label = reportFieldLabel(key);
-    out.push({
-      path: next,
-      group,
-      label: group ? group + ' · ' + label : label,
-      value: item,
-      promoted: PROMOTED_REPORT_PATHS.has(next),
-      readOnly: next === 'provider_details' || next.indexOf('provider_details.') === 0
-    });
-  });
-  return out;
-}
-
-function reportValue(report, path) {
-  return path.split('.').reduce((value, key) => value == null ? null : value[key], report);
-}
-
-function reportValueText(value) {
-  if (Array.isArray(value)) return JSON.stringify(value);
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
-}
 
 function reviewReportField(leaf) {
   const field = el('div', 'rev__field');
@@ -121,75 +85,10 @@ function reviewField(key, value) {
   return field;
 }
 
-/** Writes the edited report values back onto a copy of the extracted report. */
-function applyReportEdits(report, edits) {
-  if (!report) return null;
-  const next = JSON.parse(JSON.stringify(report));
-  Object.keys(edits).forEach((path) => {
-    const parts = path.split('.');
-    let node = next;
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (!node[parts[i]] || typeof node[parts[i]] !== 'object') node[parts[i]] = {};
-      node = node[parts[i]];
-    }
-    const last = parts[parts.length - 1];
-    if (edits[path] === null) delete node[last];
-    else node[last] = edits[path];
-  });
-  return next;
-}
-
 function toLocalInput(iso) {
   const d = toDate(iso) || new Date();
   const pad = (n) => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-}
-
-function buildReading(state, metrics, reportEdits, measuredAtValue) {
-  const measuredAt = toDate(measuredAtValue || state.measuredAt);
-  if (!measuredAt) throw new Error('The measurement date is missing.');
-  if (!Object.keys(metrics).length) throw new Error('Add at least one measurement before saving.');
-
-  const now = new Date().toISOString();
-  return {
-    id: uid(),
-    createdAt: now,
-    updatedAt: now,
-    measuredAt: measuredAt.toISOString(),
-    source: state.source || 'manual',
-    sourceType: state.sourceType || null,
-    extractionMethod: state.extractionMethod || null,
-    playerId: state.playerId || null,
-    language: state.language || null,
-    reportUrl: state.reportUrl || null,
-    note: state.notes || state.note || '',
-    confidence: state.confidence,
-    raw: state.raw,
-    report: applyReportEdits(state.report, reportEdits || {}),
-    metrics
-  };
-}
-
-async function persistReading(reading) {
-  const { reading: stored, outcome } = await addReading(reading);
-
-  if (outcome === 'kept') {
-    // The same report is already on the device carrying more than this extraction found,
-    // so the stored copy was left alone. Saying which happened is the difference between
-    // a silent no-op and a save the reader can trust.
-    toast('This report is already saved in more detail', 'error');
-  } else {
-    toast(outcome === 'updated' ? 'Reading updated' : 'Reading saved');
-  }
-
-  Route.go('dashboard');
-  if (Settings.get().mirror && Auth.isConfigured()) mirrorSync().catch(() => {});
-  return stored;
-}
-
-/** Saves trusted provider data without opening the human review screen. */
-export async function saveReadingDirect(state) {
-  return persistReading(buildReading(state, Object.assign({}, state.metrics || {})));
 }
 
 /** The read-only report metadata, as plain rows. It sits above the form because it
@@ -376,9 +275,10 @@ function revealField(node) {
  * @param {object} state Extraction result: metrics, report, measuredAt, source…
  */
 export function openReview(state) {
-  reviewState = Object.assign({ extras: [] }, state);
   const host = $('#review-body');
   clear(host);
+  // Keep module state for saveReview; extras retained for forward-compat.
+  reviewState = Object.assign({ extras: [] }, state);
 
   $('#review-title').textContent = state.report ? 'Review report' : 'Check the numbers';
   host.appendChild(reviewSummary(state));
@@ -472,85 +372,17 @@ export function closeReview() {
 export async function saveReview() {
   if (!reviewState) return;
   const errBox = $('#rev-error');
-  const errs = [];
-  const metrics = {};
-  const metricInputs = {};
 
-  /* The first field to fail is the one the reader is sent back to, so a bad value
-     in a collapsed section still opens that section rather than failing quietly. */
-  let firstBad = null;
-  const flag = (input) => {
-    input.setAttribute('aria-invalid', 'true');
-    if (!firstBad) firstBad = input;
-  };
-
-  $$('#rev-grid input[data-metric]').forEach((input) => {
-    const key = input.dataset.metric;
-    const meta = METRICS[key];
-    metricInputs[key] = input.value.trim();
-    input.removeAttribute('aria-invalid');
-    if (input.value.trim() === '') return;
-
-    const value = parseNumber(input.value);
-    if (value == null || isNaN(value)) {
-      errs.push(meta.label + ' is not a number.');
-      flag(input);
-      return;
-    }
-    if (value < meta.min || value > meta.max) {
-      errs.push(meta.label + ' should sit between ' + meta.min + ' and ' + meta.max + (meta.unit ? ' ' + meta.unit : '') + '.');
-      flag(input);
-      return;
-    }
-    metrics[key] = value;
-  });
-
-  const reportEdits = {};
-  $$('#review-form input[data-report-path]').forEach((input) => {
-    const path = input.dataset.reportPath;
-    const raw = input.value.trim();
-    input.removeAttribute('aria-invalid');
-
-    if (input.dataset.reportKind === 'number') {
-      if (raw === '') { reportEdits[path] = null; return; }
-      const value = parseNumber(raw);
-      if (value == null || isNaN(value)) {
-        errs.push(reportFieldLabel(path.split('.').pop()) + ' is not a number.');
-        flag(input);
-        return;
-      }
-      reportEdits[path] = value;
-      return;
-    }
-    reportEdits[path] = raw === '' ? null : raw;
-  });
-
-  Object.keys(metricInputs).forEach((key) => {
-    const path = METRIC_REPORT_PATH_MAP.get(key);
-    if (!path) return;
-    reportEdits[path] = metricInputs[key] === '' ? null : metrics[key];
-  });
-
-  const dateInput = $('#rev-date');
-  const measuredAt = toDate(dateInput.value);
-  if (!measuredAt) {
-    errs.push('The measurement date is missing.');
-    flag(dateInput);
-  }
-
-  if (errs.length) {
+  const checked = validateReviewForm();
+  if (!checked.ok) {
     errBox.hidden = false;
-    errBox.textContent = errs.join(' ');
-    if (firstBad) revealField(firstBad);
-    return;
-  }
-  if (!Object.keys(metrics).length) {
-    errBox.hidden = false;
-    errBox.textContent = 'Add at least one measurement before saving.';
-    revealPanel('rev-sec-measurement');
+    errBox.textContent = checked.errors.join(' ');
+    if (checked.empty) revealPanel('rev-sec-measurement');
+    else if (checked.firstBad) revealField(checked.firstBad);
     return;
   }
 
+  const { metrics, reportEdits, measuredAt } = checked;
   const reading = buildReading(reviewState, metrics, reportEdits, measuredAt);
 
   try {

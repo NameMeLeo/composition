@@ -1,6 +1,15 @@
 /* =====================================================================
    Composition — design tokens and components
    Palette, type, spacing and motion are declared once, here.
+
+   Contents (single file, no build — search for the banners):
+     1. Tokens: palette · type · spacing · radius · shadow
+     2. Base: reset · body · focus · skip link
+     3. App frame: shell · topbar · rail · tabbar · scan fan
+     4. Views: hero · tiles · charts · trends · history · detail · settings
+     5. Overlays: sheets · scanner · review · toast · overlays
+   A future split is styles/{tokens,base,frame,views,overlays}.css with
+   @import from this file; keep the banners so the split is mechanical.
    ===================================================================== */
 
 :root {

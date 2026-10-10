@@ -37,3 +37,10 @@ export function uid() {
 export function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n));
 }
+
+/** Decodes pasted HTML entities ("&amp;") without touching the real URL. */
+export function decodeHtmlEntities(input) {
+  const holder = document.createElement('textarea');
+  holder.innerHTML = String(input || '');
+  return holder.value;
+}

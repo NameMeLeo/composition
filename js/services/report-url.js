@@ -7,6 +7,7 @@
    the base configured in Settings. */
 
 import { Settings } from '../core/settings.js';
+import { decodeHtmlEntities } from '../core/dom.js';
 
 /* The report site treats a missing `language` as its own default, which is
    Traditional Chinese. So the way to ask for Chinese is to leave the parameter
@@ -45,10 +46,8 @@ export function playerReportUrl(playerId, language) {
  *          | {ok: false, reason: 'empty'|'not-a-url'|'no-base'}}
  */
 export function parseReportUrl(input) {
-  // Decodes pasted HTML entities ("&amp;") without touching the real URL.
-  const holder = document.createElement('textarea');
-  holder.innerHTML = String(input || '');
-  let text = holder.value.trim().replace(/^[`"']+|[`"']+$/g, '').trim();
+  // Decodes pasted HTML entities via the shared DOM helper (see core/dom.js).
+  let text = decodeHtmlEntities(input).trim().replace(/^[`"']+|[`"']+$/g, '').trim();
   if (!text) return { ok: false, reason: 'empty' };
 
   // A bare digit string is a player id. Checked before the URL pattern so a

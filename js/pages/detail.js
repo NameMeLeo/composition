@@ -3,56 +3,17 @@
 import { $, el, clear, toast } from '../core/dom.js';
 import {
   METRICS, METRIC_ORDER,
-  REPORT_SECTION_ORDER, REPORT_SECTION_LABELS, REPORT_FIELD_LABELS, REPORT_FIELD_UNITS,
+  REPORT_SECTION_ORDER, REPORT_SECTION_LABELS,
   METRIC_REFERENCE_RANGES
 } from '../core/metrics.js';
+import { reportFieldLabel, reportRows, reportUnit, reportValueText } from '../domain/report.js';
 import { fmtDate, fmtDateTime, metricText, metricDisplay } from '../core/format.js';
 import { getReadings, deleteReading } from '../data/store.js';
 import { Route } from '../core/router.js';
 
 /* ------------------------------------------------------------------ */
-/* Reading a report back                                               */
+/* Reading a report back (shared walk lives in domain/report.js)        */
 /* ------------------------------------------------------------------ */
-
-/* Field names arrive as snake_case. The ones the app has a name for are in
-   REPORT_FIELD_LABELS; anything else is humanised rather than shown raw, so a field
-   added to the reader's schema still reads as words instead of an identifier. */
-function reportFieldLabel(key) {
-  if (REPORT_FIELD_LABELS[key]) return REPORT_FIELD_LABELS[key];
-  return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function reportValueText(value) {
-  if (Array.isArray(value)) return JSON.stringify(value);
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
-}
-
-/* Units are keyed by the whole path where the same leaf means different things —
-   "standard" is kg under weight and % under body fat — and by the leaf name
-   otherwise. */
-function reportUnit(path) {
-  return REPORT_FIELD_UNITS[path] || REPORT_FIELD_UNITS[path.split('.').pop()];
-}
-
-/** Every leaf of one report section as label/value rows. The nested group is kept in
-    the label so "Left arm" under Muscle mass never reads like "Left arm" under fat. */
-function reportRows(section, prefix, group, out) {
-  Object.keys(section || {}).forEach((key) => {
-    const value = section[key];
-    if (value == null || value === '') return;
-
-    const path = prefix ? prefix + '.' + key : key;
-    const label = reportFieldLabel(key);
-
-    if (typeof value === 'object' && !Array.isArray(value)) {
-      reportRows(value, path, group ? group + ' · ' + label : label, out);
-      return;
-    }
-    out.push({ label: group ? group + ' · ' + label : label, path, value });
-  });
-  return out;
-}
 
 function reportBlock(title, rows) {
   const block = el('section', 'detail__reportsec');
