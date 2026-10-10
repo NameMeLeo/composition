@@ -4,6 +4,7 @@
    provider path that skips the human review screen). No DOM here. */
 
 import { uid, toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { toDate } from '../core/format.js';
 import { addReading } from '../data/store.js';
 import { Settings } from '../core/settings.js';
@@ -37,8 +38,8 @@ export function buildReading(
   measuredAtValue?: Date | string | null
 ): Reading {
   const measuredAt = toDate(measuredAtValue || state.measuredAt);
-  if (!measuredAt) throw new Error('The measurement date is missing.');
-  if (!Object.keys(metrics).length) throw new Error('Add at least one measurement before saving.');
+  if (!measuredAt) throw new Error(t('review.nodate'));
+  if (!Object.keys(metrics).length) throw new Error(t('review.empty'));
 
   const now = new Date().toISOString();
   return {
@@ -67,9 +68,9 @@ export async function persistReading(reading: Reading): Promise<Reading> {
     // The same report is already on the device carrying more than this extraction found,
     // so the stored copy was left alone. Saying which happened is the difference between
     // a silent no-op and a save the reader can trust.
-    toast('This report is already saved in more detail', 'error');
+    toast(t('pipe.kept'), 'error');
   } else {
-    toast(outcome === 'updated' ? 'Reading updated' : 'Reading saved');
+    toast(outcome === 'updated' ? t('pipe.updated') : t('pipe.saved'));
   }
 
   Route.go('dashboard');

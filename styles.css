@@ -1630,3 +1630,15 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
   scroll-behavior: auto !important;
 }
 html[data-motion="reduced"] .view { animation: none; }
+
+/* =====================================================================
+   Report image popup: the provider canvas at native resolution, scaled to
+   the sheet width. The sheet body scrolls vertically for the full 2740px.
+   ===================================================================== */
+.report__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-md, 12px);
+  background: var(--c-surface-2);
+}

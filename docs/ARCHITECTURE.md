@@ -12,9 +12,15 @@ src/
   main.ts              # thin boot: settings → shell wiring → readings → auth → route
   app/shell-events.ts  # app-frame chrome (nav, auth button, sheet/scanner/review chrome)
   core/                # pure plumbing: dom, events, router, settings, theme, constants
+    + core/i18n.ts   # en/tc/sc dictionary, t(), applyI18n(), label helpers
   domain/              # shared vocabulary: types.ts + report.ts (flatten/label/read back)
     + core/metrics.ts  # metric catalogue (METRICS, groups, ranges, report paths)
-    + core/format.ts   # dates, numbers, unit-aware display
+    + core/format.ts   # dates, numbers, unit-aware display (locale-aware)
+  report/
+    overlay-table.ts   # provider canvas coordinates ported from the source page
+    report-image.ts    # canvas replica: bundled bg.png + raw payload overlay
+    report-popup.ts    # #sheet-report controller (view details / download PNG)
+  assets/report/{tc,en,sc}/bg.png  # bundled provider backgrounds (snapshots)
   data/
     db.ts              # IndexedDB primitives only
     dedupe.ts          # same-report identity (serial + minute + player)
@@ -49,7 +55,30 @@ scan/link/file/manual
   → events.emit('readings') → router refreshes mounted page
 ```
 
-Trusted provider results skip review via `reading-builder.saveReadingDirect`.
+Trusted provider results skip review via `reading-builder.saveReadingDirect`,
+then open the report-image popup (`report/report-popup.openReportPopup`).
+
+## Provider report image
+
+The Tanita page is a canvas SPA: `bg.png` + JSON overlaid at fixed coordinates
+(`supabase/functions/ocr/tanita.ts` documents the API). We replicate that
+composition in-app: `report/overlay-table.ts` ports the coordinates,
+`report-image.ts` paints them over the bundled `assets/report/<lang>/bg.png`,
+and the popup offers View details / Download PNG. The static `text.jpg` tail
+is intentionally dropped. Small overlay icons (star, balance marks, leg dot)
+are proxied through the edge function (`mode: 'report-asset'`, allowlisted to
+five PNGs) because the HTTPS app cannot reach the plain-HTTP provider host.
+
+## Multi-language (en/tc/sc)
+
+`core/i18n.ts` owns one `{en, tc, sc}` dictionary. Dynamic code calls `t(key,
+vars)`; static HTML wears `data-i18n` / `data-i18n-ph` / `data-i18n-aria` /
+`data-i18n-title` attributes swapped by `applyI18n()` (boot + language change).
+Metric, section, field and source labels go through `metricLabel()` /
+`sectionLabel()` / `fieldLabel()` / `sourceLabel()` with English fallbacks.
+`Settings.lang` (`system` default) resolves via `navigator.language`
+(Hant→tc, Hans→sc). The report background follows the reading's language,
+falling back to the app language.
 
 ## Conventions
 

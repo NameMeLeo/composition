@@ -1,6 +1,7 @@
 /* Composition — getting readings back out of the app. */
 
 import { $, toast } from '../core/dom.js';
+import { t, metricLabel } from '../core/i18n.js';
 import { APP_VERSION } from '../core/constants.js';
 import { METRICS, METRIC_ORDER } from '../core/metrics.js';
 import { fmtDateTime, metricText } from '../core/format.js';
@@ -43,7 +44,7 @@ export function exportJSON(): void {
     JSON.stringify({ app: 'composition', version: APP_VERSION, exportedAt: new Date().toISOString(), readings: sortedAsc(getAllReadings()) }, null, 2),
     'application/json'
   );
-  toast('JSON exported');
+  toast(t('exp.json'));
 }
 
 /* Column header -> metric key. Derived from the METRICS catalogue in one place so
@@ -83,13 +84,13 @@ export function exportCSV(): void {
     return row.metrics ? row.metrics[METRIC_COLUMNS[h]] : null;
   });
   download('composition-readings-' + stamp() + '.csv', text, 'text/csv;charset=utf-8');
-  toast('CSV exported');
+  toast(t('exp.csv'));
 }
 
 /** Samsung Health's import shape. Needs weight and body fat to be meaningful. */
 export function exportSamsung(): void {
   const rows = sortedAsc(getReadings()).filter((r) => r.metrics && r.metrics.weight != null && r.metrics.bodyFat != null);
-  if (!rows.length) { toast('Samsung Health import needs weight and body fat', 'error'); return; }
+  if (!rows.length) { toast(t('exp.samsung.need'), 'error'); return; }
 
   const headers = ['start_time', 'end_time', 'weight', 'body_fat', 'skeletal_muscle', 'body_water', 'visceral_fat', 'bmi', 'basal_metabolic_rate'];
   const text = toCSV(rows, headers, (row, h) => {
@@ -105,27 +106,27 @@ export function exportSamsung(): void {
     return null;
   });
   download('samsung-health-body-composition-' + stamp() + '.csv', text, 'text/csv;charset=utf-8');
-  toast('Samsung-shaped CSV exported');
+  toast(t('exp.samsung.done'));
 }
 
 export async function copySummary(): Promise<void> {
   const last = latest();
-  if (!last) { toast('Nothing to summarise yet'); return; }
+  if (!last) { toast(t('exp.nothing')); return; }
 
-  const lines = ['Body composition — ' + fmtDateTime(last.measuredAt)];
+  const lines = [t('exp.summary.head', { date: fmtDateTime(last.measuredAt) })];
   METRIC_ORDER.forEach((key) => {
-    if (typeof last.metrics[key] === 'number') lines.push(METRICS[key].label + ': ' + metricText(key, last.metrics[key]));
+    if (typeof last.metrics[key] === 'number') lines.push(metricLabel(key, METRICS[key].label) + ': ' + metricText(key, last.metrics[key]));
   });
   const text = lines.join('\n');
 
   try {
     await navigator.clipboard.writeText(text);
-    toast('Summary copied');
+    toast(t('exp.copied'));
   } catch (e) {
     // Clipboard access needs a secure context; the hidden field is the fallback.
     const holder = $('#clipboard-holder') as HTMLTextAreaElement;
     holder.value = text;
     holder.select();
-    toast('Summary selected — copy it from the text field');
+    toast(t('exp.select'));
   }
 }

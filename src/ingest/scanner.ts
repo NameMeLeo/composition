@@ -4,6 +4,7 @@
    this module never fetches or parses reports itself beyond that routing. */
 
 import { $, toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.js';
 import { startReading } from './reading-pipeline.js';
 
@@ -64,8 +65,8 @@ async function ensureDetector(): Promise<Detector | null> {
 
 export async function openScanner(): Promise<void> {
   $('#sheet-capture').hidden = true;
-  ($('#scanner-engine') as HTMLElement).textContent = 'Starting camera';
-  ($('#scanner-hint') as HTMLElement).textContent = 'Line the QR code up inside the frame';
+  ($('#scanner-engine') as HTMLElement).textContent = t('scan.starting');
+  ($('#scanner-hint') as HTMLElement).textContent = t('scan.hint');
 
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -79,14 +80,14 @@ export async function openScanner(): Promise<void> {
 
     const engine = await ensureDetector();
     ($('#scanner-engine') as HTMLElement).textContent = engine
-      ? (engine.type === 'native' ? 'Camera ready' : 'Camera ready (fallback reader)')
-      : 'Camera ready — photo mode';
-    if (!engine) ($('#scanner-hint') as HTMLElement).textContent = 'This browser has no in-page decoder. Take a photo of the code instead.';
+      ? (engine.type === 'native' ? t('scan.ready') : t('scan.ready.fallback'))
+      : t('scan.ready.photo');
+    if (!engine) ($('#scanner-hint') as HTMLElement).textContent = t('scan.nodecoder');
     if (engine) void loop();
   } catch (err) {
-    ($('#scanner-engine') as HTMLElement).textContent = 'Camera unavailable';
-    ($('#scanner-hint') as HTMLElement).textContent = 'Camera access was refused or is unavailable. Use the report link or a photo instead.';
-    toast('Camera unavailable: ' + (err instanceof Error ? err.message : 'permission denied'), 'error');
+    ($('#scanner-engine') as HTMLElement).textContent = t('scan.unavailable');
+    ($('#scanner-hint') as HTMLElement).textContent = t('scan.refused');
+    toast(t('scan.unavailable.msg', { message: err instanceof Error ? err.message : t('scan.denied') }), 'error');
   }
 }
 
@@ -162,13 +163,13 @@ export function onDetected(text: string): void {
     if (/\d{6,}/.test(text)) {
       // A bare id is only resolvable if we know which report site to ask.
       if (parsed.reason === 'no-base') {
-        toast('A player id on its own needs a report address to look up. Add one in Settings.', 'error');
+        toast(t('scan.playerid.nobase'), 'error');
         return;
       }
       void startReading({ mode: 'player-id', playerId: text.trim(), language: DEFAULT_REPORT_LANGUAGE });
       return;
     }
-    toast('That code is not a report link: ' + text.slice(0, 60), 'error');
+    toast(t('scan.notlink', { text: text.slice(0, 60) }), 'error');
     return;
   }
   void startReading({ mode: 'report-url', url: parsed.url, playerId: parsed.playerId, language: parsed.language });
@@ -195,10 +196,10 @@ export async function toggleTorch(): Promise<void> {
   };
   const caps = track?.getCapabilities?.() as { torch?: boolean } | undefined;
   if (!track || !track.getCapabilities || !caps?.torch) {
-    toast('This camera has no torch control.');
+    toast(t('scan.notorch'));
     return;
   }
   torchOn = !torchOn;
   try { await track.applyConstraints?.({ advanced: [{ torch: torchOn }] }); }
-  catch (e) { toast('The torch could not be switched.'); }
+  catch (e) { toast(t('scan.torch.fail')); }
 }

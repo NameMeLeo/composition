@@ -3,6 +3,7 @@
    bundled, and no session is ever written by this file. */
 
 import { LS } from '../core/constants.js';
+import { t } from '../core/i18n.js';
 import { Settings } from '../core/settings.js';
 
 interface SupabaseSession {
@@ -74,7 +75,7 @@ function onChange(fn: (s: SupabaseSession | null) => void): void { listeners.pus
 function user(): SupabaseUser | null { return session?.user ?? null; }
 
 async function signInWithGoogle(): Promise<void> {
-  if (!client) throw new Error('Supabase is not configured yet.');
+  if (!client) throw new Error(t('svc.nosupa'));
   const url = new URL(window.location.href);
   url.hash = '';
   const { error } = await client.auth.signInWithOAuth({

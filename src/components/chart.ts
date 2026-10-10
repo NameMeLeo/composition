@@ -2,6 +2,7 @@
    Draws into a host element and wires pointer scrubbing when asked for it. */
 
 import { el, clear } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { metricText, fmtDate } from '../core/format.js';
 import type { ChartOptions, ChartPoint } from '../domain/types.js';
 
@@ -40,14 +41,14 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
     const empty = svgEl('svg');
     empty.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
     empty.setAttribute('role', 'img');
-    empty.setAttribute('aria-label', 'No data in this range');
-    const t = svgEl('text');
-    t.setAttribute('x', String(width / 2));
-    t.setAttribute('y', String(height / 2));
-    t.setAttribute('text-anchor', 'middle');
-    t.setAttribute('class', 'chart__label');
-    t.textContent = 'No readings in this range';
-    empty.appendChild(t);
+    empty.setAttribute('aria-label', t('chart.nodata'));
+    const label = svgEl('text');
+    label.setAttribute('x', String(width / 2));
+    label.setAttribute('y', String(height / 2));
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('class', 'chart__label');
+    label.textContent = t('chart.noreadings');
+    empty.appendChild(label);
     wrap.appendChild(empty);
     return;
   }
@@ -82,8 +83,8 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
   const plotted = pts.length;
   const readings = pts.reduce((total, point) => total + (point.readings || 1), 0);
   const described = readings > plotted
-    ? plotted + (plotted === 1 ? ' point' : ' points') + ' covering ' + readings + ' readings'
-    : plotted + (plotted === 1 ? ' reading' : ' readings');
+    ? t('chart.covering', { p: plotted, s: plotted === 1 ? '' : 's', n: readings })
+    : t('chart.count', { p: plotted, s: plotted === 1 ? '' : 's' });
   svg.setAttribute('aria-label', described + ', from ' +
     metricText(opts.metricKey || '', ys[0]).trim() + ' to ' +
     metricText(opts.metricKey || '', ys[ys.length - 1]).trim());

@@ -1,6 +1,7 @@
 /* Composition — one reading in full, with the report it was read from behind it. */
 
 import { $, el, clear, toast } from '../core/dom.js';
+import { t, metricLabel, sectionLabel } from '../core/i18n.js';
 import {
   METRICS, METRIC_ORDER,
   REPORT_SECTION_ORDER, REPORT_SECTION_LABELS,
@@ -43,8 +44,8 @@ function reportPanel(report: Report): HTMLElement {
   const card = el('section', 'detail__report');
 
   const head = el('div', 'detail__reporthead');
-  head.appendChild(el('span', 'detail__reporttitle', 'Full report'));
-  head.appendChild(el('span', 'detail__reportnote', 'Every extracted field'));
+  head.appendChild(el('span', 'detail__reporttitle', t('detail.report')));
+  head.appendChild(el('span', 'detail__reportnote', t('detail.report.note')));
   card.appendChild(head);
 
   const named = REPORT_SECTION_ORDER.filter((key) => key !== 'provider_details');
@@ -54,7 +55,7 @@ function reportPanel(report: Report): HTMLElement {
   named.concat(rest).forEach((key) => {
     const rows = reportRows(report[key], key, '', []);
     if (!rows.length) return;
-    card.appendChild(reportBlock(REPORT_SECTION_LABELS[key] || reportFieldLabel(key), rows));
+    card.appendChild(reportBlock(sectionLabel(key, REPORT_SECTION_LABELS[key] || reportFieldLabel(key)), rows));
   });
 
   return card;
@@ -91,11 +92,11 @@ function referenceNote(report: Report | null, key: string): string {
   if (lower != null && upper != null) {
     const lo = metricDisplay(key, lower);
     const hi = metricDisplay(key, upper);
-    parts.push('normal ' + lo.text + '–' + hi.text + (hi.unit ? ' ' + hi.unit : ''));
+    parts.push(t('detail.normal', { lo: lo.text, hi: hi.text, unit: hi.unit ? ' ' + hi.unit : '' }));
   }
   if (standard != null) {
     const std = metricDisplay(key, standard);
-    parts.push('standard ' + std.text + (std.unit ? ' ' + std.unit : ''));
+    parts.push(t('detail.standard', { v: std.text, unit: std.unit ? ' ' + std.unit : '' }));
   }
   return parts.join(' · ');
 }
@@ -103,7 +104,7 @@ function referenceNote(report: Report | null, key: string): string {
 /** One measured metric, with its value and the report's own reference beneath it. */
 function metricRow(key: string, value: number, note: string): HTMLElement {
   const line = el('div', 'detail__row');
-  line.appendChild(el('span', 'detail__k', METRICS[key].label));
+  line.appendChild(el('span', 'detail__k', metricLabel(key, METRICS[key].label)));
 
   if (!note) {
     line.appendChild(el('span', 'detail__v', metricText(key, value)));
@@ -127,7 +128,7 @@ export function renderDetail(id?: string | null): void {
 
   const reading = getReadings().find((r) => r.id === id);
   if (!reading) {
-    host.appendChild(el('p', 'empty__body', 'That reading is no longer on this device.'));
+    host.appendChild(el('p', 'empty__body', t('detail.gone')));
     return;
   }
 
@@ -146,7 +147,7 @@ export function renderDetail(id?: string | null): void {
   if (reading.report) host.appendChild(reportPanel(reading.report));
 
   const meta = el('p', 'detail__meta');
-  const bits = ['Saved ' + fmtDateTime(reading.createdAt)];
+  const bits = [t('detail.saved', { date: fmtDateTime(reading.createdAt) })];
   if (reading.playerId) bits.push('player_id ' + reading.playerId);
   if (reading.language) bits.push('language ' + reading.language);
   if (reading.reportUrl) bits.push(reading.reportUrl);
@@ -161,12 +162,12 @@ export function renderDetail(id?: string | null): void {
 
   const actions = el('div', 'od-cluster');
   actions.style.marginTop = 'var(--s-5)';
-  const del = el('button', 'btn btn--danger btn--small', 'Delete reading') as HTMLButtonElement;
+  const del = el('button', 'btn btn--danger btn--small', t('detail.delete')) as HTMLButtonElement;
   del.type = 'button';
   del.addEventListener('click', async () => {
-    if (!window.confirm('Delete this reading from this device? This cannot be undone.')) return;
+    if (!window.confirm(t('detail.confirm'))) return;
     await deleteReading(reading.id);
-    toast('Reading deleted');
+    toast(t('detail.deleted'));
     Route.go('history');
   });
   actions.appendChild(del);

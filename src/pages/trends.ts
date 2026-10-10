@@ -4,6 +4,7 @@
    Tapping a card charts it, so the grid is both the readout and the picker. */
 
 import { $, el, clear } from '../core/dom.js';
+import { t, metricLabel, groupLabel, rangeLabel } from '../core/i18n.js';
 import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
 import type { MetricGroup } from '../core/metrics.js';
 import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
@@ -38,7 +39,7 @@ export function renderTrends(): void {
   if (!groups.length) {
     ($('#trend-card') as HTMLElement).hidden = true;
     ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split'].forEach((id) => clear($(id)));
-    ($('#trend-label') as HTMLElement).textContent = 'Trends';
+    ($('#trend-label') as HTMLElement).textContent = t('view.trends');
     ($('#trend-latest') as HTMLElement).textContent = '—';
     ($('#trend-range-note') as HTMLElement).textContent = '';
     ['#axis-start', '#axis-mid', '#axis-end', '#trend-stat-high', '#trend-stat-low', '#trend-stat-avg']
@@ -61,10 +62,10 @@ export function renderTrends(): void {
 
   fillWheel(
     $('#range-rail'),
-    RANGES.map((range) => ({ id: range.id, label: range.label })),
+    RANGES.map((range) => ({ id: range.id, label: rangeLabel(range.id, range.label) })),
     selection.range,
     (id) => { selection.range = id; rangeChosen = true; renderTrends(); },
-    { noun: 'range', listLabel: 'Choose a time range' }
+    { noun: t('range.noun'), listLabel: t('trends.range.label') }
   );
 
   renderTrendCard(group);
@@ -79,7 +80,7 @@ function renderTabs(groups: MetricGroup[]): void {
 
   groups.forEach((group) => {
     const on = group.id === selection.tab;
-    const tab = el('button', 'tab' + (on ? ' tab--on' : ''), group.label) as HTMLButtonElement;
+    const tab = el('button', 'tab' + (on ? ' tab--on' : ''), groupLabel(group.id, group.label)) as HTMLButtonElement;
     tab.type = 'button';
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -112,20 +113,20 @@ function renderTrendCard(group: MetricGroup): void {
   const meta = METRICS[selection.metric];
   (card as HTMLElement).hidden = false;
   card.style.setProperty('--trend-accent', meta.accent);
-  card.setAttribute('aria-label', meta.label + ' trend');
+  card.setAttribute('aria-label', metricLabel(selection.metric, meta.label) + ' trend');
 
   const previous = $('#trend-prev') as HTMLButtonElement;
   previous.replaceChildren(wheelArrow(-1));
   previous.disabled = items.length < 2;
-  previous.setAttribute('aria-label', 'Previous measure');
-  previous.title = 'Previous measure';
+  previous.setAttribute('aria-label', t('trends.prev'));
+  previous.title = t('trends.prev');
   previous.onclick = () => selectAdjacentMetric(group, -1);
 
   const next = $('#trend-next') as HTMLButtonElement;
   next.replaceChildren(wheelArrow(1));
   next.disabled = items.length < 2;
-  next.setAttribute('aria-label', 'Next measure');
-  next.title = 'Next measure';
+  next.setAttribute('aria-label', t('trends.next'));
+  next.title = t('trends.next');
   next.onclick = () => selectAdjacentMetric(group, 1);
 
   bindHorizontalSwipe(card, (step) => selectAdjacentMetric(group, step), {
@@ -161,7 +162,7 @@ function renderChart(): void {
   const pts = seriesFor(key, selection.range);
   const label = (point: ChartPoint): string => bucketLabel(range.bucket, point.t);
 
-  ($('#trend-label') as HTMLElement).textContent = meta.label;
+  ($('#trend-label') as HTMLElement).textContent = metricLabel(key, meta.label);
   setMetricValue($('#trend-latest'), key, latestWith(key));
 
   const stats = spread(pts.map((point) => point.v));
@@ -177,9 +178,9 @@ function renderChart(): void {
   // The note counts the readings behind the line, not just the points, because one
   // monthly point standing for six readings is a different claim from a single one.
   const readings = pts.reduce((total, point) => total + (point.readings || 1), 0);
-  const parts = [pts.length + (pts.length === 1 ? ' point' : ' points')];
-  if (readings > pts.length) parts.push(readings + ' readings averaged');
-  if (pts.length >= 2) parts.push(metricText(key, pts[pts.length - 1].v - pts[0].v) + ' over the window');
+  const parts = [t('trends.points', { n: pts.length, s: pts.length === 1 ? '' : 's' })];
+  if (readings > pts.length) parts.push(t('trends.averaged', { n: readings }));
+  if (pts.length >= 2) parts.push(t('trends.over', { d: metricText(key, pts[pts.length - 1].v - pts[0].v) }));
   ($('#trend-range-note') as HTMLElement).textContent = parts.join(' · ');
 
   const axis = [($('#axis-start') as HTMLElement), ($('#axis-mid') as HTMLElement), ($('#axis-end') as HTMLElement)];
@@ -216,7 +217,7 @@ export function renderCompositionSplit(): void {
   const bf = last?.metrics ? last.metrics.bodyFat as number | undefined : null;
 
   if (weight == null || bf == null) {
-    host.appendChild(el('p', 'empty__body', 'A reading with both weight and body fat is needed for the split.'));
+    host.appendChild(el('p', 'empty__body', t('trends.split.need')));
     return;
   }
 
@@ -239,9 +240,9 @@ export function renderCompositionSplit(): void {
 
   const legend = el('ul', 'split__legend');
   [
-    ['Lean and other tissue', METRICS.muscleMass.accent, leanMass],
-    ['Fat mass', METRICS.bodyFat.accent, fatMass],
-    ['Total', 'var(--c-slate)', total]
+    [t('trends.split.lean'), METRICS.muscleMass.accent, leanMass],
+    [t('trends.split.fat'), METRICS.bodyFat.accent, fatMass],
+    [t('trends.split.total'), 'var(--c-slate)', total]
   ].forEach((row) => {
     const li = el('li');
     const sw = el('span', 'split__swatch');
@@ -256,7 +257,7 @@ export function renderCompositionSplit(): void {
   const note = el('p', 'footnote');
   note.style.padding = '0';
   note.style.textAlign = 'left';
-  note.textContent = 'Fat mass is derived from your weight and body fat percentage. ' + fmtDate(last?.measuredAt) + '.';
+  note.textContent = t('trends.split.note', { date: fmtDate(last?.measuredAt) });
   host.appendChild(note);
 }
 

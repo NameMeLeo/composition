@@ -26,6 +26,7 @@
 //   schema.ts        the JSON the model must answer with
 //   http.ts          CORS, JSON replies, caller identity
 //   fetch-report.ts  downloading a report and identifying its real type
+//   assets.ts        proxying the provider's small overlay icons for the canvas
 //   tanita.ts        the provider API path — exact, instant, free
 //   gemini.ts        the OCR path — for reports with no API behind them
 //   metrics.ts       flattening a report into the app's metric keys
@@ -34,6 +35,7 @@ import { GEMINI_API_KEY, GEMINI_FALLBACK_MODEL, GEMINI_MODEL, MAX_BYTES, REQUIRE
 import { PROMPT } from './prompt.ts';
 import { authorize, cors, json, stripHtml } from './http.ts';
 import { base64, fetchReport, sniffMimeType } from './fetch-report.ts';
+import { fetchReportIcon, isReportIconName } from './assets.ts';
 import { GeminiError, callGemini } from './gemini.ts';
 import { extractMetrics } from './metrics.ts';
 import { fetchTanitaReading, mapTanitaReport } from './tanita.ts';
@@ -120,8 +122,24 @@ Deno.serve(async (req: Request) => {
       return respond(respondOcr(result, 'text/html'));
     }
 
-    if (mode === 'document') {
-      const mimeType = String(body?.mimeType ?? '').trim() || 'application/octet-stream';
+    if (mode === 'report-asset') {
+      // One of the provider's small overlay icons (star, balance marks, leg dot),
+      // proxied because the browser cannot reach the plain-HTTP provider host.
+      const name = body?.name;
+      if (!isReportIconName(name)) return respond({ ok: false, error: 'Unknown report asset.' }, 400);
+      const reportUrl = String(body?.reportUrl ?? body?.url ?? '').trim();
+      if (!reportUrl) return respond({ ok: false, error: 'No report URL was supplied.' }, 400);
+
+      try {
+        const icon = await fetchReportIcon(reportUrl, name);
+        return respond({ ok: true, name, mime: icon.mime, data: icon.data });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'The image could not be fetched.';
+        return respond({ ok: false, error: message }, 502);
+      }
+    }
+
+    if (mode === 'document') {      const mimeType = String(body?.mimeType ?? '').trim() || 'application/octet-stream';
       const data = String(body?.data ?? '');
       if (!data) return respond({ ok: false, error: 'No document data was supplied.' }, 400);
       const approxBytes = Math.floor((data.length * 3) / 4);

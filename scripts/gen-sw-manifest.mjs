@@ -27,6 +27,9 @@ const fixed = [
   './styles.css',
   './manifest.webmanifest',
   './icons/icon.svg',
-  './icons/maskable.svg'
+  './icons/maskable.svg',
+  './assets/report/tc/bg.png',
+  './assets/report/en/bg.png',
+  './assets/report/sc/bg.png'
 ];
 console.log([...fixed, ...files].map((f) => `  '${f}',`).join('\n'));

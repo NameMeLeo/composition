@@ -3,6 +3,7 @@
    and immediately strips the token from the URL before anything else reads it. */
 
 import { toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { parseReportUrl } from './report-url.js';
 import { Capture } from '../ingest/capture.js';
 
@@ -17,7 +18,7 @@ interface ShareRecord {
 async function readToken(token: string): Promise<ShareRecord> {
   const res = await fetch('./share/' + encodeURIComponent(token), { cache: 'no-store' });
   const data = await res.json().catch(() => null) as { ok?: boolean; error?: string; record?: ShareRecord } | null;
-  if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'That shared file could not be collected.');
+  if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || t('svc.uncollected'));
   return data.record || ({} as ShareRecord);
 }
 
@@ -42,14 +43,14 @@ export async function consumeShareToken(): Promise<void> {
 
     if (record.kind === 'text') {
       const parsed = parseReportUrl(record.text);
-      if (!parsed.ok) { toast('The shared text was not a report link.', 'error'); return; }
+      if (!parsed.ok) { toast(t('svc.shared.notlink'), 'error'); return; }
       void Capture.startReading({ mode: 'report-url', url: parsed.url, playerId: parsed.playerId, language: parsed.language });
       return;
     }
 
     void Capture.startReading({ mode: 'file', file: decodeBase64File(record) });
   } catch (err) {
-    toast(err instanceof Error ? err.message : 'That shared file could not be collected.', 'error');
+    toast(err instanceof Error ? err.message : t('svc.uncollected'), 'error');
   } finally {
     history.replaceState(null, '', url.pathname + url.search + url.hash);
   }

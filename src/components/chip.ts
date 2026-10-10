@@ -2,6 +2,7 @@
 
 import { METRICS } from '../core/metrics.js';
 import { el } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { massValue, isMassMetric } from '../core/format.js';
 
 /**
@@ -14,7 +15,7 @@ export function deltaChip(key: string, delta: number | null): HTMLElement {
   const node = el('span', 'delta');
 
   if (delta == null) {
-    node.textContent = 'No comparison yet';
+    node.textContent = t('chip.nocomp');
     node.classList.add('delta--flat');
     return node;
   }
@@ -28,7 +29,7 @@ export function deltaChip(key: string, delta: number | null): HTMLElement {
 
   // Below half the smallest displayed step, the change is noise, not a trend.
   if (shown < Math.pow(10, -meta.digits) / 2) {
-    node.textContent = 'No change';
+    node.textContent = t('chip.nochange');
     node.classList.add('delta--flat');
     return node;
   }

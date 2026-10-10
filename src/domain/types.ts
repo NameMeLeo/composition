@@ -36,6 +36,7 @@ export interface Reading {
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark' | string;
   massUnit: 'kg' | 'lb' | string;
+  lang: 'system' | 'en' | 'tc' | 'sc' | string;
   reduceMotion: boolean;
   supabaseUrl: string;
   supabaseAnonKey: string;

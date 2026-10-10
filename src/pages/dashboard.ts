@@ -3,6 +3,7 @@
    that has ever been recorded, and the plain-language insights. */
 
 import { $, el, clear, clamp } from '../core/dom.js';
+import { t, metricLabel } from '../core/i18n.js';
 import { METRICS, METRIC_ORDER, rangeById } from '../core/metrics.js';
 import { metricDisplay, fmtDateTime, relDays, axisFormat, bucketLabel } from '../core/format.js';
 import { getReadings, latest, deltaFor, seriesFor, rawPoints } from '../data/store.js';
@@ -58,10 +59,10 @@ export function renderDashboard(): void {
   html('#hero-weight', w.text + (w.unit ? ' ' + w.unit : ''));
   html('#hero-muscle', m.text + (m.unit ? ' ' + m.unit : ''));
   ($('#hero-visceral') as HTMLElement).textContent = last.metrics.visceralFat != null ? String(last.metrics.visceralFat) : '—';
-  ($('#hero-eyebrow') as HTMLElement).textContent = 'Latest reading';
-  ($('#hero-meta') as HTMLElement).textContent = fmtDateTime(last.measuredAt) + ' · ' + relDays(last.measuredAt) +
-    (last.playerId ? ' · player ' + last.playerId : '') +
-    ' · ' + readings.length + ' reading' + (readings.length === 1 ? '' : 's') + ' on this device';
+  ($('#hero-eyebrow') as HTMLElement).textContent = t('dash.hero.eyebrow');
+  ($('#hero-meta') as HTMLElement).textContent = last.playerId
+    ? t('dash.hero.meta', { date: fmtDateTime(last.measuredAt), rel: relDays(last.measuredAt), player: last.playerId, n: readings.length, s: readings.length === 1 ? '' : 's' })
+    : t('dash.hero.meta.noplayer', { date: fmtDateTime(last.measuredAt), rel: relDays(last.measuredAt), n: readings.length, s: readings.length === 1 ? '' : 's' });
 
   /* deltas */
   const deltaGrid = $('#delta-grid');
@@ -70,7 +71,7 @@ export function renderDashboard(): void {
     const meta = METRICS[key];
     const card = el('div', 'tile');
     card.style.setProperty('--tile-accent', meta.accent);
-    card.appendChild(el('span', 'tile__label', meta.label));
+    card.appendChild(el('span', 'tile__label', metricLabel(key, meta.label)));
 
     const d = deltaFor(key);
     const holder = el('div', 'od-row');
@@ -82,7 +83,7 @@ export function renderDashboard(): void {
     card.appendChild(holder);
 
     const foot = el('div', 'tile__foot');
-    foot.textContent = d == null ? 'Needs two readings' : 'Compared with your previous reading';
+    foot.textContent = d == null ? t('dash.deltas.need2') : t('dash.deltas.prev');
     card.appendChild(foot);
     deltaGrid.appendChild(card);
   });

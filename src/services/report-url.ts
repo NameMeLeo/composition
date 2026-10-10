@@ -7,6 +7,7 @@
    the base configured in Settings. */
 
 import { Settings } from '../core/settings.js';
+import { t } from '../core/i18n.js';
 import { decodeHtmlEntities } from '../core/dom.js';
 import type { ParseReportUrlResult } from '../domain/types.js';
 
@@ -32,7 +33,7 @@ export function isChineseLanguage(language: unknown): boolean {
 /** A report URL for one player. Throws when no report base is configured. */
 export function playerReportUrl(playerId: string, language: unknown): string {
   const base = reportBase();
-  if (!base) throw new Error('No report address is configured. Add one in Settings.');
+  if (!base) throw new Error(t('svc.nobase'));
 
   const url = new URL(base);
   url.search = '';

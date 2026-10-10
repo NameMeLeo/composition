@@ -11,6 +11,7 @@ import {
   REPORT_METRIC_PATHS,
   SEGMENTAL_REPORT_PATHS
 } from '../core/metrics.js';
+import { fieldLabel } from '../core/i18n.js';
 import type { Report } from './types.js';
 
 export interface ReportLeaf {
@@ -28,10 +29,12 @@ export interface ReportRow {
   value: unknown;
 }
 
-/** Human label for a snake_case field. Unknown keys are humanised, never raw. */
+/** Human label for a snake_case field, in the UI language. Unknown keys are
+    humanised, never raw. */
 export function reportFieldLabel(key: string): string {
-  if (REPORT_FIELD_LABELS[key]) return REPORT_FIELD_LABELS[key];
-  return String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const fallback = REPORT_FIELD_LABELS[key]
+    || String(key).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return fieldLabel(key, fallback);
 }
 
 /** Unit for a dotted report path, falling back to the leaf name. */

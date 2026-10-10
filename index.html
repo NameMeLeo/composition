@@ -75,7 +75,7 @@
 </head>
 <body>
 
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main" data-i18n="skip.content">Skip to content</a>
 
 <!-- ---------------------- AUTH ---------------------- -->
 <section id="view-auth" class="auth" hidden>
@@ -90,12 +90,12 @@
       <span class="brand__name">Composition</span>
     </div>
 
-    <h1 class="auth__title">Read once.<br>Kept for good.</h1>
-    <p class="auth__lede">Reads and logs your <a href="https://www.lcsd.gov.hk/en/healthy/stfc.html" target="_blank" rel="noreferrer">LCSD Self-test Fitness Corner</a> reports.</p>
+    <h1 class="auth__title"><span data-i18n="auth.title.1">Read once.</span><br><span data-i18n="auth.title.2">Kept for good.</span></h1>
+    <p class="auth__lede"><span data-i18n="auth.lede.pre">Reads and logs your </span><a href="https://www.lcsd.gov.hk/en/healthy/stfc.html" target="_blank" rel="noreferrer">LCSD Self-test Fitness Corner</a><span data-i18n="auth.lede.post"> reports.</span></p>
 
     <button id="btn-signin" class="btn btn--primary btn--block" type="button">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M21.35 11.1H12v2.8h5.35c-.23 1.4-1.66 4.1-5.35 4.1a5.94 5.94 0 0 1 0-11.88c1.7 0 2.84.72 3.49 1.34l2.38-2.3A9 9 0 1 0 12 21c5.2 0 8.65-3.65 8.65-8.79 0-.59-.06-1.04-.15-1.5Z"/></svg>
-      Continue with Google
+      <span data-i18n="auth.signin">Continue with Google</span>
     </button>
     <p class="auth__note" id="auth-note"></p>
   </div>
@@ -110,22 +110,22 @@
     </div>
   </header>
 
-  <nav class="rail" aria-label="Desktop primary" hidden>
+  <nav class="rail" aria-label="Desktop primary" data-i18n-aria="nav.desktop" hidden>
     <button class="rail__item" data-route="dashboard" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 12 7 7"/></svg>
-      <span>Today</span>
+      <span data-i18n="nav.today">Today</span>
     </button>
     <button class="rail__item" data-route="trends" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 3-4 6-6"/><path d="M21 4h-5M21 4v5"/></svg>
-      <span>Trends</span>
+      <span data-i18n="nav.trends">Trends</span>
     </button>
     <button class="rail__item" data-route="history" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-      <span>History</span>
+      <span data-i18n="nav.history">History</span>
     </button>
     <button class="rail__item" data-route="settings" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
-      <span>Settings</span>
+      <span data-i18n="nav.settings">Settings</span>
     </button>
   </nav>
 
@@ -137,10 +137,10 @@
       <div class="callout callout--info" id="banner-setup" hidden>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
         <div class="od-fill">
-          <p class="callout__title">Supabase setup required</p>
-          <p class="callout__body">Configure Supabase before using the OCR proxy.</p>
+          <p class="callout__title" data-i18n="dash.setup.title">Supabase setup required</p>
+          <p class="callout__body" data-i18n="dash.setup.body">Configure Supabase before using the OCR proxy.</p>
         </div>
-        <button class="btn btn--small btn--ghost" data-route="settings" type="button">Setup</button>
+        <button class="btn btn--small btn--ghost" data-route="settings" type="button" data-i18n="dash.setup.btn">Setup</button>
       </div>
 
       <section class="hero" id="hero" hidden>
@@ -150,26 +150,26 @@
         <div class="hero__body">
           <figure class="ring" id="hero-ring">
             <svg viewBox="0 0 120 120" width="132" height="132" role="img" aria-labelledby="ring-label">
-              <title id="ring-label">Body fat percentage</title>
+              <title id="ring-label" data-i18n="dash.ring.label">Body fat percentage</title>
               <circle class="ring__track" cx="60" cy="60" r="52"/>
               <circle class="ring__value" id="ring-arc" cx="60" cy="60" r="52"/>
             </svg>
             <figcaption class="ring__caption">
               <span class="ring__num od-nowrap" id="hero-bf">&mdash;</span>
-              <span class="ring__unit">% body fat</span>
+              <span class="ring__unit" data-i18n="dash.ring.unit">% body fat</span>
             </figcaption>
           </figure>
           <dl class="hero__stats">
             <div class="od-stat">
-              <dt>Weight</dt>
+              <dt data-i18n="metric.weight">Weight</dt>
               <dd class="od-nowrap" id="hero-weight">&mdash;</dd>
             </div>
             <div class="od-stat">
-              <dt>Muscle mass</dt>
+              <dt data-i18n="metric.muscleMass">Muscle mass</dt>
               <dd class="od-nowrap" id="hero-muscle">&mdash;</dd>
             </div>
             <div class="od-stat">
-              <dt>Visceral fat</dt>
+              <dt data-i18n="metric.visceralFat">Visceral fat</dt>
               <dd class="od-nowrap" id="hero-visceral">&mdash;</dd>
             </div>
           </dl>
@@ -181,36 +181,36 @@
         <span class="empty__art" aria-hidden="true">
           <svg viewBox="0 0 96 96" width="72" height="72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="14" width="24" height="24" rx="3"/><rect x="58" y="14" width="24" height="24" rx="3"/><rect x="14" y="58" width="24" height="24" rx="3"/><path d="M58 58h10v10H58zM76 76h6v6h-6zM76 58h6v6h-6zM58 76h6v6h-6z"/></svg>
         </span>
-        <h2 class="empty__title">No readings yet</h2>
-        <p class="empty__body">Point the camera at the QR code printed on a Tanita report, share the PDF to the app, or enter the numbers yourself. Everything lands here.</p>
-        <button class="btn btn--primary" data-route="capture" type="button">Add your first reading</button>
+        <h2 class="empty__title" data-i18n="dash.empty.title">No readings yet</h2>
+        <p class="empty__body" data-i18n="dash.empty.body">Point the camera at the QR code printed on a Tanita report, share the PDF to the app, or enter the numbers yourself. Everything lands here.</p>
+        <button class="btn btn--primary" data-route="capture" type="button" data-i18n="dash.empty.btn">Add your first reading</button>
       </section>
 
       <section class="block" id="block-deltas" hidden>
         <div class="block__head">
-          <h2 class="block__title">Change since last reading</h2>
+          <h2 class="block__title" data-i18n="dash.deltas.title">Change since last reading</h2>
         </div>
         <div class="od-grid tiles" id="delta-grid" style="--od-cols:2"></div>
       </section>
 
       <section class="block" id="block-trend" hidden>
         <div class="block__head">
-          <h2 class="block__title">Recent shape</h2>
-          <button class="linkbtn" data-route="trends" type="button">All trends</button>
+          <h2 class="block__title" data-i18n="dash.trend.title">Recent shape</h2>
+          <button class="linkbtn" data-route="trends" type="button" data-i18n="dash.trend.all">All trends</button>
         </div>
         <div class="chart dashboard-chart" id="mini-chart"></div>
       </section>
 
       <section class="block" id="block-insights" hidden>
         <div class="block__head">
-          <h2 class="block__title">What the numbers say</h2>
+          <h2 class="block__title" data-i18n="dash.insights.title">What the numbers say</h2>
         </div>
         <div class="od-stack" id="insight-list" style="--od-gap:10px"></div>
       </section>
 
       <section class="block" id="block-all-measurements">
         <div class="block__head">
-          <h2 class="block__title">All measurements</h2>
+          <h2 class="block__title" data-i18n="dash.all.title">All measurements</h2>
         </div>
         <div class="od-grid tiles" id="dashboard-metrics" style="--od-cols:2"></div>
       </section>
@@ -219,14 +219,14 @@
     <!-- TRENDS -->
     <section class="view" id="view-trends" data-title="Trends" hidden>
       <div class="trend-controls">
-        <div class="tabs" id="trend-tabs" role="tablist" aria-label="Choose a group of measures"></div>
-        <div class="wheel wheel--minor" id="range-rail" role="group" aria-label="Choose a time range"></div>
+        <div class="tabs" id="trend-tabs" role="tablist" data-i18n-aria="trends.groups.label" aria-label="Choose a group of measures"></div>
+        <div class="wheel wheel--minor" id="range-rail" role="group" data-i18n-aria="trends.range.label" aria-label="Choose a time range"></div>
       </div>
 
       <section class="block">
         <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
           <div class="trend-card__head">
-            <button class="trend-card__nav iconbtn" id="trend-prev" type="button" aria-label="Previous measure" title="Previous measure"></button>
+            <button class="trend-card__nav iconbtn" id="trend-prev" type="button" data-i18n-aria="trends.prev" aria-label="Previous measure" data-i18n-title="trends.prev" title="Previous measure"></button>
             <div class="stathead">
               <div class="od-stat">
                 <span class="stathead__label" id="trend-label">Weight</span>
@@ -234,19 +234,19 @@
               </div>
               <span class="delta" id="trend-delta">&mdash;</span>
             </div>
-            <button class="trend-card__nav iconbtn" id="trend-next" type="button" aria-label="Next measure" title="Next measure"></button>
+            <button class="trend-card__nav iconbtn" id="trend-next" type="button" data-i18n-aria="trends.next" aria-label="Next measure" data-i18n-title="trends.next" title="Next measure"></button>
           </div>
-          <div class="trend-card__stats" aria-label="Selected measure summary">
+          <div class="trend-card__stats" data-i18n-aria="trends.summary" aria-label="Selected measure summary">
             <div class="trend-card__stat">
-              <span class="trend-card__stat-label">High</span>
+              <span class="trend-card__stat-label" data-i18n="trends.high">High</span>
               <strong class="trend-card__stat-value" id="trend-stat-high">&mdash;</strong>
             </div>
             <div class="trend-card__stat">
-              <span class="trend-card__stat-label">Low</span>
+              <span class="trend-card__stat-label" data-i18n="trends.low">Low</span>
               <strong class="trend-card__stat-value" id="trend-stat-low">&mdash;</strong>
             </div>
             <div class="trend-card__stat">
-              <span class="trend-card__stat-label">Avg</span>
+              <span class="trend-card__stat-label" data-i18n="trends.avg">Avg</span>
               <strong class="trend-card__stat-value" id="trend-stat-avg">&mdash;</strong>
             </div>
           </div>
@@ -262,7 +262,7 @@
 
       <section class="block" id="block-composition">
         <div class="block__head">
-          <h2 class="block__title">Composition split</h2>
+          <h2 class="block__title" data-i18n="trends.split.title">Composition split</h2>
         </div>
         <div class="card">
           <div class="split" id="composition-split"></div>
@@ -275,16 +275,16 @@
       <div class="history__tools">
         <label class="srch">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <span class="srch__label">Filter readings by date or source</span>
-          <input id="history-search" type="search" placeholder="Filter by date or source" autocomplete="off">
+          <span class="srch__label" data-i18n="hist.filter">Filter readings by date or source</span>
+          <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
         </label>
-        <button class="btn btn--ghost btn--small" id="btn-export-history" type="button">Export</button>
+        <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
       </div>
       <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
       <div class="empty empty--inline" id="empty-history" hidden>
-        <h2 class="empty__title">Nothing matches</h2>
-        <p class="empty__body">Try a different date, or clear the filter to see every reading.</p>
-        <button class="btn btn--ghost" id="btn-clear-filter" type="button">Clear filter</button>
+        <h2 class="empty__title" data-i18n="hist.empty">Nothing matches</h2>
+        <p class="empty__body" data-i18n="hist.empty.body">Try a different date, or clear the filter to see every reading.</p>
+        <button class="btn btn--ghost" id="btn-clear-filter" type="button" data-i18n="hist.clear">Clear filter</button>
       </div>
     </section>
 
@@ -292,7 +292,7 @@
     <section class="view" id="view-detail" data-title="Reading" hidden>
       <button class="linkbtn linkbtn--back" id="btn-detail-back" type="button">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
-        Back
+        <span data-i18n="detail.back">Back</span>
       </button>
       <div id="detail-body"></div>
     </section>
@@ -301,7 +301,7 @@
     <section class="view" id="view-settings" data-title="Settings" hidden>
 
       <section class="block">
-        <div class="block__head"><h2 class="block__title">Account</h2></div>
+        <div class="block__head"><h2 class="block__title" data-i18n="set.account">Account</h2></div>
         <div class="card">
           <div class="od-row">
             <span class="avatar" id="account-avatar" aria-hidden="true"></span>
@@ -315,62 +315,74 @@
       </section>
 
       <section class="block">
-        <div class="block__head"><h2 class="block__title">Reading and appearance</h2></div>
+        <div class="block__head"><h2 class="block__title" data-i18n="set.appearance">Reading and appearance</h2></div>
         <div class="card card--rows">
           <div class="od-row">
             <div class="od-field od-fill">
-              <label class="row__title" for="sel-theme">Theme</label>
-              <span class="row__sub">Follows your system unless you choose.</span>
+              <label class="row__title" for="sel-theme" data-i18n="set.theme">Theme</label>
+              <span class="row__sub" data-i18n="set.theme.sub">Follows your system unless you choose.</span>
             </div>
-            <select class="select od-fixed" id="sel-theme" aria-label="Theme">
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+            <select class="select od-fixed" id="sel-theme" data-i18n-aria="set.theme" aria-label="Theme">
+              <option value="system" data-i18n="set.theme.system">System</option>
+              <option value="light" data-i18n="set.theme.light">Light</option>
+              <option value="dark" data-i18n="set.theme.dark">Dark</option>
             </select>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
-              <label class="row__title" for="sel-mass">Mass unit</label>
-              <span class="row__sub">Body weight, muscle and bone mass.</span>
+              <label class="row__title" for="sel-mass" data-i18n="set.mass">Mass unit</label>
+              <span class="row__sub" data-i18n="set.mass.sub">Body weight, muscle and bone mass.</span>
             </div>
-            <select class="select od-fixed" id="sel-mass" aria-label="Mass unit">
-              <option value="kg">Kilograms</option>
-              <option value="lb">Pounds</option>
+            <select class="select od-fixed" id="sel-mass" data-i18n-aria="set.mass" aria-label="Mass unit">
+              <option value="kg" data-i18n="set.mass.kg">Kilograms</option>
+              <option value="lb" data-i18n="set.mass.lb">Pounds</option>
             </select>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Reduce motion</span>
-              <span class="row__sub">Follows the system preference by default.</span>
+              <label class="row__title" for="sel-lang" data-i18n="set.lang">Language</label>
+              <span class="row__sub" data-i18n="set.lang.sub">App and report language.</span>
+            </div>
+            <select class="select od-fixed" id="sel-lang" data-i18n-aria="set.lang" aria-label="Language">
+              <option value="system" data-i18n="set.theme.system">System</option>
+              <option value="en">English</option>
+              <option value="tc">繁體中文</option>
+              <option value="sc">简体中文</option>
+            </select>
+          </div>
+          <div class="od-row">
+            <div class="od-field od-fill">
+              <span class="row__title" data-i18n="set.motion">Reduce motion</span>
+              <span class="row__sub" data-i18n="set.motion.sub">Follows the system preference by default.</span>
             </div>
             <label class="switch od-fixed">
               <input type="checkbox" id="chk-motion">
               <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
-              <span class="sr-only">Reduce motion</span>
+              <span class="sr-only" data-i18n="set.motion">Reduce motion</span>
             </label>
           </div>
         </div>
       </section>
 
       <section class="block">
-        <div class="block__head"><h2 class="block__title">Your data</h2></div>
+        <div class="block__head"><h2 class="block__title" data-i18n="set.data">Your data</h2></div>
         <div class="card card--rows">
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Readings on this device</span>
+              <span class="row__title" data-i18n="set.count">Readings on this device</span>
               <span class="row__sub" id="stat-count">0 readings</span>
             </div>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Storage used</span>
+              <span class="row__title" data-i18n="set.storage">Storage used</span>
               <span class="row__sub" id="stat-size">&mdash;</span>
             </div>
           </div>
           <div class="od-cluster" style="--od-gap:8px">
-            <button class="btn btn--ghost btn--small" id="btn-export-json" type="button">Export JSON</button>
-            <button class="btn btn--ghost btn--small" id="btn-export-csv" type="button">Export CSV</button>
-            <button class="btn btn--ghost btn--small" id="btn-copy-summary" type="button">Copy summary</button>
+            <button class="btn btn--ghost btn--small" id="btn-export-json" type="button" data-i18n="set.export.json">Export JSON</button>
+            <button class="btn btn--ghost btn--small" id="btn-export-csv" type="button" data-i18n="set.export.csv">Export CSV</button>
+            <button class="btn btn--ghost btn--small" id="btn-copy-summary" type="button" data-i18n="set.export.copy">Copy summary</button>
           </div>
         </div>
       </section>
@@ -407,36 +419,36 @@
       </section>
 
       <section class="block">
-        <div class="block__head"><h2 class="block__title">Install and sync</h2></div>
+        <div class="block__head"><h2 class="block__title" data-i18n="set.install">Install and sync</h2></div>
         <div class="card card--rows">
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Installable app</span>
+              <span class="row__title" data-i18n="set.installable">Installable app</span>
               <span class="row__sub" id="install-sub"></span>
             </div>
-            <button class="btn btn--ghost btn--small od-fixed" id="btn-install" type="button" hidden>Install</button>
+            <button class="btn btn--ghost btn--small od-fixed" id="btn-install" type="button" hidden data-i18n="set.install.btn">Install</button>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Cloud mirror</span>
-              <span class="row__sub">Sync to cloud</span>
+              <span class="row__title" data-i18n="set.mirror">Cloud mirror</span>
+              <span class="row__sub" data-i18n="set.mirror.sub">Sync to cloud</span>
             </div>
             <label class="switch od-fixed">
               <input type="checkbox" id="chk-mirror">
               <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
-              <span class="sr-only">Cloud mirror</span>
+              <span class="sr-only" data-i18n="set.mirror">Cloud mirror</span>
             </label>
           </div>
           <div class="od-row" id="mirror-status" hidden>
             <div class="od-field od-fill">
-              <span class="row__title">Last sync</span>
+              <span class="row__title" data-i18n="set.lastsync">Last sync</span>
               <span class="row__sub" id="mirror-last">Never</span>
             </div>
-            <button class="btn btn--ghost btn--small od-fixed" id="btn-sync-now" type="button">Sync now</button>
+            <button class="btn btn--ghost btn--small od-fixed" id="btn-sync-now" type="button" data-i18n="set.syncnow">Sync now</button>
           </div>
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Samsung Health export</span>
+              <span class="row__title" data-i18n="set.samsung">Samsung Health export</span>
               <span class="row__sub"></span>
             </div>
             <button class="btn btn--ghost btn--small od-fixed" id="btn-export-samsung" type="button">CSV</button>
@@ -445,14 +457,14 @@
       </section>
 
       <section class="block">
-        <div class="block__head"><h2 class="block__title">Danger zone</h2></div>
+        <div class="block__head"><h2 class="block__title" data-i18n="set.danger">Danger zone</h2></div>
         <div class="card card--rows">
           <div class="od-row">
             <div class="od-field od-fill">
-              <span class="row__title">Erase everything</span>
-              <span class="row__sub">Deletes every reading from this device. Export first if you want a copy.</span>
+              <span class="row__title" data-i18n="set.erase">Erase everything</span>
+              <span class="row__sub" data-i18n="set.erase.sub">Deletes every reading from this device. Export first if you want a copy.</span>
             </div>
-            <button class="btn btn--danger btn--small od-fixed" id="btn-erase" type="button">Erase</button>
+            <button class="btn btn--danger btn--small od-fixed" id="btn-erase" type="button" data-i18n="set.erase.btn">Erase</button>
           </div>
         </div>
       </section>
@@ -460,53 +472,53 @@
     </section>
   </main>
 
-  <nav class="tabbar" aria-label="Primary">
+  <nav class="tabbar" data-i18n-aria="nav.primary" aria-label="Primary">
     <button class="tabbar__item" data-route="dashboard" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 12 7 7"/></svg>
-      <span>Today</span>
+      <span data-i18n="nav.today">Today</span>
     </button>
     <button class="tabbar__item" data-route="trends" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 3-4 6-6"/><path d="M21 4h-5M21 4v5"/></svg>
-      <span>Trends</span>
+      <span data-i18n="nav.trends">Trends</span>
     </button>
-    <button class="tabbar__scan" id="btn-scan-top" type="button" aria-label="Scan a report QR code" title="Scan QR code">
+    <button class="tabbar__scan" id="btn-scan-top" type="button" data-i18n-aria="fan.scan.qr" aria-label="Scan a report QR code" data-i18n-title="fan.scan.qr" title="Scan QR code">
       <svg viewBox="0 0 24 24" width="25" height="25" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M3 12h18"/></svg>
     </button>
     <button class="tabbar__item" data-route="history" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-      <span>History</span>
+      <span data-i18n="nav.history">History</span>
     </button>
     <button class="tabbar__item" data-route="settings" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
-      <span>Settings</span>
+      <span data-i18n="nav.settings">Settings</span>
     </button>
   </nav>
 
   <!-- Radial actions around the scan button: hover (mouse) or long-press (touch). -->
   <div class="scanfan" id="scan-fan" data-open="false">
-    <button class="scanfan__item" data-scan-fan="scan" type="button" aria-label="Scan the report QR code">
+    <button class="scanfan__item" data-scan-fan="scan" type="button" data-i18n-aria="fan.scan.report" aria-label="Scan the report QR code">
       <span class="scanfan__disc">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M3 12h18"/></svg>
       </span>
-      <span class="scanfan__label">Scan</span>
+      <span class="scanfan__label" data-i18n="fan.scan">Scan</span>
     </button>
-    <button class="scanfan__item" data-scan-fan="upload" type="button" aria-label="Upload a PDF or photo">
+    <button class="scanfan__item" data-scan-fan="upload" type="button" data-i18n-aria="fan.upload.file" aria-label="Upload a PDF or photo">
       <span class="scanfan__disc">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
       </span>
-      <span class="scanfan__label">Upload</span>
+      <span class="scanfan__label" data-i18n="fan.upload">Upload</span>
     </button>
-    <button class="scanfan__item" data-scan-fan="link" type="button" aria-label="Paste the report link">
+    <button class="scanfan__item" data-scan-fan="link" type="button" data-i18n-aria="fan.paste.link" aria-label="Paste the report link">
       <span class="scanfan__disc">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
       </span>
-      <span class="scanfan__label">Link</span>
+      <span class="scanfan__label" data-i18n="fan.link">Link</span>
     </button>
-    <button class="scanfan__item" data-scan-fan="manual" type="button" aria-label="Type the numbers">
+    <button class="scanfan__item" data-scan-fan="manual" type="button" data-i18n-aria="fan.type.numbers" aria-label="Type the numbers">
       <span class="scanfan__disc">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h9"/></svg>
       </span>
-      <span class="scanfan__label">Type</span>
+      <span class="scanfan__label" data-i18n="fan.type">Type</span>
     </button>
   </div>
 </div>
@@ -516,7 +528,7 @@
   <div class="sheet__scrim" data-close-sheet></div>
   <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="capture-title">
     <header class="sheet__head">
-      <h2 class="sheet__title" id="capture-title">Add a reading</h2>
+      <h2 class="sheet__title" id="capture-title" data-i18n="capture.title">Add a reading</h2>
       <button class="iconbtn" data-close-sheet type="button" aria-label="Close">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
@@ -524,12 +536,12 @@
     <div class="sheet__body od-stack" style="--od-gap:10px">
       <form class="od-stack urlform" id="url-form" style="--od-gap:8px">
         <label class="od-field">
-          <span class="row__title">Paste a report link</span>
-          <span class="row__sub">Paste the link from your report. Composition fetches and reads it for you.</span>
+          <span class="row__title" data-i18n="capture.link">Paste a report link</span>
+          <span class="row__sub" data-i18n="capture.link.sub">Paste the link from your report. Composition fetches and reads it for you.</span>
         </label>
-        <input class="input" id="in-report-url" type="text" inputmode="url" placeholder="Paste the report link here" autocomplete="off" spellcheck="false">
+        <input class="input" id="in-report-url" type="text" inputmode="url" data-i18n-ph="capture.link.ph" placeholder="Paste the report link here" autocomplete="off" spellcheck="false">
         <div class="od-cluster" style="--od-gap:8px">
-          <button class="btn btn--primary btn--small" type="submit">Fetch report</button>
+          <button class="btn btn--primary btn--small" type="submit" data-i18n="capture.fetch">Fetch report</button>
         </div>
       </form>
     </div>
@@ -558,11 +570,11 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z"/></svg>
       </button>
     </div>
-    <p class="scanner__hint" id="scanner-hint">Line the QR code up inside the frame</p>
+    <p class="scanner__hint" id="scanner-hint" data-i18n="scan.hint">Line the QR code up inside the frame</p>
     <div class="scanner__bottom">
       <label class="sr-only" for="scanner-image">Use a photo instead</label>
       <input type="file" id="scanner-image" accept="image/*" hidden>
-      <button class="btn btn--ghost btn--small btn--onDark" id="btn-scanner-image" type="button">Read a photo instead</button>
+      <button class="btn btn--ghost btn--small btn--onDark" id="btn-scanner-image" type="button" data-i18n="scan.photo.btn">Read a photo instead</button>
     </div>
   </div>
 </div>
@@ -571,12 +583,12 @@
 <div class="overlay" id="overlay-processing" hidden>
   <div class="overlay__panel" role="status" aria-live="polite">
     <span class="spinner" aria-hidden="true"></span>
-    <p class="overlay__title" id="proc-title">Reading the report</p>
-    <p class="overlay__body" id="proc-body">Fetching the page, then reading it.</p>
+    <p class="overlay__title" id="proc-title" data-i18n="proc.reading">Reading the report</p>
+    <p class="overlay__body" id="proc-body" data-i18n="proc.fetching">Fetching the page, then reading it.</p>
     <ol class="steps" id="proc-steps">
-      <li data-step="fetch">Fetching the report</li>
-      <li data-step="ocr">Reading the numbers</li>
-      <li data-step="done">Checking the result</li>
+      <li data-step="fetch" data-i18n="proc.step.fetch">Fetching the report</li>
+      <li data-step="ocr" data-i18n="proc.step.ocr">Reading the numbers</li>
+      <li data-step="done" data-i18n="proc.step.done">Checking the result</li>
     </ol>
   </div>
 </div>
@@ -594,9 +606,27 @@
     </header>
     <div class="sheet__body od-scroll" id="review-body"></div>
     <footer class="sheet__foot">
-      <button class="btn btn--ghost" id="btn-review-cancel" type="button">Cancel</button>
-      <button class="btn btn--primary od-fill" id="btn-review-save" type="button">Save reading</button>
+      <button class="btn btn--ghost" id="btn-review-cancel" type="button" data-i18n="review.cancel">Cancel</button>
+      <button class="btn btn--primary od-fill" id="btn-review-save" type="button" data-i18n="review.save">Save reading</button>
     </footer>
+  </div>
+</div>
+
+<!-- ---------------------- REPORT IMAGE ---------------------- -->
+<div class="sheet sheet--full" id="sheet-report" hidden>
+  <div class="sheet__scrim" data-close-report></div>
+  <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <header class="sheet__head">
+      <div class="od-field od-fill">
+        <h2 class="sheet__title" id="report-title">Report image</h2>
+        <p class="row__sub" id="report-meta"></p>
+      </div>
+      <button class="iconbtn" id="btn-report-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="sheet__body od-scroll" id="report-body"></div>
+    <footer class="sheet__foot od-cluster" id="report-foot"></footer>
   </div>
 </div>
 
