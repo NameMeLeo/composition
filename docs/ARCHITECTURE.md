@@ -69,6 +69,31 @@ is intentionally dropped. Small overlay icons (star, balance marks, leg dot)
 are proxied through the edge function (`mode: 'report-asset'`, allowlisted to
 five PNGs) because the HTTPS app cannot reach the plain-HTTP provider host.
 
+## Desktop workspace (1024px and up)
+
+Phone stays the capture-and-glance tool; desktop is the analysis workspace.
+Mobile-first is preserved: every desktop rule is a `min-width` addition.
+
+- Shell: labeled sidebar (`.rail`, hidden below 1024px) with an Add-reading
+  dropdown (`components/menu.ts`, same four Capture actions as the scan fan);
+  bottom tabbar hidden on desktop. Drag-and-drop of PDF/photo anywhere on the
+  window feeds the file pipeline; shortcuts `1–4` switch views, `/` focuses
+  the history filter (inert while typing or signed out).
+- Dashboard 12-col grid; trends chart + clickable metric side-list rail;
+  history 2-col cards + sticky filter; settings 2-col; sheets to 960px.
+- Master–detail history at 1280px: `Route.onSplitDetail` lets `go('detail')`
+  render into `#history-detail` without leaving the route (hash still
+  updates, refresh is split-aware, breakpoint crossing re-renders).
+- Trends compare mode: secondary dashed series mapped affinely onto the
+  primary span (axis stays primary-labeled); tooltip shows real values.
+- Bulk history ops: select mode + `#bulk-bar` (count, CSV/JSON of selected,
+  one-confirm delete). `exportCSV`/`exportJSON` take an optional id list.
+- CSV import (`data/import.ts`): parses our own export, validates
+  (parseable date + ≥1 metric), previews counts/errors in a confirm, saves
+  through `addReading` so dedupe applies.
+- 30-day summary strip on Today: avg weight, count, body-fat and muscle net
+  changes, derived from existing selectors.
+
 ## Multi-language (en/tc/sc)
 
 `core/i18n.ts` owns one `{en, tc, sc}` dictionary. Dynamic code calls `t(key,

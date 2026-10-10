@@ -214,6 +214,13 @@
         <div class="chart dashboard-chart" id="mini-chart"></div>
       </section>
 
+      <section class="block" id="block-summary" hidden>
+        <div class="block__head">
+          <h2 class="block__title" data-i18n="sum.title">Last 30 days</h2>
+        </div>
+        <div class="od-grid tiles" id="summary-grid" style="--od-cols:2"></div>
+      </section>
+
       <section class="block" id="block-insights" hidden>
         <div class="block__head">
           <h2 class="block__title" data-i18n="dash.insights.title">What the numbers say</h2>
@@ -429,8 +436,10 @@
           <div class="od-cluster" style="--od-gap:8px">
             <button class="btn btn--ghost btn--small" id="btn-export-json" type="button" data-i18n="set.export.json">Export JSON</button>
             <button class="btn btn--ghost btn--small" id="btn-export-csv" type="button" data-i18n="set.export.csv">Export CSV</button>
+            <button class="btn btn--ghost btn--small" id="btn-import-csv" type="button" data-i18n="set.import.btn">Import CSV</button>
             <button class="btn btn--ghost btn--small" id="btn-copy-summary" type="button" data-i18n="set.export.copy">Copy summary</button>
           </div>
+          <input type="file" id="import-picker" accept=".csv,text/csv" hidden>
         </div>
       </section>
 

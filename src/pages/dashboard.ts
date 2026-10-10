@@ -10,7 +10,7 @@ import { getReadings, latest, deltaFor, seriesFor, rawPoints } from '../data/sto
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { tile } from '../components/tile.js';
-import { renderInsights } from './insights.js';
+import { renderInsights, renderSummary } from './insights.js';
 import { Route } from '../core/router.js';
 
 function html(sel: string, markup: string): HTMLElement {
@@ -29,6 +29,7 @@ export function renderDashboard(): void {
   ($('#hero') as HTMLElement).hidden = !has;
   ($('#block-deltas') as HTMLElement).hidden = !has;
   ($('#block-trend') as HTMLElement).hidden = !has;
+  ($('#block-summary') as HTMLElement).hidden = !has;
   ($('#block-insights') as HTMLElement).hidden = !has;
 
   const metricGrid = $('#dashboard-metrics');
@@ -103,6 +104,7 @@ export function renderDashboard(): void {
     pointLabel: (point) => bucketLabel(miniRange.bucket, point.t)
   });
 
+  renderSummary();
   renderInsights();
 }
 

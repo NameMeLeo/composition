@@ -1748,6 +1748,8 @@ html[data-motion="reduced"] .view { animation: none; }
   #hero { grid-column: span 7; }
   #block-deltas { grid-column: span 5; }
   #block-trend { grid-column: span 7; }
+  #block-summary { grid-column: 1 / -1; }
+  #summary-grid.od-grid.tiles { --od-cols: 4 !important; }
   #block-insights { grid-column: span 5; }
   #block-all-measurements { grid-column: 1 / -1; }
 
