@@ -4,21 +4,28 @@
    Tapping a card charts it, so the grid is both the readout and the picker. */
 
 import { $, el, clear } from '../core/dom.js';
-import { t, metricLabel, groupLabel } from '../core/i18n.js';
-import { METRICS, METRIC_GROUPS, metricsInGroup } from '../core/metrics.js';
+import { t, metricLabel, groupLabel, rangeLabel } from '../core/i18n.js';
+import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES } from '../core/metrics.js';
 import type { MetricGroup } from '../core/metrics.js';
 import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
 import { getReadings, latest, latestWith, deltaFor, seriesForPeriod, rawPoints, sortedAsc } from '../data/store.js';
 import { tile } from '../components/tile.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
-import { bindHorizontalSwipe, wheelArrow } from '../components/wheel.js';
+import { bindHorizontalSwipe, fillWheel, wheelArrow } from '../components/wheel.js';
 import { Route } from '../core/router.js';
 import type { ChartPoint, TrendBucket } from '../domain/types.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
 // The plotted period is explicit [from, to] timestamps; the bucket follows the span.
-const selection = { metric: 'weight', tab: 'composition', from: null as number | null, to: null as number | null };
+// Narrow screens pick it via preset wheel, wide screens via date inputs + snip.
+const selection = {
+  metric: 'weight',
+  tab: 'composition',
+  preset: null as string | null,
+  from: null as number | null,
+  to: null as number | null
+};
 
 /** A metric is only offered once at least one reading has recorded it. */
 const hasData = (key: string): boolean => rawPoints(key).length > 0;
@@ -57,6 +64,31 @@ function defaultPeriod(): { from: number; to: number } {
   return { from: Math.min(startOfDay(to - 89 * DAY_MS), startOfDay(earliest)), to };
 }
 
+/* Preset wheel windows as explicit bounds. Spans sit just inside the bucket
+   edges so each preset lands in its intended aggregation (7d→raw, 28d→weekly,
+   364d→monthly, open-ended→yearly-or-shorter). */
+function presetBounds(id: string): { from: number; to: number } {
+  const to = endOfDay(Date.now());
+  const day = startOfDay(to);
+  if (id === 'day') return { from: day - 6 * DAY_MS, to };
+  if (id === 'week') return { from: day - 27 * DAY_MS, to };
+  if (id === 'year') {
+    const times = sortedAsc(getReadings())
+      .map((r) => new Date(r.measuredAt).getTime())
+      .filter((time) => Number.isFinite(time));
+    return { from: times.length ? startOfDay(times[0]) : day - 364 * DAY_MS, to };
+  }
+  return { from: day - 364 * DAY_MS, to };
+}
+
+function applyPreset(id: string): void {
+  selection.preset = id;
+  const bounds = presetBounds(id);
+  selection.from = bounds.from;
+  selection.to = bounds.to;
+  renderTrends();
+}
+
 /** The explicit plotted period, falling back to the default window. */
 function period(): { from: number; to: number } {
   if (selection.from != null && selection.to != null) return { from: selection.from, to: selection.to };
@@ -69,7 +101,7 @@ export function renderTrends(): void {
 
   if (!groups.length) {
     ($('#trend-card') as HTMLElement).hidden = true;
-    ['#trend-tabs', '#trend-chart', '#composition-split', '#metric-rail'].forEach((id) => { const n = $(id); if (n) clear(n); });
+    ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split', '#metric-rail'].forEach((id) => { const n = $(id); if (n) clear(n); });
     ($('#trend-label') as HTMLElement).textContent = t('view.trends');
     ($('#trend-latest') as HTMLElement).textContent = '—';
     ($('#trend-range-note') as HTMLElement).textContent = '';
@@ -89,9 +121,36 @@ export function renderTrends(): void {
 
   renderTabs(groups);
 
+  // Narrow screens live on presets: without one, or after a desktop-side custom
+  // period, snap back to the highlighted preset so wheel and plot never disagree.
+  if (window.matchMedia('(min-width: 1024px)').matches) {
+    if (selection.from == null || selection.to == null) {
+      const d = defaultPeriod();
+      selection.from = d.from;
+      selection.to = d.to;
+    }
+  } else {
+    if (!selection.preset) selection.preset = 'month';
+    applyPresetBounds(selection.preset);
+    fillWheel(
+      $('#range-rail'),
+      RANGES.map((range) => ({ id: range.id, label: rangeLabel(range.id, range.label) })),
+      selection.preset,
+      (id) => applyPreset(id),
+      { noun: t('range.noun'), listLabel: t('trends.range.label') }
+    );
+  }
+
   renderTrendCard(group);
   renderMetricRail(group);
   renderCompositionSplit();
+}
+
+/** Sets the explicit period from a preset without re-rendering (caller renders). */
+function applyPresetBounds(id: string): void {
+  const bounds = presetBounds(id);
+  selection.from = bounds.from;
+  selection.to = bounds.to;
 }
 
 /* The tab strip. Every tab is always offered for the groups that have data, so the
@@ -269,6 +328,7 @@ function renderChart(): void {
       selection.from = startOfDay(lo);
       // A snip inside one day still plots that whole day.
       selection.to = Math.max(endOfDay(hi), endOfDay(lo));
+      selection.preset = null;
       renderTrends();
     }
   });
@@ -292,6 +352,7 @@ function syncPeriodInputs(from: number, to: number): void {
     const cur = period();
     if (next <= cur.to) selection.from = next;
     else { selection.from = startOfDay(cur.to); selection.to = endOfDay(next); }
+    selection.preset = null;
     renderTrends();
   };
   toInput.onchange = () => {
@@ -299,6 +360,7 @@ function syncPeriodInputs(from: number, to: number): void {
     const cur = period();
     if (next >= cur.from) selection.to = next;
     else { selection.from = startOfDay(next); selection.to = endOfDay(cur.from); }
+    selection.preset = null;
     renderTrends();
   };
 }

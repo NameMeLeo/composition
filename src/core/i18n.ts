@@ -98,6 +98,7 @@ const STR: Record<string, DictEntry> = {
 
   /* trends */
   'trends.groups.label': { en: 'Choose a group of measures', tc: '選擇量度組別', sc: '选择量度组别' },
+  'trends.range.label': { en: 'Choose a time range', tc: '選擇時間範圍', sc: '选择时间范围' },
   'trends.metrics': { en: 'Metrics', tc: '量度', sc: '测量' },
   'trends.metrics.label': { en: 'Metrics in this group', tc: '此組別的量度', sc: '此组别的测量' },
   'trends.from': { en: 'From', tc: '由', sc: '从' },
@@ -359,6 +360,7 @@ const STR: Record<string, DictEntry> = {
   'range.day': { en: 'Days', tc: '日', sc: '日' },  'range.week': { en: 'Weeks', tc: '週', sc: '周' },
   'range.month': { en: 'Months', tc: '月', sc: '月' },
   'range.year': { en: 'Years', tc: '年', sc: '年' },
+  'range.noun': { en: 'range', tc: '範圍', sc: '范围' },
   'group.composition': { en: 'Composition', tc: '體組成', sc: '体组成' },
   'group.muscle': { en: 'Muscle', tc: '肌肉', sc: '肌肉' },
   'group.fat': { en: 'Fat', tc: '脂肪', sc: '脂肪' },

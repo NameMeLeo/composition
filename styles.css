@@ -1842,8 +1842,13 @@ body.is-dropping .drop-cue span {
   font-weight: 700;
 }
 
-/* Trends period pickers + drag-snip shade. */
-.trend-period { display: flex; gap: var(--s-3); }
+/* Trends period pickers (desktop) + drag-snip shade. The preset wheel keeps
+   narrow screens; wide screens get explicit dates instead. */
+.trend-period { display: none; }
+@media (min-width: 1024px) {
+  #range-rail { display: none; }
+  .trend-period { display: flex; gap: var(--s-3); }
+}
 .trend-period__field { display: grid; gap: 4px; flex: 1 1 auto; min-width: 0; font-size: var(--fs-xs); font-weight: 600; color: var(--c-muted); }
 .trend-period__field input {
   min-height: 44px;
