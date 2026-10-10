@@ -38,10 +38,11 @@ function toCSV(rows: Reading[], headers: string[], mapper: (row: Reading, h: str
   return lines.join('\n');
 }
 
-export function exportJSON(): void {
+export function exportJSON(ids?: string[] | null): void {
+  const readings = ids ? sortedAsc(getAllReadings().filter((r) => ids.includes(r.id))) : sortedAsc(getAllReadings());
   download(
     'composition-readings-' + stamp() + '.json',
-    JSON.stringify({ app: 'composition', version: APP_VERSION, exportedAt: new Date().toISOString(), readings: sortedAsc(getAllReadings()) }, null, 2),
+    JSON.stringify({ app: 'composition', version: APP_VERSION, exportedAt: new Date().toISOString(), readings }, null, 2),
     'application/json'
   );
   toast(t('exp.json'));
@@ -49,7 +50,7 @@ export function exportJSON(): void {
 
 /* Column header -> metric key. Derived from the METRICS catalogue in one place so
    adding a metric cannot silently leave the CSV behind. */
-const METRIC_COLUMNS: Record<string, string> = {
+export const METRIC_COLUMNS: Record<string, string> = {
   weight_kg: 'weight', body_fat_pct: 'bodyFat', muscle_mass_kg: 'muscleMass', fat_free_mass_kg: 'fatFreeMass',
   body_water_pct: 'bodyWater', bone_mass_kg: 'boneMass', visceral_fat: 'visceralFat', bmi: 'bmi',
   bmr_kcal: 'bmr', metabolic_age: 'metabolicAge', muscle_quality: 'muscleQuality', physique_rating: 'physiqueRating',
@@ -72,10 +73,11 @@ const METRIC_COLUMNS: Record<string, string> = {
   left_leg_fat_balance: 'segFatBalanceLeftLeg', right_leg_fat_balance: 'segFatBalanceRightLeg'
 };
 
-export function exportCSV(): void {
+export function exportCSV(ids?: string[] | null): void {
   const headers = ['measured_at', 'source', 'player_id', 'serial_number', 'note'].concat(Object.keys(METRIC_COLUMNS));
+  const rows = ids ? sortedAsc(getReadings().filter((r) => ids.includes(r.id))) : sortedAsc(getReadings());
 
-  const text = toCSV(sortedAsc(getReadings()), headers, (row, h) => {
+  const text = toCSV(rows, headers, (row, h) => {
     if (h === 'measured_at') return row.measuredAt;
     if (h === 'source') return row.source;
     if (h === 'player_id') return row.playerId;
@@ -85,6 +87,11 @@ export function exportCSV(): void {
   });
   download('composition-readings-' + stamp() + '.csv', text, 'text/csv;charset=utf-8');
   toast(t('exp.csv'));
+}
+
+/** Reverse lookup for the importer: CSV column header -> metric key. */
+export function metricFromCsvColumn(header: string): string | null {
+  return METRIC_COLUMNS[header] ?? null;
 }
 
 /** Samsung Health's import shape. Needs weight and body fat to be meaningful. */

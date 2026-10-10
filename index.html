@@ -311,6 +311,16 @@
               <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
             </label>
             <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
+            <button class="btn btn--ghost btn--small" id="btn-select" type="button" data-i18n="bulk.select">Select</button>
+          </div>
+          <div class="bulkbar" id="bulk-bar" hidden>
+            <span class="bulkbar__count" id="bulk-count"></span>
+            <div class="od-cluster bulkbar__actions" style="--od-gap:8px">
+              <button class="btn btn--ghost btn--small" id="bulk-csv" type="button">CSV</button>
+              <button class="btn btn--ghost btn--small" id="bulk-json" type="button">JSON</button>
+              <button class="btn btn--danger btn--small" id="bulk-delete" type="button" data-i18n="bulk.delete">Delete</button>
+              <button class="btn btn--ghost btn--small" id="bulk-done" type="button" data-i18n="bulk.done">Done</button>
+            </div>
           </div>
           <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
           <div class="empty empty--inline" id="empty-history" hidden>

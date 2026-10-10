@@ -1803,6 +1803,24 @@ html[data-motion="reduced"] .view { animation: none; }
   .hitem.is-current { border-color: var(--c-primary); box-shadow: var(--ring); }
 }
 
+/* History bulk selection + bar. */
+.bulkbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+.bulkbar__count { font-size: var(--fs-sm); font-weight: 600; }
+.bulkbar__actions { justify-content: flex-end; }
+.hitem-row { display: flex; align-items: center; gap: var(--s-2); }
+.hitem-row .hitem { flex: 1 1 auto; min-width: 0; }
+.hitem__check { flex: none; width: 22px; height: 22px; accent-color: var(--c-primary); }
+
 /* Desktop drag-and-drop cue. */
 .drop-cue { display: none; }
 body.is-dropping .drop-cue {

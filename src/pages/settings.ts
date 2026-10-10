@@ -154,8 +154,8 @@ export function initSettings(): void {
     showAuth();
   });
 
-  ($('#btn-export-json') as HTMLButtonElement).addEventListener('click', exportJSON);
-  ($('#btn-export-csv') as HTMLButtonElement).addEventListener('click', exportCSV);
+  ($('#btn-export-json') as HTMLButtonElement).addEventListener('click', () => exportJSON());
+  ($('#btn-export-csv') as HTMLButtonElement).addEventListener('click', () => exportCSV());
   ($('#btn-export-samsung') as HTMLButtonElement).addEventListener('click', exportSamsung);
   ($('#btn-copy-summary') as HTMLButtonElement).addEventListener('click', () => void copySummary());
 

@@ -118,6 +118,13 @@ const STR: Record<string, DictEntry> = {
   'hist.empty': { en: 'Nothing matches', tc: '沒有相符項目', sc: '没有相符项目' },
   'hist.empty.body': { en: 'Try a different date, or clear the filter to see every reading.', tc: '試試其他日期，或清除篩選以查看全部讀數。', sc: '试试其他日期，或清除筛选以查看全部读数。' },
   'hist.clear': { en: 'Clear filter', tc: '清除篩選', sc: '清除筛选' },
+  'bulk.select': { en: 'Select', tc: '選取', sc: '选取' },
+  'bulk.count': { en: '{n} selected', tc: '已選 {n} 項', sc: '已选 {n} 项' },
+  'bulk.delete': { en: 'Delete', tc: '刪除', sc: '删除' },
+  'bulk.done': { en: 'Done', tc: '完成', sc: '完成' },
+  'bulk.pick': { en: 'Select the reading from {date}', tc: '選取 {date} 的讀數', sc: '选取 {date} 的读数' },
+  'bulk.confirm': { en: 'Delete {n} readings? This cannot be undone.', tc: '確定刪除 {n} 筆讀數？此操作無法復原。', sc: '确定删除 {n} 笔读数？此操作无法撤销。' },
+  'bulk.deleted': { en: '{n} reading{s} deleted', tc: '已刪除 {n} 筆讀數', sc: '已删除 {n} 笔读数' },
 
   /* detail */
   'detail.back': { en: 'Back', tc: '返回', sc: '返回' },
