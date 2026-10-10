@@ -3,3 +3,7 @@ sample*
 
 # Supabase CLI scratch — machine specific, never deployed
 supabase/.temp/
+
+# Node + TypeScript build output — machine specific, rebuilt in CI
+node_modules/
+dist/

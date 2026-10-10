@@ -21,11 +21,24 @@ jobs:
       - name: Check out
         uses: actions/checkout@v5
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Compile TypeScript (src -> dist/js)
+        run: npm run build
+
       - name: Prepare the static bundle
         run: |
-          mkdir -p dist
           cp index.html styles.css sw.js manifest.webmanifest .nojekyll dist/
-          cp -r js dist/js
           cp -r icons dist/icons
           cp README.md dist/
           # Fail loudly here rather than publishing a site with no JavaScript.

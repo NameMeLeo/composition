@@ -1,6 +1,7 @@
-// Composition — prints the sw.js ASSETS block for the current js/ tree.
+// Composition — prints the sw.js ASSETS block for the current src/ tree.
 // Usage: node scripts/gen-sw-manifest.mjs
 // Paste the output into sw.js and bump CACHE (composition-vNN).
+// Paths are the compiled dist/js locations (tsc: rootDir src -> outDir dist/js).
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,12 +15,12 @@ function walk(dir, base) {
     if (statSync(full).isDirectory()) {
       if (name === '.git' || name === 'dist' || name === 'node_modules' || name === '.temp') continue;
       walk(full, rel);
-    } else if (/\.js$/.test(name) && rel.startsWith('js/')) {
-      files.push('./' + rel);
+    } else if (/\.ts$/.test(name) && rel.startsWith('src/')) {
+      files.push('./js/' + rel.slice(4).replace(/\.ts$/, '.js'));
     }
   }
 }
-walk(join(ROOT, 'js'), 'js');
+walk(join(ROOT, 'src'), 'src');
 const fixed = [
   './',
   './index.html',
