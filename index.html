@@ -297,19 +297,26 @@
 
     <!-- HISTORY -->
     <section class="view" id="view-history" data-title="History" hidden>
-      <div class="history__tools">
-        <label class="srch">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <span class="srch__label" data-i18n="hist.filter">Filter readings by date or source</span>
-          <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
-        </label>
-        <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
-      </div>
-      <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
-      <div class="empty empty--inline" id="empty-history" hidden>
-        <h2 class="empty__title" data-i18n="hist.empty">Nothing matches</h2>
-        <p class="empty__body" data-i18n="hist.empty.body">Try a different date, or clear the filter to see every reading.</p>
-        <button class="btn btn--ghost" id="btn-clear-filter" type="button" data-i18n="hist.clear">Clear filter</button>
+      <div class="history-layout">
+        <div class="history-main">
+          <div class="history__tools">
+            <label class="srch">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <span class="srch__label" data-i18n="hist.filter">Filter readings by date or source</span>
+              <input id="history-search" type="search" data-i18n-ph="hist.filter" placeholder="Filter by date or source" autocomplete="off">
+            </label>
+            <button class="btn btn--ghost btn--small" id="btn-export-history" type="button" data-i18n="hist.export">Export</button>
+          </div>
+          <div class="od-stack" id="history-list" style="--od-gap:10px"></div>
+          <div class="empty empty--inline" id="empty-history" hidden>
+            <h2 class="empty__title" data-i18n="hist.empty">Nothing matches</h2>
+            <p class="empty__body" data-i18n="hist.empty.body">Try a different date, or clear the filter to see every reading.</p>
+            <button class="btn btn--ghost" id="btn-clear-filter" type="button" data-i18n="hist.clear">Clear filter</button>
+          </div>
+        </div>
+        <aside class="history-detail" id="history-detail-wrap" data-i18n-aria="hist.detailpane" aria-label="Reading details" hidden>
+          <div id="history-detail"></div>
+        </aside>
       </div>
     </section>
 
@@ -545,6 +552,10 @@
       </span>
       <span class="scanfan__label" data-i18n="fan.type">Type</span>
     </button>
+  </div>
+
+  <div class="drop-cue" id="drop-cue" aria-hidden="true">
+    <span data-i18n="drop.hint">Drop a PDF or photo to read it</span>
   </div>
 </div>
 

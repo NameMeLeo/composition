@@ -122,8 +122,8 @@ function metricRow(key: string, value: number, note: string): HTMLElement {
 /* The page                                                            */
 /* ------------------------------------------------------------------ */
 
-export function renderDetail(id?: string | null): void {
-  const host = $('#detail-body');
+export function renderDetail(id?: string | null, target?: HTMLElement): void {
+  const host = target ?? $('#detail-body');
   clear(host);
 
   const reading = getReadings().find((r) => r.id === id);

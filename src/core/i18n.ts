@@ -297,6 +297,9 @@ const STR: Record<string, DictEntry> = {
   'shell.noqr': { en: 'No QR code found in that photo', tc: '相片中找不到二維碼', sc: '照片中找不到二维码' },
   'shell.codenotlink': { en: 'That code is not a report link', tc: '該代碼不是報告連結', sc: '该代码不是报告链接' },
   'shell.photofail': { en: 'The photo could not be read', tc: '相片無法讀取', sc: '照片无法读取' },
+  'drop.hint': { en: 'Drop a PDF or photo to read it', tc: '放開 PDF 或相片以讀取', sc: '放开 PDF 或照片以读取' },
+  'drop.badtype': { en: 'Only a PDF or photo can be read', tc: '只能讀取 PDF 或相片', sc: '只能读取 PDF 或照片' },
+  'hist.detailpane': { en: 'Reading details', tc: '讀數詳情', sc: '读数详情' },
 
   /* services */
   'svc.nosupa': { en: 'Supabase is not configured yet.', tc: 'Supabase 尚未設定。', sc: 'Supabase 尚未设置。' },

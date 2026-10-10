@@ -8,6 +8,21 @@ const ROUTES = ['dashboard', 'trends', 'history', 'settings', 'detail'];
 const pages = new Map<string, (param?: string | null) => void>();
 const navigateHooks = new Set<(name: string) => void>();
 
+/* Wide-screen master–detail: the history page registers a handler that renders
+   a reading into its side pane. When set and the viewport is wide, go('detail')
+   stays on the history view instead of swapping pages. */
+let splitDetailHandler: ((param: string | null) => void) | null = null;
+
+/** Registers the master–detail renderer (history page, desktop only). */
+function onSplitDetail(fn: (param: string | null) => void): () => void {
+  splitDetailHandler = fn;
+  return () => { if (splitDetailHandler === fn) splitDetailHandler = null; };
+}
+
+function splitDetailActive(): boolean {
+  return !!splitDetailHandler && window.matchMedia('(min-width: 1280px)').matches;
+}
+
 let current = 'dashboard';
 let currentParam: string | null = null;
 let lastRoute: { name: string; param: string | null } = { name: 'dashboard', param: null };
@@ -35,16 +50,19 @@ function go(name: string, param?: string | null): void {
   current = name;
   currentParam = param || null;
 
-  $$('.view').forEach((view) => { (view as HTMLElement).hidden = view.id !== 'view-' + name; });
+  const split = name === 'detail' && splitDetailActive();
+  const shown = split ? 'history' : name;
+
+  $$('.view').forEach((view) => { (view as HTMLElement).hidden = view.id !== 'view-' + shown; });
 
   $$('[data-route]').forEach((btn) => {
     const target = btn.getAttribute('data-route');
-    btn.classList.toggle('is-current', target === name);
-    if (target === name) btn.setAttribute('aria-current', 'page');
+    btn.classList.toggle('is-current', target === shown);
+    if (target === shown) btn.setAttribute('aria-current', 'page');
     else btn.removeAttribute('aria-current');
   });
 
-  const active = $('#view-' + name);
+  const active = $('#view-' + shown);
   const title = $('#page-title');
   if (title) title.textContent = active ? (active as HTMLElement).dataset.title || '' : '';
 
@@ -58,14 +76,22 @@ function go(name: string, param?: string | null): void {
     try { fn(name); } catch (err) { console.error('Navigation hook failed', err); }
   });
 
-  const render = pages.get(name);
-  if (render) render(param ?? null);
+  if (split && splitDetailHandler) {
+    splitDetailHandler(param ?? null);
+  } else {
+    const render = pages.get(name);
+    if (render) render(param ?? null);
+  }
 
   if (name !== 'detail') lastRoute = { name, param: null };
 }
 
 /** Re-renders the current route, for when the data changed underneath it. */
 function refresh(): void {
+  if (current === 'detail' && splitDetailActive() && splitDetailHandler) {
+    splitDetailHandler(currentParam);
+    return;
+  }
   const render = pages.get(current);
   if (render) render(currentParam);
 }
@@ -73,6 +99,7 @@ function refresh(): void {
 export const Route = {
   page,
   onNavigate,
+  onSplitDetail,
   go,
   refresh,
   current: (): string => current,

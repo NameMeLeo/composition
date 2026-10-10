@@ -1,15 +1,25 @@
 /* Composition — History.
    Every reading, newest first, searchable by date, source, player id or note. */
 
-import { $, el, clear } from '../core/dom.js';
+import { $, $$, el, clear } from '../core/dom.js';
 import { metricLabel, sourceLabel, appLocaleTag } from '../core/i18n.js';
 import { METRICS, SOURCE_LABEL } from '../core/metrics.js';
 import { fmtDate, fmtTime, metricText, toDate } from '../core/format.js';
 import { getReadings, readingSerialNumber, sortedDesc } from '../data/store.js';
 import { exportCSV } from '../data/export.js';
+import { renderDetail } from './detail.js';
 import { Route } from '../core/router.js';
 
 let filter = '';
+/* Pending master–detail selection (desktop split mode). `undefined` means "leave
+   the selection alone" (filter typing); a string (possibly null) is set by the
+   router's split handler or a plain history visit before renderHistory runs. */
+let pendingSplit: string | null | undefined;
+let splitSelected: string | null = null;
+
+function splitMode(): boolean {
+  return window.matchMedia('(min-width: 1280px)').matches;
+}
 
 function chevron(): SVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -29,6 +39,10 @@ function chevron(): SVGElement {
 export function renderHistory(): void {
   const host = $('#history-list');
   clear(host);
+  if (pendingSplit !== undefined) {
+    splitSelected = pendingSplit;
+    pendingSplit = undefined;
+  }
 
   const query = filter.trim().toLowerCase();
   const rows = sortedDesc(getReadings()).filter((r) => {
@@ -42,8 +56,9 @@ export function renderHistory(): void {
   rows.forEach((reading) => {
     const d = toDate(reading.measuredAt);
 
-    const btn = el('button', 'hitem') as HTMLButtonElement;
+    const btn = el('button', 'hitem' + (splitSelected === reading.id ? ' is-current' : '')) as HTMLButtonElement;
     btn.type = 'button';
+    btn.dataset.id = reading.id;
     btn.addEventListener('click', () => Route.go('detail', reading.id));
 
     const date = el('div', 'hitem__date');
@@ -71,20 +86,44 @@ export function renderHistory(): void {
     btn.appendChild(chevron());
     host.appendChild(btn);
   });
+
+  if (splitSelected && splitMode()) showSplitPane(splitSelected);
+}
+
+/** Renders a reading into the desktop side pane (master–detail split). */
+function showSplitPane(id: string | null): void {
+  const wrap = $('#history-detail-wrap');
+  const pane = $('#history-detail');
+  if (!wrap || !pane) return;
+  if (!id) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  renderDetail(id, pane);
+  $$('#history-list .hitem').forEach((node) => {
+    node.classList.toggle('is-current', (node as HTMLElement).dataset.id === id);
+  });
 }
 
 /** Wires the search box, its clear button and the CSV export on this page. */
 export function initHistory(): void {
-  ($('#history-search') as HTMLInputElement).addEventListener('input', (e) => {
+  $('#history-search').addEventListener('input', (e) => {
     filter = (e.target as HTMLInputElement).value;
     renderHistory();
   });
-  ($('#btn-clear-filter') as HTMLButtonElement).addEventListener('click', () => {
+  $('#btn-clear-filter').addEventListener('click', () => {
     filter = '';
     ($('#history-search') as HTMLInputElement).value = '';
     renderHistory();
   });
   ($('#btn-export-history') as HTMLButtonElement).addEventListener('click', exportCSV);
+
+  // Master–detail split: the router stays on history and hands detail ids here.
+  Route.onSplitDetail((id) => {
+    pendingSplit = id;
+    renderHistory();
+  });
+  // Crossing the breakpoint re-renders: entering split with a detail hash shows
+  // the pane; leaving split hides it again.
+  window.matchMedia('(min-width: 1280px)').addEventListener('change', () => Route.refresh());
 }
 
 Route.page('history', renderHistory);

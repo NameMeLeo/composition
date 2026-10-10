@@ -1785,6 +1785,43 @@ html[data-motion="reduced"] .view { animation: none; }
   .report__facts { position: sticky; top: 0; display: grid; gap: var(--s-2); align-content: start; margin-bottom: 0; }
 }
 
+/* Master–detail history (1280px and up): list left, reading right. */
+.history-detail { display: none; }
+@media (min-width: 1280px) {
+  .history-layout { display: grid; grid-template-columns: minmax(0, 430px) minmax(0, 1fr); gap: 0 var(--s-5); align-items: start; }
+  .history-layout #history-list { grid-template-columns: 1fr; }
+  .history-detail { display: block; min-width: 0; }
+  .history-detail[hidden] { display: none; }
+  .history-detail > div {
+    position: sticky;
+    top: 0;
+    padding: var(--s-4);
+    border: 1px solid var(--c-line-soft);
+    border-radius: var(--r-card);
+    background: var(--c-surface);
+  }
+  .hitem.is-current { border-color: var(--c-primary); box-shadow: var(--ring); }
+}
+
+/* Desktop drag-and-drop cue. */
+.drop-cue { display: none; }
+body.is-dropping .drop-cue {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: color-mix(in srgb, var(--c-primary-soft) 88%, transparent);
+  pointer-events: none;
+}
+body.is-dropping .drop-cue span {
+  padding: var(--s-4) var(--s-6);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-2);
+  font-weight: 700;
+}
+
 @media (hover: hover) {
   .rail__item:hover { background: var(--c-surface-2); }
   .rail__item.is-current:hover { background: var(--c-primary-soft); }
