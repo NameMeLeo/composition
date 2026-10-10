@@ -1,0 +1,17 @@
+{
+  "name": "composition",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first body composition tracker (PWA, no framework).",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "sw-manifest": "node scripts/gen-sw-manifest.mjs",
+    "serve": "npx serve dist"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.3"
+  }
+}

@@ -37,6 +37,7 @@ const ASSETS = [
 
   /* Shared domain vocabulary. */
   './js/domain/report.js',
+  './js/domain/types.js',
 
   /* Everything that talks to a system we do not own. */
   './js/services/auth.js',
