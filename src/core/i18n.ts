@@ -342,8 +342,11 @@ const STR: Record<string, DictEntry> = {
   /* charts */
   'chart.nodata': { en: 'No data in this range', tc: '此範圍沒有數據', sc: '此范围没有数据' },
   'chart.noreadings': { en: 'No readings in this range', tc: '此範圍沒有讀數', sc: '此范围没有读数' },
+  'chart.readings': { en: '{n} readings', tc: '{n} 筆讀數', sc: '{n} 笔读数' },
   'chart.covering': { en: '{p} point{s} covering {n} readings', tc: '{p} 點，共 {n} 筆讀數', sc: '{p} 点，共 {n} 笔读数' },
   'chart.count': { en: '{p} reading{s}', tc: '{p} 筆讀數', sc: '{p} 笔读数' },
+  'compare.label': { en: 'Compare with', tc: '對比', sc: '对比' },
+  'compare.none': { en: 'None', tc: '無', sc: '无' },
 
     /* report popup */  'popup.title': { en: 'Report image', tc: '報告圖像', sc: '报告图像' },  'popup.rendering': { en: 'Rendering the report…', tc: '正在繪製報告…', sc: '正在绘制报告…' },
   'popup.fail': { en: 'The report image could not be rendered.', tc: '無法繪製報告圖像。', sc: '无法绘制报告图像。' },

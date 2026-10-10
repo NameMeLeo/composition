@@ -1822,6 +1822,23 @@ body.is-dropping .drop-cue span {
   font-weight: 700;
 }
 
+/* Compare overlay: dashed secondary series. */
+.chart__line--compare { fill: none; stroke-width: 2; }
+
+/* Trends compare picker + legend. */
+.trend-compare {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+.trend-compare__label { font-size: var(--fs-sm); font-weight: 600; color: var(--c-muted); flex: none; }
+.trend-compare .select { flex: 1 1 auto; min-width: 0; }
+.trend-legend { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-2); }
+.trend-legend__item { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xs); color: var(--c-muted); }
+.trend-legend__sw { width: 22px; height: 3px; border-radius: 2px; }
+.trend-legend__sw--dash { height: 0; border-top: 3px dashed; border-radius: 0; }
+
 @media (hover: hover) {
   .rail__item:hover { background: var(--c-surface-2); }
   .rail__item.is-current:hover { background: var(--c-primary-soft); }

@@ -5,7 +5,7 @@
 
 import { $, el, clear } from '../core/dom.js';
 import { t, metricLabel, groupLabel, rangeLabel } from '../core/i18n.js';
-import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
+import { METRICS, METRIC_ORDER, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
 import type { MetricGroup } from '../core/metrics.js';
 import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
 import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../data/store.js';
@@ -17,7 +17,7 @@ import { Route } from '../core/router.js';
 import type { ChartPoint } from '../domain/types.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
-const selection = { metric: 'weight', range: 'month', tab: 'composition' };
+const selection = { metric: 'weight', range: 'month', tab: 'composition', compare: null as string | null };
 // Until a range is chosen by hand, the page picks one that actually shows a line.
 let rangeChosen = false;
 
@@ -193,6 +193,15 @@ function renderChart(): void {
   const pts = seriesFor(key, selection.range);
   const label = (point: ChartPoint): string => bucketLabel(range.bucket, point.t);
 
+  // A stale compare pick (metric since unrecorded) stands down quietly.
+  if (selection.compare && (selection.compare === key || !hasData(selection.compare))) {
+    selection.compare = null;
+  }
+  const cmpKey = selection.compare;
+  const cmpMeta = cmpKey ? METRICS[cmpKey] : null;
+
+  fillCompareSelect(key);
+
   ($('#trend-label') as HTMLElement).textContent = metricLabel(key, meta.label);
   setMetricValue($('#trend-latest'), key, latestWith(key));
 
@@ -235,8 +244,59 @@ function renderChart(): void {
     metricKey: key,
     padLeft: 44,
     yFormat: axisFormat(key),
-    pointLabel: label
+    pointLabel: label,
+    compare: cmpKey && cmpMeta
+      ? {
+          points: seriesFor(cmpKey, selection.range),
+          accent: cmpMeta.accent,
+          label: metricLabel(cmpKey, cmpMeta.label),
+          format: (v: number) => metricText(cmpKey, v)
+        }
+      : undefined
   });
+
+  renderLegend(key, meta.accent, cmpKey);
+}
+
+/** Compare picker + legend. Any recorded metric qualifies, cross-group included. */
+function fillCompareSelect(current: string): void {
+  const sel = $('#trend-compare-sel') as HTMLSelectElement | null;
+  if (!sel) return;
+  clear(sel);
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = t('compare.none');
+  sel.appendChild(none);
+  METRIC_ORDER.filter((k) => k !== current && hasData(k)).forEach((k) => {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = metricLabel(k, METRICS[k].label);
+    sel.appendChild(o);
+  });
+  sel.value = selection.compare ?? '';
+  sel.onchange = () => {
+    selection.compare = sel.value || null;
+    renderTrends();
+  };
+}
+
+function renderLegend(key: string, accent: string, cmpKey: string | null): void {
+  const legend = $('#trend-legend');
+  if (!legend) return;
+  clear(legend);
+  if (!cmpKey) { (legend as HTMLElement).hidden = true; return; }
+  (legend as HTMLElement).hidden = false;
+  const entry = (color: string, dashed: boolean, name: string): void => {
+    const item = el('span', 'trend-legend__item');
+    const sw = el('span', 'trend-legend__sw' + (dashed ? ' trend-legend__sw--dash' : ''));
+    sw.style.background = dashed ? 'transparent' : color;
+    if (dashed) sw.style.borderColor = color;
+    item.appendChild(sw);
+    item.appendChild(el('span', undefined, name));
+    legend.appendChild(item);
+  };
+  entry(accent, false, metricLabel(key, METRICS[key].label));
+  entry(METRICS[cmpKey].accent, true, metricLabel(cmpKey, METRICS[cmpKey].label));
 }
 
 export function renderCompositionSplit(): void {

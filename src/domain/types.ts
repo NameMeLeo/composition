@@ -52,6 +52,13 @@ export interface ChartPoint {
   readings?: number;
 }
 
+export interface ChartCompare {
+  points: ChartPoint[];
+  accent?: string;
+  label: string;
+  format: (v: number) => string;
+}
+
 export interface ChartOptions {
   points: ChartPoint[];
   height?: number;
@@ -68,6 +75,9 @@ export interface ChartOptions {
   metricKey?: string;
   yFormat?: ((v: number) => string) | null;
   pointLabel?: (p: ChartPoint) => string;
+  /* Secondary dashed series, mapped onto the primary's vertical span so two
+     different units stay comparable. Axis labels always describe the primary. */
+  compare?: ChartCompare;
 }
 
 export type StartReadingJob =
