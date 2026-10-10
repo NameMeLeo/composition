@@ -10,6 +10,80 @@ const NS = 'http://www.w3.org/2000/svg';
 
 function svgEl(tag: string): SVGElement { return document.createElementNS(NS, tag) as SVGElement; }
 
+interface SnipGeom {
+  width: number;
+  padLeft: number;
+  plotW: number;
+  minT: number;
+  spanT: number;
+  onSelect: (from: number, to: number) => void;
+}
+
+/* Mouse drag shades a span of the plot and reports it back as timestamps.
+   Anything under a few pixels is a click, not a snip, and is ignored. */
+function enableSnip(wrap: HTMLElement, svg: SVGElement, geom: SnipGeom): void {
+  wrap.style.cursor = 'crosshair';
+  let anchor: number | null = null;
+  let shade: SVGRectElement | null = null;
+
+  const toTime = (clientX: number): number => {
+    const box = svg.getBoundingClientRect();
+    const localX = ((clientX - box.left) / box.width) * geom.width;
+    const clamped = Math.min(Math.max(localX, geom.padLeft), geom.padLeft + geom.plotW);
+    return geom.minT + ((clamped - geom.padLeft) / geom.plotW) * geom.spanT;
+  };
+
+  const toX = (clientX: number): number => {
+    const box = svg.getBoundingClientRect();
+    const localX = ((clientX - box.left) / box.width) * geom.width;
+    return Math.min(Math.max(localX, geom.padLeft), geom.padLeft + geom.plotW);
+  };
+
+  wrap.addEventListener('pointerdown', (e) => {
+    const ev = e as PointerEvent;
+    if (ev.pointerType !== 'mouse' || ev.button !== 0) return;
+    anchor = ev.clientX;
+  });
+
+  wrap.addEventListener('pointermove', (e) => {
+    const ev = e as PointerEvent;
+    if (anchor == null || ev.pointerType !== 'mouse') return;
+    if (Math.abs(ev.clientX - anchor) < 6) return;
+    if (!shade) {
+      shade = document.createElementNS(NS, 'rect') as SVGRectElement;
+      shade.setAttribute('class', 'chart__select');
+      shade.setAttribute('y', '0');
+      shade.setAttribute('height', '100%');
+      svg.appendChild(shade);
+    }
+    const x0 = toX(anchor);
+    const x1 = toX(ev.clientX);
+    shade.setAttribute('x', String(Math.min(x0, x1)));
+    shade.setAttribute('width', String(Math.max(1, Math.abs(x1 - x0))));
+  });
+
+  const finish = (e: Event): void => {
+    if (anchor == null) return;
+    const ev = e as PointerEvent;
+    const start = anchor;
+    anchor = null;
+    if (shade) {
+      shade.remove();
+      shade = null;
+    }
+    if (ev.pointerType !== 'mouse' || Math.abs(ev.clientX - start) < 6) return;
+    geom.onSelect(toTime(start), toTime(ev.clientX));
+  };
+  wrap.addEventListener('pointerup', finish);
+  wrap.addEventListener('pointercancel', () => {
+    anchor = null;
+    if (shade) {
+      shade.remove();
+      shade = null;
+    }
+  });
+}
+
 export function drawChart(host: HTMLElement, options: ChartOptions): void {
   const opts = {
     height: 150,
@@ -131,26 +205,6 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
   line.setAttribute('stroke', opts.accent);
   svg.appendChild(line);
 
-  /* Compare overlay: the secondary series is affinely mapped onto the primary
-     span (its own min anchors the bottom, its max the top), so shape can be
-     compared across units. Only the shape transfers — the axis stays primary. */
-  const cmp = opts.compare && opts.compare.points.length ? opts.compare : null;
-  let cmpAt: ((v: number) => number) | null = null;
-  if (cmp) {
-    const cvs = cmp.points.map((p) => p.v);
-    const cmin = Math.min.apply(null, cvs);
-    const cmax = Math.max.apply(null, cvs);
-    const cspan = (cmax - cmin) || 1;
-    cmpAt = (v: number): number => lo + ((v - cmin) / cspan) * (hi - lo);
-    const cPath = cmp.points.map((p, i) => (i === 0 ? 'M' : 'L') + xAt(p.t).toFixed(1) + ' ' + (cmpAt as (v: number) => number)(p.v).toFixed(1)).join(' ');
-    const cLine = svgEl('path');
-    cLine.setAttribute('class', 'chart__line chart__line--compare');
-    cLine.setAttribute('d', cPath);
-    cLine.setAttribute('stroke', cmp.accent || 'var(--c-slate)');
-    cLine.setAttribute('stroke-dasharray', '6 4');
-    svg.appendChild(cLine);
-  }
-
   if (opts.dots && pts.length <= 40) {
     pts.forEach((p) => {
       const c = svgEl('circle');
@@ -171,6 +225,10 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
   svg.appendChild(cursor);
 
   wrap.appendChild(svg);
+
+  if (opts.selectable && opts.onSelect) {
+    enableSnip(wrap, svg, { width, padLeft, plotW, minT, spanT, onSelect: opts.onSelect });
+  }
 
   if (!opts.scrub) return;
 
@@ -200,17 +258,7 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
     // bucket, and says how many readings went into it when it stood for more than one.
     const when = opts.pointLabel ? opts.pointLabel(point) : fmtDate(point.t, { day: 'numeric', month: 'short' });
     const spread = (point.readings ?? 0) > 1 ? ' · ' + t('chart.readings', { n: point.readings as number }) : '';
-    let cmpText = '';
-    if (cmp) {
-      let cbest = cmp.points[0];
-      let cdist = Infinity;
-      cmp.points.forEach((p) => {
-        const d = Math.abs(xAt(p.t) - localX);
-        if (d < cdist) { cdist = d; cbest = p; }
-      });
-      if (cbest) cmpText = ' · ' + cmp.label + ': ' + cmp.format(cbest.v);
-    }
-    tip.textContent = metricText(opts.metricKey || '', point.v) + ' · ' + when + spread + cmpText;
+    tip.textContent = metricText(opts.metricKey || '', point.v) + ' · ' + when + spread;
     tip.hidden = false;
   }
 
@@ -219,7 +267,12 @@ export function drawChart(host: HTMLElement, options: ChartOptions): void {
     tip.hidden = true;
   }
 
-  wrap.addEventListener('pointermove', (e) => moveTo((e as PointerEvent).clientX));
+  wrap.addEventListener('pointermove', (e) => {
+    const ev = e as PointerEvent;
+    // A held mouse button means a period snip is in progress — leave the tip alone.
+    if (ev.pointerType === 'mouse' && (ev.buttons & 1)) return;
+    moveTo(ev.clientX);
+  });
   wrap.addEventListener('pointerdown', (e) => {
     const ev = e as PointerEvent;
     (wrap as HTMLElement).setPointerCapture?.(ev.pointerId);

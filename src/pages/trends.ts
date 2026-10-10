@@ -4,33 +4,63 @@
    Tapping a card charts it, so the grid is both the readout and the picker. */
 
 import { $, el, clear } from '../core/dom.js';
-import { t, metricLabel, groupLabel, rangeLabel } from '../core/i18n.js';
-import { METRICS, METRIC_ORDER, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../core/metrics.js';
+import { t, metricLabel, groupLabel } from '../core/i18n.js';
+import { METRICS, METRIC_GROUPS, metricsInGroup } from '../core/metrics.js';
 import type { MetricGroup } from '../core/metrics.js';
 import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
-import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../data/store.js';
+import { getReadings, latest, latestWith, deltaFor, seriesForPeriod, rawPoints, sortedAsc } from '../data/store.js';
 import { tile } from '../components/tile.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
-import { bindHorizontalSwipe, fillWheel, wheelArrow } from '../components/wheel.js';
+import { bindHorizontalSwipe, wheelArrow } from '../components/wheel.js';
 import { Route } from '../core/router.js';
-import type { ChartPoint } from '../domain/types.js';
+import type { ChartPoint, TrendBucket } from '../domain/types.js';
 
 // Remembered across visits so switching pages does not reset the user's choice.
-const selection = { metric: 'weight', range: 'month', tab: 'composition', compare: null as string | null };
-// Until a range is chosen by hand, the page picks one that actually shows a line.
-let rangeChosen = false;
+// The plotted period is explicit [from, to] timestamps; the bucket follows the span.
+const selection = { metric: 'weight', tab: 'composition', from: null as number | null, to: null as number | null };
 
 /** A metric is only offered once at least one reading has recorded it. */
 const hasData = (key: string): boolean => rawPoints(key).length > 0;
 
-/* All readings made in one month collapse to a single averaged point, which draws no
-   line and gives high, low and average the same value. So the opening range is the
-   narrowest window that still holds two points — the recent movement is what someone
-   opening Trends wants to see, and they can widen it from there. */
-function fittedRange(key: string): string {
-  const fit = RANGES.find((range) => seriesFor(key, range.id).length >= 2);
-  return fit ? fit.id : RANGES[0].id;
+const DAY_MS = 86400000;
+
+function startOfDay(time: number): number {
+  const d = new Date(time);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function endOfDay(time: number): number {
+  return startOfDay(time) + DAY_MS - 1;
+}
+
+function toInputDate(time: number): string {
+  const d = new Date(time);
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+function fromInputDate(value: string, fallback: number): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return fallback;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+}
+
+/* Default window: last 90 days, widened to the earliest reading so sparse
+   histories still draw a line on first visit. */
+function defaultPeriod(): { from: number; to: number } {
+  const to = endOfDay(Date.now());
+  const times = sortedAsc(getReadings())
+    .map((r) => new Date(r.measuredAt).getTime())
+    .filter((time) => Number.isFinite(time));
+  const earliest = times.length ? times[0] : to;
+  return { from: Math.min(startOfDay(to - 89 * DAY_MS), startOfDay(earliest)), to };
+}
+
+/** The explicit plotted period, falling back to the default window. */
+function period(): { from: number; to: number } {
+  if (selection.from != null && selection.to != null) return { from: selection.from, to: selection.to };
+  return defaultPeriod();
 }
 
 export function renderTrends(): void {
@@ -39,7 +69,7 @@ export function renderTrends(): void {
 
   if (!groups.length) {
     ($('#trend-card') as HTMLElement).hidden = true;
-    ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split', '#metric-rail'].forEach((id) => { const n = $(id); if (n) clear(n); });
+    ['#trend-tabs', '#trend-chart', '#composition-split', '#metric-rail'].forEach((id) => { const n = $(id); if (n) clear(n); });
     ($('#trend-label') as HTMLElement).textContent = t('view.trends');
     ($('#trend-latest') as HTMLElement).textContent = '—';
     ($('#trend-range-note') as HTMLElement).textContent = '';
@@ -58,16 +88,6 @@ export function renderTrends(): void {
   }
 
   renderTabs(groups);
-
-  if (!rangeChosen) selection.range = fittedRange(selection.metric);
-
-  fillWheel(
-    $('#range-rail'),
-    RANGES.map((range) => ({ id: range.id, label: rangeLabel(range.id, range.label) })),
-    selection.range,
-    (id) => { selection.range = id; rangeChosen = true; renderTrends(); },
-    { noun: t('range.noun'), listLabel: t('trends.range.label') }
-  );
 
   renderTrendCard(group);
   renderMetricRail(group);
@@ -189,18 +209,11 @@ function spread(values: number[]): { min: number; max: number; mean: number } | 
 function renderChart(): void {
   const key = selection.metric;
   const meta = METRICS[key];
-  const range = rangeById(selection.range);
-  const pts = seriesFor(key, selection.range);
-  const label = (point: ChartPoint): string => bucketLabel(range.bucket, point.t);
+  const { from, to } = period();
+  const { points: pts, bucket } = seriesForPeriod(key, from, to);
+  const label = (point: ChartPoint): string => bucketLabel(bucket === 'raw' ? 'day' : bucket, point.t);
 
-  // A stale compare pick (metric since unrecorded) stands down quietly.
-  if (selection.compare && (selection.compare === key || !hasData(selection.compare))) {
-    selection.compare = null;
-  }
-  const cmpKey = selection.compare;
-  const cmpMeta = cmpKey ? METRICS[cmpKey] : null;
-
-  fillCompareSelect(key);
+  syncPeriodInputs(from, to);
 
   ($('#trend-label') as HTMLElement).textContent = metricLabel(key, meta.label);
   setMetricValue($('#trend-latest'), key, latestWith(key));
@@ -218,7 +231,11 @@ function renderChart(): void {
   // The note counts the readings behind the line, not just the points, because one
   // monthly point standing for six readings is a different claim from a single one.
   const readings = pts.reduce((total, point) => total + (point.readings || 1), 0);
-  const parts = [t('trends.points', { n: pts.length, s: pts.length === 1 ? '' : 's' })];
+  const parts = [
+    fmtDate(from, { day: 'numeric', month: 'short' }) + ' – ' + fmtDate(to, { day: 'numeric', month: 'short', year: 'numeric' }),
+    t('trends.points', { n: pts.length, s: pts.length === 1 ? '' : 's' }),
+    t('trends.bucket.' + bucket)
+  ];
   if (readings > pts.length) parts.push(t('trends.averaged', { n: readings }));
   if (pts.length >= 2) parts.push(t('trends.over', { d: metricText(key, pts[pts.length - 1].v - pts[0].v) }));
   ($('#trend-range-note') as HTMLElement).textContent = parts.join(' · ');
@@ -245,58 +262,45 @@ function renderChart(): void {
     padLeft: 44,
     yFormat: axisFormat(key),
     pointLabel: label,
-    compare: cmpKey && cmpMeta
-      ? {
-          points: seriesFor(cmpKey, selection.range),
-          accent: cmpMeta.accent,
-          label: metricLabel(cmpKey, cmpMeta.label),
-          format: (v: number) => metricText(cmpKey, v)
-        }
-      : undefined
+    selectable: true,
+    onSelect: (a: number, b: number) => {
+      const lo = Math.min(a, b);
+      const hi = Math.max(a, b);
+      selection.from = startOfDay(lo);
+      // A snip inside one day still plots that whole day.
+      selection.to = Math.max(endOfDay(hi), endOfDay(lo));
+      renderTrends();
+    }
   });
 
-  renderLegend(key, meta.accent, cmpKey);
-}
-
-/** Compare picker + legend. Any recorded metric qualifies, cross-group included. */
-function fillCompareSelect(current: string): void {
-  const sel = $('#trend-compare-sel') as HTMLSelectElement | null;
-  if (!sel) return;
-  clear(sel);
-  const none = document.createElement('option');
-  none.value = '';
-  none.textContent = t('compare.none');
-  sel.appendChild(none);
-  METRIC_ORDER.filter((k) => k !== current && hasData(k)).forEach((k) => {
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = metricLabel(k, METRICS[k].label);
-    sel.appendChild(o);
-  });
-  sel.value = selection.compare ?? '';
-  sel.onchange = () => {
-    selection.compare = sel.value || null;
+  ($('#trend-chart') as HTMLElement).ondblclick = () => {
+    selection.from = null;
+    selection.to = null;
     renderTrends();
   };
 }
 
-function renderLegend(key: string, accent: string, cmpKey: string | null): void {
-  const legend = $('#trend-legend');
-  if (!legend) return;
-  clear(legend);
-  if (!cmpKey) { (legend as HTMLElement).hidden = true; return; }
-  (legend as HTMLElement).hidden = false;
-  const entry = (color: string, dashed: boolean, name: string): void => {
-    const item = el('span', 'trend-legend__item');
-    const sw = el('span', 'trend-legend__sw' + (dashed ? ' trend-legend__sw--dash' : ''));
-    sw.style.background = dashed ? 'transparent' : color;
-    if (dashed) sw.style.borderColor = color;
-    item.appendChild(sw);
-    item.appendChild(el('span', undefined, name));
-    legend.appendChild(item);
+/** Keeps the date inputs in step with the plotted period (no-op when absent). */
+function syncPeriodInputs(from: number, to: number): void {
+  const fromInput = $('#trend-from') as HTMLInputElement | null;
+  const toInput = $('#trend-to') as HTMLInputElement | null;
+  if (!fromInput || !toInput) return;
+  fromInput.value = toInputDate(from);
+  toInput.value = toInputDate(to);
+  fromInput.onchange = () => {
+    const next = startOfDay(fromInputDate(fromInput.value, from));
+    const cur = period();
+    if (next <= cur.to) selection.from = next;
+    else { selection.from = startOfDay(cur.to); selection.to = endOfDay(next); }
+    renderTrends();
   };
-  entry(accent, false, metricLabel(key, METRICS[key].label));
-  entry(METRICS[cmpKey].accent, true, metricLabel(cmpKey, METRICS[cmpKey].label));
+  toInput.onchange = () => {
+    const next = endOfDay(fromInputDate(toInput.value, to));
+    const cur = period();
+    if (next >= cur.from) selection.to = next;
+    else { selection.from = startOfDay(next); selection.to = endOfDay(cur.from); }
+    renderTrends();
+  };
 }
 
 export function renderCompositionSplit(): void {

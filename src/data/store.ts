@@ -20,12 +20,14 @@ import {
   withReportMetrics,
   rawPointsFor,
   seriesForRange,
+  seriesForPeriodRange,
   latestWithIn,
   deltaForIn
 } from './selectors.js';
-import type { ChartPoint, Reading } from '../domain/types.js';
+import type { ChartPoint, Reading, TrendBucket } from '../domain/types.js';
 
 export { Store, readingSerialNumber, sortedAsc, sortedDesc };
+export type { TrendBucket };
 
 /* ------------------------------------------------------------------ */
 /* The in-memory set                                                   */
@@ -116,6 +118,11 @@ export function rawPoints(key: string): ChartPoint[] { return rawPointsFor(getRe
 
 /** One averaged point per bucket inside a window, oldest first. */
 export function seriesFor(key: string, rangeId: string): ChartPoint[] { return seriesForRange(getReadings(), key, rangeId); }
+
+/** Points for an explicit [from, to] period, bucketed by its span. */
+export function seriesForPeriod(key: string, from: number, to: number): { points: ChartPoint[]; bucket: TrendBucket } {
+  return seriesForPeriodRange(getReadings(), key, from, to);
+}
 
 /** The most recent value for a metric, ignoring readings that skipped it. */
 export function latestWith(key: string): number | null { return latestWithIn(getReadings(), key); }

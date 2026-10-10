@@ -84,8 +84,10 @@ Mobile-first is preserved: every desktop rule is a `min-width` addition.
 - Master–detail history at 1280px: `Route.onSplitDetail` lets `go('detail')`
   render into `#history-detail` without leaving the route (hash still
   updates, refresh is split-aware, breakpoint crossing re-renders).
-- Trends compare mode: secondary dashed series mapped affinely onto the
-  primary span (axis stays primary-labeled); tooltip shows real values.
+- Trends period control: explicit From/To date pickers plus mouse drag-snip
+  on the chart (double-click resets to the default window). Aggregation
+  follows the span: under 7 days plots every reading, under 2 months buckets
+  weekly, under a year monthly, beyond that yearly (`bucketForSpan`).
 - Bulk history ops: select mode + `#bulk-bar` (count, CSV/JSON of selected,
   one-confirm delete). `exportCSV`/`exportJSON` take an optional id list.
 - CSV import (`data/import.ts`): parses our own export, validates

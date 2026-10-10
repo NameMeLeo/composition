@@ -52,12 +52,8 @@ export interface ChartPoint {
   readings?: number;
 }
 
-export interface ChartCompare {
-  points: ChartPoint[];
-  accent?: string;
-  label: string;
-  format: (v: number) => string;
-}
+/** Aggregation used for an explicit plotted period. 'raw' plots every reading. */
+export type TrendBucket = 'raw' | 'day' | 'week' | 'month' | 'year';
 
 export interface ChartOptions {
   points: ChartPoint[];
@@ -75,9 +71,10 @@ export interface ChartOptions {
   metricKey?: string;
   yFormat?: ((v: number) => string) | null;
   pointLabel?: (p: ChartPoint) => string;
-  /* Secondary dashed series, mapped onto the primary's vertical span so two
-     different units stay comparable. Axis labels always describe the primary. */
-  compare?: ChartCompare;
+  /* Drag-to-snip a period: mouse drags shade a span and report it back as
+     timestamps. Touch stays on scrub so page scrolling keeps working. */
+  selectable?: boolean;
+  onSelect?: (from: number, to: number) => void;
 }
 
 export type StartReadingJob =

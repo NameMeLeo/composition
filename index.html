@@ -240,7 +240,16 @@
     <section class="view" id="view-trends" data-title="Trends" hidden>
       <div class="trend-controls">
         <div class="tabs" id="trend-tabs" role="tablist" data-i18n-aria="trends.groups.label" aria-label="Choose a group of measures"></div>
-        <div class="wheel wheel--minor" id="range-rail" role="group" data-i18n-aria="trends.range.label" aria-label="Choose a time range"></div>
+        <div class="trend-period">
+          <label class="trend-period__field">
+            <span data-i18n="trends.from">From</span>
+            <input type="date" id="trend-from">
+          </label>
+          <label class="trend-period__field">
+            <span data-i18n="trends.to">To</span>
+            <input type="date" id="trend-to">
+          </label>
+        </div>
       </div>
 
       <div class="trend-layout">
@@ -273,11 +282,6 @@
             </div>
           </div>
           <div class="chart chart--tall" id="trend-chart"></div>
-          <div class="trend-compare">
-            <label class="trend-compare__label" for="trend-compare-sel" data-i18n="compare.label">Compare with</label>
-            <select class="select" id="trend-compare-sel"></select>
-          </div>
-          <div class="trend-legend" id="trend-legend" hidden></div>
           <div class="chart__axis">
             <span id="axis-start">&mdash;</span>
             <span id="axis-mid">&mdash;</span>

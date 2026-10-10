@@ -3,7 +3,7 @@
    The in-memory set lives in store.ts; this module never touches IndexedDB. */
 
 import { rangeById, REPORT_METRIC_PATHS, SEGMENTAL_REPORT_PATHS } from '../core/metrics.js';
-import type { ChartPoint, Reading } from '../domain/types.js';
+import type { ChartPoint, Reading, TrendBucket } from '../domain/types.js';
 
 export const sortedAsc = (list: Reading[]): Reading[] =>
   list.slice().sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime());
@@ -84,10 +84,14 @@ export function seriesForRange(readings: Reading[], key: string, rangeId: string
   const range = rangeById(rangeId);
   const from = range.span ? windowStart(range.bucket, range.span) : null;
 
+  const points = rawPointsFor(readings, key).filter((point) => from === null || point.t >= (from as number));
+  return bucketize(points, range.bucket);
+}
+
+function bucketize(points: ChartPoint[], bucket: string): ChartPoint[] {
   const buckets = new Map<number, { sum: number; n: number }>();
-  rawPointsFor(readings, key).forEach((point) => {
-    if (from !== null && point.t < (from as number)) return;
-    const start = bucketStart(point.t, range.bucket);
+  points.forEach((point) => {
+    const start = bucketStart(point.t, bucket);
     const held = buckets.get(start);
     if (held) { held.sum += point.v; held.n += 1; }
     else buckets.set(start, { sum: point.v, n: 1 });
@@ -96,6 +100,33 @@ export function seriesForRange(readings: Reading[], key: string, rangeId: string
   return Array.from(buckets.entries())
     .map(([t, held]) => ({ t, v: held.sum / held.n, readings: held.n }))
     .sort((a, b) => a.t - b.t);
+}
+
+const WEEK_MS = 7 * 86400000;
+const TWO_MONTHS_MS = 60 * 86400000;
+const YEAR_MS = 365 * 86400000;
+
+/* Bucket follows the chosen span: a week or less plots every reading, under two
+   months averages by week, under a year by month, beyond that by year. Short
+   windows keep raw points so a sparse week still draws what was measured. */
+export function bucketForSpan(spanMs: number): TrendBucket {
+  if (spanMs < WEEK_MS) return 'raw';
+  if (spanMs < TWO_MONTHS_MS) return 'week';
+  if (spanMs < YEAR_MS) return 'month';
+  return 'year';
+}
+
+/** Points for an explicit [from, to] period (inclusive), bucketed by its span. */
+export function seriesForPeriodRange(
+  readings: Reading[],
+  key: string,
+  from: number,
+  to: number
+): { points: ChartPoint[]; bucket: TrendBucket } {
+  const bucket = bucketForSpan(Math.max(0, to - from));
+  const points = rawPointsFor(readings, key).filter((point) => point.t >= from && point.t <= to);
+  if (bucket === 'raw') return { points, bucket };
+  return { points: bucketize(points, bucket), bucket };
 }
 
 /** The most recent value for a metric, ignoring readings that skipped it. */

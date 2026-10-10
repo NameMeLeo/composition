@@ -1842,22 +1842,19 @@ body.is-dropping .drop-cue span {
   font-weight: 700;
 }
 
-/* Compare overlay: dashed secondary series. */
-.chart__line--compare { fill: none; stroke-width: 2; }
-
-/* Trends compare picker + legend. */
-.trend-compare {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin-top: var(--s-3);
+/* Trends period pickers + drag-snip shade. */
+.trend-period { display: flex; gap: var(--s-3); }
+.trend-period__field { display: grid; gap: 4px; flex: 1 1 auto; min-width: 0; font-size: var(--fs-xs); font-weight: 600; color: var(--c-muted); }
+.trend-period__field input {
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
 }
-.trend-compare__label { font-size: var(--fs-sm); font-weight: 600; color: var(--c-muted); flex: none; }
-.trend-compare .select { flex: 1 1 auto; min-width: 0; }
-.trend-legend { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-2); }
-.trend-legend__item { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xs); color: var(--c-muted); }
-.trend-legend__sw { width: 22px; height: 3px; border-radius: 2px; }
-.trend-legend__sw--dash { height: 0; border-top: 3px dashed; border-radius: 0; }
+.chart__select { fill: var(--c-primary); fill-opacity: .14; stroke: var(--c-primary); stroke-width: 1.5; stroke-dasharray: 4 3; }
 
 @media (hover: hover) {
   .rail__item:hover { background: var(--c-surface-2); }
