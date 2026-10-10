@@ -11,6 +11,7 @@ import { on } from '../core/events.js';
 import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.js';
 import { Capture } from '../ingest/capture.js';
 import { ScanFan } from '../ingest/scanfan.js';
+import { attachMenu } from '../components/menu.js';
 import { closeReview, saveReview } from '../ingest/review.js';
 import { closeReportPopup } from '../report/report-popup.js';
 import { initHistory } from '../pages/history.js';
@@ -41,6 +42,19 @@ export function bindShellEvents(): void {
   });
 
   ScanFan.init();
+
+  /* Desktop sidebar capture menu: the same four doors as the radial fan. */
+  const addBtn = $('#btn-add-top') as HTMLButtonElement | null;
+  const addMenu = $('#menu-add');
+  if (addBtn && addMenu) {
+    attachMenu(addBtn, addMenu, (action) => {
+      if (action === 'scan') void Capture.openScanner();
+      else if (action === 'upload') ($('#file-picker') as HTMLElement).click();
+      else if (action === 'link') Capture.openSheet();
+      else if (action === 'manual') void Capture.startReading({ mode: 'manual' });
+    });
+    Route.onNavigate(() => { addMenu.hidden = true; });
+  }
 
   ($('#url-form') as HTMLFormElement).addEventListener('submit', (e) => {
     e.preventDefault();

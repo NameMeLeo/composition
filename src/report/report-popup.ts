@@ -5,8 +5,9 @@
    never come here. */
 
 import { $, el, clear, toast } from '../core/dom.js';
-import { t, resolveAppLang, type AppLang } from '../core/i18n.js';
-import { fmtDateTime } from '../core/format.js';
+import { t, resolveAppLang, metricLabel, type AppLang } from '../core/i18n.js';
+import { fmtDateTime, metricText } from '../core/format.js';
+import { METRICS } from '../core/metrics.js';
 import { OcrProxy } from '../services/ocr.js';
 import { Route } from '../core/router.js';
 import {
@@ -58,6 +59,23 @@ function metaLine(reading: Reading): string {
   const bits = [fmtDateTime(reading.measuredAt)];
   if (reading.playerId) bits.push('player ' + reading.playerId);
   return bits.join(' · ');
+}
+
+/** Key facts beside the canvas: date lives in the header, values live here. */
+function renderFacts(reading: Reading): HTMLElement {
+  const facts = el('div', 'report__facts');
+  const add = (label: string, value: string): void => {
+    if (!value || value === '—') return;
+    const chip = el('span', 'report__fact');
+    chip.appendChild(el('b', undefined, value));
+    chip.appendChild(document.createTextNode(' ' + label));
+    facts.appendChild(chip);
+  };
+  for (const key of ['weight', 'bodyFat', 'muscleMass', 'visceralFat', 'bmi']) {
+    const value = reading.metrics ? reading.metrics[key] : null;
+    if (typeof value === 'number') add(metricLabel(key, METRICS[key].label).toLowerCase(), metricText(key, value));
+  }
+  return facts;
 }
 
 function downloadCanvas(canvas: HTMLCanvasElement): void {
@@ -121,6 +139,7 @@ export async function openReportPopup(reading: Reading): Promise<void> {
   }
 
   clear(body);
+  body.appendChild(renderFacts(reading));
   canvas.className = 'report__canvas';
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', t('popup.title') + ' · ' + metaLine(reading));

@@ -110,7 +110,20 @@
     </div>
   </header>
 
-  <nav class="rail" aria-label="Desktop primary" data-i18n-aria="nav.desktop" hidden>
+  <nav class="rail" aria-label="Desktop primary" data-i18n-aria="nav.desktop">
+    <span class="rail__word">Composition</span>
+    <div class="rail__add">
+      <button class="btn btn--primary btn--block" id="btn-add-top" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-add">
+        <span aria-hidden="true" class="rail__plus">+</span>
+        <span data-i18n="rail.add">Add reading</span>
+      </button>
+      <div class="menu" id="menu-add" role="menu" hidden>
+        <button type="button" role="menuitem" data-add-action="scan"><span data-i18n="fan.scan">Scan</span></button>
+        <button type="button" role="menuitem" data-add-action="upload"><span data-i18n="fan.upload">Upload</span></button>
+        <button type="button" role="menuitem" data-add-action="link"><span data-i18n="fan.link">Link</span></button>
+        <button type="button" role="menuitem" data-add-action="manual"><span data-i18n="fan.type">Type</span></button>
+      </div>
+    </div>
     <button class="rail__item" data-route="dashboard" type="button">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 12 7 7"/></svg>
       <span data-i18n="nav.today">Today</span>
@@ -223,8 +236,10 @@
         <div class="wheel wheel--minor" id="range-rail" role="group" data-i18n-aria="trends.range.label" aria-label="Choose a time range"></div>
       </div>
 
-      <section class="block">
-        <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
+      <div class="trend-layout">
+        <div class="trend-main">
+          <section class="block">
+            <article class="card card--stat trend-card" id="trend-card" role="region" aria-labelledby="trend-label">
           <div class="trend-card__head">
             <button class="trend-card__nav iconbtn" id="trend-prev" type="button" data-i18n-aria="trends.prev" aria-label="Previous measure" data-i18n-title="trends.prev" title="Previous measure"></button>
             <div class="stathead">
@@ -268,6 +283,16 @@
           <div class="split" id="composition-split"></div>
         </div>
       </section>
+        </div>
+        <aside class="trend-side" data-i18n-aria="trends.metrics.label" aria-label="Metrics in this group">
+          <section class="block">
+            <div class="block__head">
+              <h2 class="block__title" data-i18n="trends.metrics">Metrics</h2>
+            </div>
+            <div class="od-stack" id="metric-rail" style="--od-gap:8px"></div>
+          </section>
+        </aside>
+      </div>
     </section>
 
     <!-- HISTORY -->

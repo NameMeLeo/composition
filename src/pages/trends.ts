@@ -9,6 +9,7 @@ import { METRICS, METRIC_GROUPS, metricsInGroup, RANGES, rangeById } from '../co
 import type { MetricGroup } from '../core/metrics.js';
 import { metricText, metricDisplay, fmtDate, axisFormat, bucketLabel } from '../core/format.js';
 import { latest, latestWith, deltaFor, seriesFor, rawPoints } from '../data/store.js';
+import { tile } from '../components/tile.js';
 import { deltaChip } from '../components/chip.js';
 import { scheduleChart } from '../components/chart.js';
 import { bindHorizontalSwipe, fillWheel, wheelArrow } from '../components/wheel.js';
@@ -38,7 +39,7 @@ export function renderTrends(): void {
 
   if (!groups.length) {
     ($('#trend-card') as HTMLElement).hidden = true;
-    ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split'].forEach((id) => clear($(id)));
+    ['#trend-tabs', '#range-rail', '#trend-chart', '#composition-split', '#metric-rail'].forEach((id) => { const n = $(id); if (n) clear(n); });
     ($('#trend-label') as HTMLElement).textContent = t('view.trends');
     ($('#trend-latest') as HTMLElement).textContent = '—';
     ($('#trend-range-note') as HTMLElement).textContent = '';
@@ -69,6 +70,7 @@ export function renderTrends(): void {
   );
 
   renderTrendCard(group);
+  renderMetricRail(group);
   renderCompositionSplit();
 }
 
@@ -135,8 +137,37 @@ function renderTrendCard(group: MetricGroup): void {
   renderChart();
 }
 
-function setMetricValue(node: HTMLElement, key: string, value: unknown): void {
-  clear(node);
+/* Desktop side list: every recorded metric in the open tab as a mini-card.
+   Hidden below the desktop breakpoint by CSS; rendering it always is cheap. */
+function renderMetricRail(group: MetricGroup): void {
+  const host = $('#metric-rail');
+  if (!host) return;
+  clear(host);
+  const last = latest();
+  metricItems(group).forEach((key) => {
+    const item = el('div', 'metric-rail__item' + (key === selection.metric ? ' is-current' : '')) as HTMLElement;
+    item.setAttribute('role', 'button');
+    item.tabIndex = 0;
+    item.setAttribute('aria-label', metricLabel(key, METRICS[key].label));
+    item.appendChild(tile(key, last, { delta: deltaFor(key), points: rawPoints(key).slice(-12) }));
+    const pick = (): void => {
+      if (selection.metric !== key) {
+        selection.metric = key;
+        renderTrends();
+      }
+    };
+    item.addEventListener('click', pick);
+    item.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+        e.preventDefault();
+        pick();
+      }
+    });
+    host.appendChild(item);
+  });
+}
+
+function setMetricValue(node: HTMLElement, key: string, value: unknown): void {  clear(node);
   const shown = metricDisplay(key, value);
   node.appendChild(document.createTextNode(shown.text));
   if (shown.unit) node.appendChild(el('span', 'unit', shown.unit));

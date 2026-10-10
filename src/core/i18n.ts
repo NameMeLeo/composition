@@ -27,6 +27,7 @@ const STR: Record<string, DictEntry> = {
   'nav.settings': { en: 'Settings', tc: '設定', sc: '设置' },
   'nav.primary': { en: 'Primary', tc: '主導航', sc: '主导航' },
   'nav.desktop': { en: 'Desktop primary', tc: '桌面主導航', sc: '桌面主导航' },
+  'rail.add': { en: 'Add reading', tc: '新增讀數', sc: '新增读数' },
 
   /* auth */
   'auth.title.1': { en: 'Read once.', tc: '讀一次。', sc: '读一次。' },
@@ -92,6 +93,8 @@ const STR: Record<string, DictEntry> = {
 
   /* trends */
   'trends.groups.label': { en: 'Choose a group of measures', tc: '選擇量度組別', sc: '选择量度组别' },
+  'trends.metrics': { en: 'Metrics', tc: '量度', sc: '测量' },
+  'trends.metrics.label': { en: 'Metrics in this group', tc: '此組別的量度', sc: '此组别的测量' },
   'trends.range.label': { en: 'Choose a time range', tc: '選擇時間範圍', sc: '选择时间范围' },
   'trends.prev': { en: 'Previous measure', tc: '上一項量度', sc: '上一项量度' },
   'trends.next': { en: 'Next measure', tc: '下一項量度', sc: '下一项量度' },
@@ -339,7 +342,7 @@ const STR: Record<string, DictEntry> = {
   'chart.covering': { en: '{p} point{s} covering {n} readings', tc: '{p} 點，共 {n} 筆讀數', sc: '{p} 点，共 {n} 笔读数' },
   'chart.count': { en: '{p} reading{s}', tc: '{p} 筆讀數', sc: '{p} 笔读数' },
 
-  /* report popup */  'popup.title': { en: 'Report image', tc: '報告圖像', sc: '报告图像' },  'popup.rendering': { en: 'Rendering the report…', tc: '正在繪製報告…', sc: '正在绘制报告…' },
+    /* report popup */  'popup.title': { en: 'Report image', tc: '報告圖像', sc: '报告图像' },  'popup.rendering': { en: 'Rendering the report…', tc: '正在繪製報告…', sc: '正在绘制报告…' },
   'popup.fail': { en: 'The report image could not be rendered.', tc: '無法繪製報告圖像。', sc: '无法绘制报告图像。' },
   'popup.details': { en: 'View details', tc: '查看詳情', sc: '查看详情' },
   'popup.download': { en: 'Download PNG', tc: '下載 PNG', sc: '下载 PNG' },
