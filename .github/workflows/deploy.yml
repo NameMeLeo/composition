@@ -40,11 +40,15 @@ jobs:
         run: |
           cp index.html styles.css sw.js manifest.webmanifest .nojekyll dist/
           cp -r icons dist/icons
+          cp -r assets dist/assets
           cp README.md dist/
           # Fail loudly here rather than publishing a site with no JavaScript.
           test -f dist/index.html
           test -f dist/sw.js
           test -f dist/js/main.js
+          test -f dist/assets/report/tc/bg.png
+          test -f dist/assets/report/en/bg.png
+          test -f dist/assets/report/sc/bg.png
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

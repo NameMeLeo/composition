@@ -3,6 +3,7 @@
    Supabase project, resolving conflicts by whichever copy was touched last. */
 
 import { Auth } from '../services/auth.js';
+import { t } from '../core/i18n.js';
 import { Settings } from '../core/settings.js';
 import { Store, setReadings } from './store.js';
 import type { MirrorResult, Reading } from '../domain/types.js';
@@ -45,7 +46,7 @@ export async function mirrorSync(): Promise<MirrorResult> {
   const url = Settings.get().supabaseUrl.replace(/\/+$/, '') + '/rest/v1/readings';
   try {
     const token = await Auth.accessToken();
-    if (!token) return { ok: false, count: 0, error: 'Sign in before mirroring readings.' };
+    if (!token) return { ok: false, count: 0, error: t('svc.mirror.signin') };
 
     const headers: Record<string, string> = {
       apikey: Settings.get().supabaseAnonKey,
@@ -65,10 +66,10 @@ export async function mirrorSync(): Promise<MirrorResult> {
     });
     if (!pull.ok) {
       const detail = await pull.text().catch(() => '');
-      return { ok: false, count: 0, error: 'The mirror could not download readings (' + pull.status + ')' + (detail ? ': ' + detail.slice(0, 140) : '.') };
+      return { ok: false, count: 0, error: t('svc.mirror.download', { status: pull.status, detail: detail ? ': ' + detail.slice(0, 140) : '.' }) };
     }
     const remoteRows = await pull.json().catch(() => null) as RemoteRow[] | null;
-    if (!Array.isArray(remoteRows)) return { ok: false, count: 0, error: 'The mirror returned an invalid reading list.' };
+    if (!Array.isArray(remoteRows)) return { ok: false, count: 0, error: t('svc.mirror.badlist') };
 
     const merged = new Map(localReadings.map((reading) => [reading.id, reading]));
     const uploads: Reading[] = [];
@@ -111,7 +112,7 @@ export async function mirrorSync(): Promise<MirrorResult> {
       });
       if (!push.ok) {
         const detail = await push.text().catch(() => '');
-        return { ok: false, count: 0, error: 'The mirror could not upload readings (' + push.status + ')' + (detail ? ': ' + detail.slice(0, 140) : '.') };
+        return { ok: false, count: 0, error: t('svc.mirror.upload', { status: push.status, detail: detail ? ': ' + detail.slice(0, 140) : '.' }) };
       }
     }
 
@@ -120,6 +121,6 @@ export async function mirrorSync(): Promise<MirrorResult> {
     Settings.save({ mirrorSyncedAt: new Date().toISOString() });
     return { ok: true, count: mergedReadings.length, uploaded: uniqueUploads.length, downloaded };
   } catch (err) {
-    return { ok: false, count: 0, error: 'The mirror could not be reached.' };
+    return { ok: false, count: 0, error: t('svc.mirror.unreachable') };
   }
 }

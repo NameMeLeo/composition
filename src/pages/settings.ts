@@ -3,6 +3,7 @@
    and every export, plus the wiring for all of the controls on this page. */
 
 import { $, toast } from '../core/dom.js';
+import { t, applyI18n } from '../core/i18n.js';
 import { Settings } from '../core/settings.js';
 import { Auth } from '../services/auth.js';
 import { OcrProxy } from '../services/ocr.js';
@@ -16,19 +17,20 @@ import { showAuth } from '../core/shell.js';
 
 function describeMirrorSync(): string {
   const at = Settings.get().mirrorSyncedAt;
-  if (!at) return 'Never synced';
+  if (!at) return t('set.never');
   return fmtDateTime(at) + ' · ' + relDays(at);
 }
 
 export function renderSettings(): void {
   const user = Auth.user();
-  ($('#account-name') as HTMLElement).textContent = user ? user.user_metadata?.full_name || 'Signed in' : 'Not signed in';
-  ($('#account-email') as HTMLElement).textContent = user?.email ? user.email : 'No account connected';
-  ($('#btn-account') as HTMLButtonElement).textContent = user ? 'Sign out' : 'Sign in';
+  ($('#account-name') as HTMLElement).textContent = user ? user.user_metadata?.full_name || t('set.signed.in') : t('set.signed.out');
+  ($('#account-email') as HTMLElement).textContent = user?.email ? user.email : t('set.noaccount');
+  ($('#btn-account') as HTMLButtonElement).textContent = user ? t('set.signout') : t('set.signin');
   ($('#account-avatar') as HTMLElement).textContent = user ? (user.email || 'U').slice(0, 1).toUpperCase() : '?';
 
   ($('#sel-theme') as HTMLSelectElement).value = Settings.get().theme;
   ($('#sel-mass') as HTMLSelectElement).value = Settings.get().massUnit;
+  ($('#sel-lang') as HTMLSelectElement).value = Settings.get().lang || 'system';
   ($('#chk-motion') as HTMLInputElement).checked = Boolean(Settings.get().reduceMotion);
 
   const mirrorOn = Boolean(Settings.get().mirror);
@@ -40,7 +42,9 @@ export function renderSettings(): void {
 
   const readings = getReadings();
   const count = readings.length;
-  ($('#stat-count') as HTMLElement).textContent = count + ' reading' + (count === 1 ? '' : 's') + (count ? '' : ' on this device');
+  ($('#stat-count') as HTMLElement).textContent = count === 0
+    ? t('set.count.none')
+    : t('set.count.n', { n: count, s: count === 1 ? '' : 's' });
 
   let bytes = 0;
   try { bytes = new Blob([JSON.stringify(readings)]).size; } catch (e) { bytes = 0; }
@@ -50,13 +54,11 @@ export function renderSettings(): void {
 
   const configured = OcrProxy.isConfigured();
   const pill = $('#proxy-pill');
-  pill.textContent = configured ? 'Connected' : 'Not configured';
+  pill.textContent = configured ? t('set.pill.ok') : t('set.pill.warn');
   pill.className = 'pill' + (configured ? ' pill--ok' : ' pill--warn');
-  ($('#proxy-sub') as HTMLElement).textContent = configured
-    ? 'Readings are read inside your own Supabase project. The key never reaches this app.'
-    : 'Configure Supabase before using the OCR proxy.';
+  ($('#proxy-sub') as HTMLElement).textContent = configured ? t('set.proxy.ok') : t('set.proxy.need');
 
-  ($('#install-sub') as HTMLElement).textContent = isStandalone() ? 'Installed. Camera and offline use are available.' : '';
+  ($('#install-sub') as HTMLElement).textContent = isStandalone() ? t('set.installed') : '';
 }
 
 /** Wires every control on the Settings page. Called once at boot. */
@@ -73,6 +75,13 @@ export function initSettings(): void {
     if (Route.current() === 'dashboard') Route.refresh();
   });
 
+  ($('#sel-lang') as HTMLSelectElement).addEventListener('change', (e) => {
+    Settings.save({ lang: (e.target as HTMLSelectElement).value });
+    applyI18n();
+    renderSettings();
+    Route.refresh();
+  });
+
   ($('#chk-motion') as HTMLInputElement).addEventListener('change', (e) => {
     Settings.save({ reduceMotion: (e.target as HTMLInputElement).checked });
     applyMotion();
@@ -81,31 +90,30 @@ export function initSettings(): void {
   ($('#chk-mirror') as HTMLInputElement).addEventListener('change', (e) => {
     const checked = (e.target as HTMLInputElement).checked;
     Settings.save({ mirror: checked });
-    toast(checked ? 'Cloud mirror on — new readings copy to your project' : 'Cloud mirror off');
+    toast(checked ? t('set.mirror.on') : t('set.mirror.off'));
     renderSettings();
   });
 
   ($('#btn-sync-now') as HTMLButtonElement).addEventListener('click', async () => {
     const btn = $('#btn-sync-now') as HTMLButtonElement;
-    if (!Auth.user()) { toast('Sign in before mirroring readings', 'error'); return; }
+    if (!Auth.user()) { toast(t('set.signin.mirror'), 'error'); return; }
     if (!Settings.get().supabaseUrl || !Settings.get().supabaseAnonKey) {
-      toast('Add your Supabase URL and anon key first', 'error');
+      toast(t('set.need.supa'), 'error');
       return;
     }
 
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Syncing…';
+    btn.textContent = t('set.syncing');
     const result = await mirrorSync();
     btn.disabled = false;
     btn.textContent = label;
 
     renderSettings();
     if (result.ok) {
-      toast('Synced ' + result.count + ' reading' + (result.count === 1 ? '' : 's') +
-        ' · ' + (result.uploaded || 0) + ' up · ' + (result.downloaded || 0) + ' down');
+      toast(t('set.synced', { n: result.count, s: result.count === 1 ? '' : 's', u: result.uploaded || 0, d: result.downloaded || 0 }));
     } else {
-      toast(result.error || 'The mirror did not answer', 'error');
+      toast(result.error || t('set.mirror.fail'), 'error');
     }
   });
 
@@ -114,7 +122,7 @@ export function initSettings(): void {
       supabaseUrl: (($('#in-supa-url') as HTMLInputElement).value || '').trim().replace(/\/+$/, ''),
       supabaseAnonKey: (($('#in-supa-key') as HTMLInputElement).value || '').trim()
     });
-    toast('Configuration saved — reconnecting');
+    toast(t('set.saved'));
     await Auth.reset();
     renderSettings();
     Route.refresh();
@@ -125,21 +133,21 @@ export function initSettings(): void {
       supabaseUrl: (($('#in-supa-url') as HTMLInputElement).value || '').trim().replace(/\/+$/, ''),
       supabaseAnonKey: (($('#in-supa-key') as HTMLInputElement).value || '').trim()
     });
-    if (!OcrProxy.isConfigured()) { toast('Add the URL and anon key first', 'error'); return; }
+    if (!OcrProxy.isConfigured()) { toast(t('set.need.supa'), 'error'); return; }
 
-    toast('Testing the proxy…');
+    toast(t('set.testing'));
     try {
       const res = await OcrProxy.ping();
-      toast('Proxy is live' + (res && (res.model as string) ? ' · ' + res.model : ''));
+      toast(t('set.live') + (res && (res.model as string) ? ' · ' + res.model : ''));
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'The proxy did not answer', 'error');
+      toast(err instanceof Error ? err.message : t('set.proxy.fail'), 'error');
     }
     renderSettings();
   });
 
   ($('#btn-account') as HTMLButtonElement).addEventListener('click', async () => {
     if (Auth.user()) {
-      if (!window.confirm('Sign out? Readings stay on this device.')) return;
+      if (!window.confirm(t('set.signout.confirm'))) return;
       await Auth.signOut();
       return;
     }
@@ -152,10 +160,10 @@ export function initSettings(): void {
   ($('#btn-copy-summary') as HTMLButtonElement).addEventListener('click', () => void copySummary());
 
   ($('#btn-erase') as HTMLButtonElement).addEventListener('click', async () => {
-    if (!window.confirm('Delete every reading from this device? Export first if you want a copy.')) return;
+    if (!window.confirm(t('set.erase.confirm'))) return;
     await Store.clearAll();
     setReadings([]);
-    toast('All readings erased');
+    toast(t('set.erased'));
     Route.go('dashboard');
   });
 

@@ -2,6 +2,7 @@
    Every reading, newest first, searchable by date, source, player id or note. */
 
 import { $, el, clear } from '../core/dom.js';
+import { metricLabel, sourceLabel, appLocaleTag } from '../core/i18n.js';
 import { METRICS, SOURCE_LABEL } from '../core/metrics.js';
 import { fmtDate, fmtTime, metricText, toDate } from '../core/format.js';
 import { getReadings, readingSerialNumber, sortedDesc } from '../data/store.js';
@@ -32,7 +33,7 @@ export function renderHistory(): void {
   const query = filter.trim().toLowerCase();
   const rows = sortedDesc(getReadings()).filter((r) => {
     if (!query) return true;
-    const hay = [fmtDate(r.measuredAt), SOURCE_LABEL[r.source] || '', r.playerId || '', readingSerialNumber(r), r.note || ''].join(' ').toLowerCase();
+    const hay = [fmtDate(r.measuredAt), sourceLabel(r.source, SOURCE_LABEL[r.source] || ''), r.playerId || '', readingSerialNumber(r), r.note || ''].join(' ').toLowerCase();
     return hay.indexOf(query) !== -1;
   });
 
@@ -47,7 +48,7 @@ export function renderHistory(): void {
 
     const date = el('div', 'hitem__date');
     date.appendChild(el('span', 'hitem__day', d ? String(d.getDate()) : '—'));
-    date.appendChild(el('span', 'hitem__mon', d ? new Intl.DateTimeFormat(undefined, { month: 'short' }).format(d) : ''));
+    date.appendChild(el('span', 'hitem__mon', d ? new Intl.DateTimeFormat(appLocaleTag(), { month: 'short' }).format(d) : ''));
     // Several readings can share a day, so the time is what tells them apart.
     date.appendChild(el('span', 'hitem__time', d ? fmtTime(d) : ''));
     btn.appendChild(date);
@@ -56,7 +57,7 @@ export function renderHistory(): void {
     const figures = el('div', 'hitem__figures');
     const items: Array<[string, string]> = [];
     ['weight', 'bodyFat', 'muscleMass', 'visceralFat'].forEach((key) => {
-      if (typeof reading.metrics[key] === 'number') items.push([METRICS[key].label, metricText(key, reading.metrics[key])]);
+      if (typeof reading.metrics[key] === 'number') items.push([metricLabel(key, METRICS[key].label), metricText(key, reading.metrics[key])]);
     });
     items.slice(0, 3).forEach((pair) => {
       const span = el('span');

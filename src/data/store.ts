@@ -5,6 +5,7 @@
    event so the mounted page can re-render itself. */
 
 import { toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { emit } from '../core/events.js';
 import { Store } from './db.js';
 import {
@@ -58,7 +59,7 @@ export async function loadReadings(): Promise<void> {
     setReadings(promoted);
   } catch (err) {
     setReadings([]);
-    toast('Local storage is unavailable in this browser. Readings cannot be saved.', 'error');
+    toast(t('pipe.nostore'), 'error');
   }
 }
 

@@ -3,6 +3,7 @@
    30-day cadence. No DOM shell here beyond the insight list host. */
 
 import { $, el, clear } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { metricText, relDays, massValue } from '../core/format.js';
 import { getReadings, sortedAsc } from '../data/store.js';
 
@@ -20,8 +21,8 @@ export function renderInsights(): void {
     const only = el('div', 'insight');
     only.appendChild(el('span', 'insight__mark', '•'));
     const body = el('div', 'od-field');
-    body.appendChild(el('div', 'insight__title', 'One reading so far'));
-    body.appendChild(el('div', 'insight__body', 'Add a second reading and the direction of travel appears here.'));
+    body.appendChild(el('div', 'insight__title', t('insights.one')));
+    body.appendChild(el('div', 'insight__body', t('insights.one.body')));
     only.appendChild(body);
     host.appendChild(only);
     return;
@@ -34,8 +35,12 @@ export function renderInsights(): void {
   if (bfDelta != null && Math.abs(bfDelta) >= 0.2) {
     items.push({
       accent: 'var(--c-amber-soft)',
-      title: bfDelta < 0 ? 'Body fat has moved down' : 'Body fat has moved up',
-      body: Math.abs(bfDelta).toFixed(1) + ' points ' + (bfDelta < 0 ? 'lower' : 'higher') + ' than your earliest reading, across ' + list.length + ' readings.'
+      title: bfDelta < 0 ? t('insights.bf.down') : t('insights.bf.up'),
+      body: t('insights.bf.body', {
+        v: Math.abs(bfDelta).toFixed(1),
+        dir: bfDelta < 0 ? t('insights.bf.lower') : t('insights.bf.higher'),
+        n: list.length
+      })
     });
   }
 
@@ -45,8 +50,11 @@ export function renderInsights(): void {
     const shown = massValue(Math.abs(mmDelta), 1);
     items.push({
       accent: 'var(--c-green-soft)',
-      title: mmDelta > 0 ? 'Muscle mass is up' : 'Muscle mass is down',
-      body: shown.value + ' ' + shown.unit + ' ' + (mmDelta > 0 ? 'above' : 'below') + ' your earliest reading.'
+      title: mmDelta > 0 ? t('insights.mm.up') : t('insights.mm.down'),
+      body: t('insights.mm.body', {
+        v: shown.value, unit: shown.unit,
+        dir: mmDelta > 0 ? t('insights.mm.above') : t('insights.mm.below')
+      })
     });
   }
 
@@ -61,16 +69,19 @@ export function renderInsights(): void {
     const spread = Math.max.apply(null, weights) - Math.min.apply(null, weights);
     items.push({
       accent: 'var(--c-primary-soft)',
-      title: 'Weight spread over 90 days',
-      body: 'A range of ' + metricText('weight', spread) + ' across ' + weights.length + ' readings, with the latest at ' + metricText('weight', weights[weights.length - 1]) + '.'
+      title: t('insights.spread.title'),
+      body: t('insights.spread.body', {
+        spread: metricText('weight', spread), n: weights.length,
+        last: metricText('weight', weights[weights.length - 1])
+      })
     });
   }
 
   const last30 = getReadings().filter((r) => Date.now() - new Date(r.measuredAt).getTime() <= 30 * 86400000);
   items.push({
     accent: 'var(--c-teal-soft)',
-    title: 'Cadence',
-    body: last30.length + ' reading' + (last30.length === 1 ? '' : 's') + ' in the last 30 days. The most recent was ' + relDays(last.measuredAt) + '.'
+    title: t('insights.cadence'),
+    body: t('insights.cadence.body', { n: last30.length, s: last30.length === 1 ? '' : 's', rel: relDays(last.measuredAt) })
   });
 
   items.forEach((item) => {
@@ -89,6 +100,6 @@ export function renderInsights(): void {
   const note = el('p', 'footnote');
   note.style.padding = 'var(--s-2) 0 0';
   note.style.textAlign = 'left';
-  note.textContent = 'These lines describe what your own readings show. They are not medical advice.';
+  note.textContent = t('insights.note');
   host.appendChild(note);
 }

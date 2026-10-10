@@ -6,6 +6,7 @@ import type { AppSettings } from '../domain/types.js';
 const defaults: AppSettings = {
   theme: 'system',
   massUnit: 'kg',
+  lang: 'system',
   reduceMotion: false,
   supabaseUrl: DEFAULT_SUPABASE_URL,
   supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,

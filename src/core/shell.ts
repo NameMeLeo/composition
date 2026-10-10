@@ -1,6 +1,7 @@
 /* Composition — swapping between the sign-in screen and the app shell. */
 
 import { $ } from './dom.js';
+import { t } from './i18n.js';
 import { Auth } from '../services/auth.js';
 import { Route, parse } from './router.js';
 
@@ -9,7 +10,7 @@ export function showAuth(): void {
   $('#view-auth').hidden = false;
   const note = $('#auth-note');
   if (!Auth.isConfigured()) {
-    note.textContent = 'Google sign-in is unavailable until Supabase is configured.';
+    note.textContent = t('auth.noSupabase');
   }
 }
 

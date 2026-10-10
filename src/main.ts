@@ -9,6 +9,7 @@
    ===================================================================== */
 
 import { Settings } from './core/settings.js';
+import { applyI18n } from './core/i18n.js';
 import { Auth } from './services/auth.js';
 import { applyTheme, applyMotion } from './core/theme.js';
 import { loadReadings } from './data/store.js';
@@ -35,6 +36,7 @@ function registerServiceWorker(): void {
 
 async function boot(): Promise<void> {
   Settings.load();
+  applyI18n();
   applyTheme();
   applyMotion();
 

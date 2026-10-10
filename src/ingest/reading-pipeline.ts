@@ -4,11 +4,13 @@
    This module orchestrates between them and never touches the view directly. */
 
 import { $, $$, toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { METRICS } from '../core/metrics.js';
 import { parseNumber } from '../core/format.js';
 import { OcrProxy } from '../services/ocr.js';
 import { parseReportUrl, playerReportUrl, reportBase } from '../services/report-url.js';
 import { openReview, saveReadingDirect } from './review.js';
+import { openReportPopup } from '../report/report-popup.js';
 import type { OcrResult, StartReadingJob } from '../domain/types.js';
 
 async function fileToBase64(file: File): Promise<string> {
@@ -45,10 +47,10 @@ function providerSourceOf(result: OcrResult | null): string | null {
 
 export function extractionMethod(result: OcrResult | null): string {
   if (result && (result.sourceType === 'tanita-api' || providerSourceOf(result) === 'tanita-api')) {
-    return 'Tanita provider API (OCR not used)';
+    return t('pipe.method.api');
   }
   const format = result?.sourceType ? ' (' + result.sourceType + ')' : '';
-  return 'OCR fallback' + format;
+  return t('pipe.method.ocr') + format;
 }
 
 export function isProviderResult(result: OcrResult | null): boolean {
@@ -60,12 +62,12 @@ export async function startReading(job: StartReadingJob): Promise<void> {
     openReview({
       metrics: {}, report: null, measuredAt: new Date().toISOString(), confidence: null, raw: null, notes: '',
       playerId: null, language: null, reportUrl: null, source: 'manual', previewUrl: null,
-      sourceType: null, extractionMethod: 'Manual entry', note: 'Entered by hand.'
+      sourceType: null, extractionMethod: t('review.manual'), note: t('pipe.entered')
     });
     return;
   }
 
-  showProcessing('Reading the report', 'Fetching the page for you, then reading it.', ['fetch']);
+  showProcessing(t('proc.reading'), t('proc.fetching'), ['fetch']);
   let result: OcrResult | null = null;
   let previewUrl: string | null = null;
   let note = '';
@@ -74,23 +76,23 @@ export async function startReading(job: StartReadingJob): Promise<void> {
     if (job.mode === 'file') {
       setStep('fetch', 'done');
       setStep('ocr', 'active');
-      ($('#proc-title') as HTMLElement).textContent = 'Reading the attachment';
-      ($('#proc-body') as HTMLElement).textContent = 'Sending ' + job.file.name + ' straight for reading — no fetching needed.';
+      ($('#proc-title') as HTMLElement).textContent = t('proc.reading');
+      ($('#proc-body') as HTMLElement).textContent = t('pipe.sending', { name: job.file.name });
       previewUrl = job.file.type?.indexOf('image/') === 0 ? URL.createObjectURL(job.file) : null;
       const data = await fileToBase64(job.file);
       result = (await OcrProxy.fromDocument(job.file.type || 'application/octet-stream', data)) as unknown as OcrResult;
-      note = 'Read from ' + job.file.name + ' with ' + extractionMethod(result) + '.';
+      note = t('pipe.read.from', { file: job.file.name, method: extractionMethod(result) });
     } else if (job.mode === 'report-url') {
-      if (!OcrProxy.isConfigured()) throw new Error('The OCR proxy is not configured, so the report cannot be fetched or read. Add your Supabase details in Settings, or enter the numbers by hand.');
+      if (!OcrProxy.isConfigured()) throw new Error(t('pipe.noproxy'));
       result = (await OcrProxy.fromReportUrl(job.url)) as unknown as OcrResult;
       const parsed = parseReportUrl(job.url);
-      note = 'Fetched from ' + (parsed.ok ? parsed.host : job.url) + ' via ' + extractionMethod(result) + '.';
+      note = t('pipe.read.fetched', { host: parsed.ok ? parsed.host : job.url, method: extractionMethod(result) });
     } else if (job.mode === 'player-id') {
-      if (!reportBase()) throw new Error('Only a player id was found, and no report address is configured. Add one in Settings, or paste the full report link.');
+      if (!reportBase()) throw new Error(t('pipe.playerid.nobase'));
       const built = playerReportUrl(job.playerId, job.language);
-      if (!OcrProxy.isConfigured()) throw new Error('Only a player id was found. The full report link is needed, and the proxy must be configured to fetch it.');
+      if (!OcrProxy.isConfigured()) throw new Error(t('pipe.playerid.noproxy'));
       result = (await OcrProxy.fromReportUrl(built)) as unknown as OcrResult;
-      note = 'Fetched from player ' + job.playerId + ' via ' + extractionMethod(result) + '.';
+      note = t('pipe.read.player', { id: job.playerId, method: extractionMethod(result) });
     } else {
       result = { metrics: {}, measuredAt: new Date().toISOString() };
     }
@@ -101,11 +103,11 @@ export async function startReading(job: StartReadingJob): Promise<void> {
     hideProcessing();
     // An expired session has already sent the user back to the sign-in screen.
     if (err instanceof Error && (err as Error & { code?: string }).code === 'AUTH_REQUIRED') return;
-    const message = err instanceof Error ? err.message : 'The report could not be read.';
-    const proceed = window.confirm(message + '\n\nOpen the review screen and type the numbers instead?');
+    const message = err instanceof Error ? err.message : t('pipe.unreadable');
+    const proceed = window.confirm(message + '\n\n' + t('pipe.type.instead'));
     if (!proceed) return;
     result = { metrics: {}, measuredAt: new Date().toISOString(), failed: true };
-    note = 'Entered by hand after: ' + message;
+    note = t('pipe.entered.after', { message });
   }
 
   hideProcessing();
@@ -123,16 +125,18 @@ export async function startReading(job: StartReadingJob): Promise<void> {
     reportUrl: job.mode === 'report-url' ? job.url : null,
     source: job.mode === 'file' ? 'file' : job.mode === 'report-url' ? 'link' : 'qr',
     sourceType: (r.sourceType as string) ?? providerSourceOf(r),
-    extractionMethod: r.failed ? 'Manual entry after extraction failure' : extractionMethod(r),
+    extractionMethod: r.failed ? t('pipe.method.manualfail') : extractionMethod(r),
     previewUrl,
     note
   };
 
   if (isProviderResult(r)) {
     try {
-      await saveReadingDirect(review);
+      const stored = await saveReadingDirect(review);
+      // The numbers are saved; show the report as the source page draws it.
+      await openReportPopup(stored);
     } catch (err) {
-      toast('Could not save the provider reading: ' + (err instanceof Error ? err.message : 'unknown error'), 'error');
+      toast(t('pipe.save.fail', { message: err instanceof Error ? err.message : t('pipe.unreadable') }), 'error');
     }
     return;
   }

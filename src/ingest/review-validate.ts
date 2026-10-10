@@ -3,6 +3,7 @@
    No saving here (see reading-builder.ts); no rendering here (see review.ts). */
 
 import { $, $$ } from '../core/dom.js';
+import { t, metricLabel } from '../core/i18n.js';
 import { METRICS } from '../core/metrics.js';
 import { parseNumber, toDate } from '../core/format.js';
 import { reportFieldLabel, METRIC_REPORT_PATH_MAP } from '../domain/report.js';
@@ -50,12 +51,15 @@ export function validateReviewForm(): ReviewCheck {
 
     const value = parseNumber(el.value);
     if (value == null || isNaN(value)) {
-      errs.push(meta.label + ' is not a number.');
+      errs.push(t('review.nan', { label: metricLabel(key, meta.label) }));
       flag(input);
       return;
     }
     if (value < meta.min || value > meta.max) {
-      errs.push(meta.label + ' should sit between ' + meta.min + ' and ' + meta.max + (meta.unit ? ' ' + meta.unit : '') + '.');
+      errs.push(t('review.between', {
+        label: metricLabel(key, meta.label), min: meta.min, max: meta.max,
+        unit: meta.unit ? ' ' + meta.unit : ''
+      }));
       flag(input);
       return;
     }
@@ -73,7 +77,7 @@ export function validateReviewForm(): ReviewCheck {
       if (raw === '') { reportEdits[path] = null; return; }
       const value = parseNumber(raw);
       if (value == null || isNaN(value)) {
-        errs.push(reportFieldLabel(path.split('.').pop() ?? path) + ' is not a number.');
+        errs.push(t('review.nan', { label: reportFieldLabel(path.split('.').pop() ?? path) }));
         flag(input);
         return;
       }
@@ -92,13 +96,13 @@ export function validateReviewForm(): ReviewCheck {
   const dateInput = $('#rev-date') as HTMLInputElement | null;
   const measuredAt = dateInput ? toDate(dateInput.value) : null;
   if (!measuredAt) {
-    errs.push('The measurement date is missing.');
+    errs.push(t('review.nodate'));
     if (dateInput) flag(dateInput);
   }
 
   if (errs.length) return { ok: false, errors: errs, firstBad };
   if (!Object.keys(metrics).length) {
-    return { ok: false, errors: ['Add at least one measurement before saving.'], firstBad: null, empty: true };
+    return { ok: false, errors: [t('review.empty')], firstBad: null, empty: true };
   }
   return { ok: true, metrics, reportEdits, measuredAt: measuredAt as Date };
 }

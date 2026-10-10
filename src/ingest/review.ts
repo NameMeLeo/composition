@@ -5,6 +5,7 @@
    reading-builder.ts; report flattening lives in domain/report.ts. */
 
 import { $, el, clear } from '../core/dom.js';
+import { t, metricLabel, sectionLabel, sourceLabel } from '../core/i18n.js';
 import {
   METRICS, METRIC_ORDER,
   REPORT_SECTION_LABELS, REPORT_FIELD_UNITS,
@@ -68,7 +69,7 @@ function reviewField(key: string, value: unknown): HTMLElement {
   const field = el('div', 'rev__field');
   const id = 'rev-' + key;
 
-  const label = el('label', 'rev__label', meta.label + (meta.unit ? ' · ' + meta.unit : ''));
+  const label = el('label', 'rev__label', metricLabel(key, meta.label) + (meta.unit ? ' · ' + meta.unit : ''));
   label.setAttribute('for', id);
   field.appendChild(label);
 
@@ -98,8 +99,8 @@ function metadataCard(leaves: ReportLeaf[]): HTMLElement {
   const card = el('div', 'rev__meta');
 
   const head = el('div', 'rev__metahead');
-  head.appendChild(el('span', 'rev__metatitle', 'Report metadata'));
-  head.appendChild(el('span', 'rev__metanote', 'Read only'));
+  head.appendChild(el('span', 'rev__metatitle', t('review.meta')));
+  head.appendChild(el('span', 'rev__metanote', t('review.readonly')));
   card.appendChild(head);
 
   const grid = el('div', 'detail__grid');
@@ -119,7 +120,7 @@ function measurementPanel(state: ReviewState): HTMLElement {
   const body = el('div', 'rev__body');
 
   const dateField = el('div', 'rev__field');
-  const dateLabel = el('label', 'rev__label', 'Measured at');
+  const dateLabel = el('label', 'rev__label', t('review.measured'));
   dateLabel.setAttribute('for', 'rev-date');
   dateField.appendChild(dateLabel);
 
@@ -143,13 +144,13 @@ function measurementPanel(state: ReviewState): HTMLElement {
   select.id = 'rev-add';
   const opt0 = document.createElement('option');
   opt0.value = '';
-  opt0.textContent = 'Add another metric';
+  opt0.textContent = t('review.add');
   select.appendChild(opt0);
   METRIC_ORDER.forEach((key) => {
     if (state.metrics[key] != null) return;
     const o = document.createElement('option');
     o.value = key;
-    o.textContent = METRICS[key].label + (METRICS[key].unit ? ' (' + METRICS[key].unit + ')' : '');
+    o.textContent = metricLabel(key, METRICS[key].label) + (METRICS[key].unit ? ' (' + METRICS[key].unit + ')' : '');
     select.appendChild(o);
   });
   select.addEventListener('change', () => {
@@ -194,7 +195,7 @@ function reportSectionEntries(report: Report): Array<{ key: string; label: strin
     .filter((key) => key !== 'metadata' && key !== 'confidence' && key !== 'notes')
     .map((key) => ({
       key,
-      label: REPORT_SECTION_LABELS[key] || reportFieldLabel(key),
+      label: sectionLabel(key, REPORT_SECTION_LABELS[key] || reportFieldLabel(key)),
       leaves: reportLeaves(report[key], key, '', [])
     }))
     .filter((entry) => entry.leaves.length);
@@ -206,11 +207,11 @@ function summaryValue(value: unknown): string {
 
 function reviewSummary(state: ReviewState): HTMLElement {
   const card = el('section', 'rev__summary');
-  card.setAttribute('aria-label', 'Reading source');
+  card.setAttribute('aria-label', t('review.source'));
 
   const head = el('div', 'rev__summaryhead');
-  head.appendChild(el('div', 'rev__summarytitle', 'Reading source'));
-  head.appendChild(el('span', 'rev__summarynote', state.report ? 'Report context' : 'Manual entry'));
+  head.appendChild(el('div', 'rev__summarytitle', t('review.source')));
+  head.appendChild(el('span', 'rev__summarynote', state.report ? t('review.context') : t('review.manual')));
   card.appendChild(head);
 
   const grid = el('div', 'rev__summarygrid');
@@ -223,11 +224,11 @@ function reviewSummary(state: ReviewState): HTMLElement {
     grid.appendChild(item);
   };
 
-  add('Input', SOURCE_LABEL[state.source] || state.source || 'Unknown');
-  add('Extraction', state.extractionMethod || 'Unknown');
-  if (typeof state.confidence === 'number') add('Confidence', Math.round(state.confidence * 100) + '%');
-  add('Player', summaryValue(state.playerId));
-  add('Serial', summaryValue(reportValue(state.report, 'metadata.serial_number')));
+  add(t('review.input'), sourceLabel(state.source, SOURCE_LABEL[state.source] || state.source) || state.source || t('review.unknown'));
+  add(t('review.extraction'), state.extractionMethod || t('review.unknown'));
+  if (typeof state.confidence === 'number') add(t('review.confidence'), Math.round(state.confidence * 100) + '%');
+  add(t('review.player'), summaryValue(state.playerId));
+  add(t('review.serial'), summaryValue(reportValue(state.report, 'metadata.serial_number')));
 
   if (state.reportUrl) {
     let link: HTMLAnchorElement | null = null;
@@ -242,14 +243,14 @@ function reviewSummary(state: ReviewState): HTMLElement {
         link.textContent = url.toString();
       }
     } catch (e) { /* keep the source as plain state, without making it a link */ }
-    add('Report link', link ? '' : (state.reportUrl as string), link);
+    add(t('review.link'), link ? '' : (state.reportUrl as string), link);
   }
   card.appendChild(grid);
 
   if (state.note) card.appendChild(el('p', 'rev__hint', state.note));
   if (state.notes) {
     const warning = el('div', 'rev__warning');
-    warning.appendChild(el('strong', 'rev__warningtitle', 'OCR note'));
+    warning.appendChild(el('strong', 'rev__warningtitle', t('review.ocrnote')));
     warning.appendChild(el('span', 'rev__warningtext', state.notes));
     card.appendChild(warning);
   }
@@ -280,14 +281,14 @@ export function openReview(state: ReviewState): void {
   // Keep module state for saveReview; extras retained for forward-compat.
   reviewState = { ...state, extras: [] };
 
-  ($('#review-title') as HTMLElement).textContent = state.report ? 'Review report' : 'Check the numbers';
+  ($('#review-title') as HTMLElement).textContent = state.report ? t('review.report') : t('review.check');
   host.appendChild(reviewSummary(state));
 
   if (state.previewUrl) {
     const wrap = el('div', 'rev__preview');
     const img = document.createElement('img');
     img.src = state.previewUrl;
-    img.alt = 'The attachment being read';
+    img.alt = t('review.preview.alt');
     img.width = 800;
     img.height = 600;
     wrap.appendChild(img);
@@ -304,7 +305,7 @@ export function openReview(state: ReviewState): void {
   const rail = el('div', 'tabs rev__tabs');
   rail.id = 'rev-tabs';
   rail.setAttribute('role', 'tablist');
-  rail.setAttribute('aria-label', 'Sections of this reading');
+  rail.setAttribute('aria-label', t('review.sections'));
 
   const form = el('form', 'rev') as HTMLFormElement;
   form.id = 'review-form';
@@ -342,7 +343,7 @@ export function openReview(state: ReviewState): void {
 
   const sections = state.report ? reportSectionEntries(state.report) : [];
   sections.forEach((entry, index) => addSection(entry.key, entry.label, reportPanel(entry.leaves), index === 0));
-  addSection('measurement', 'Measurements', measurementPanel(state), sections.length === 0);
+  addSection('measurement', t('review.measurements'), measurementPanel(state), sections.length === 0);
 
   /* The rail and the error line travel together, so a problem never scrolls out of
      sight while the field it names is somewhere below. */
@@ -389,7 +390,7 @@ export async function saveReview(): Promise<void> {
     await persistReading(reading);
   } catch (err) {
     errBox.hidden = false;
-    errBox.textContent = 'Could not save to this device: ' + (err instanceof Error ? err.message : 'unknown error');
+    errBox.textContent = t('pipe.nosave', { message: err instanceof Error ? err.message : t('pipe.unreadable') });
     return;
   }
 

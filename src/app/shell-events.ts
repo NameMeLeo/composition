@@ -4,6 +4,7 @@
    Pages own their rendering; this module owns everything around them. */
 
 import { $, $input, toast } from '../core/dom.js';
+import { t } from '../core/i18n.js';
 import { Auth } from '../services/auth.js';
 import { Route } from '../core/router.js';
 import { on } from '../core/events.js';
@@ -11,6 +12,7 @@ import { parseReportUrl, DEFAULT_REPORT_LANGUAGE } from '../services/report-url.
 import { Capture } from '../ingest/capture.js';
 import { ScanFan } from '../ingest/scanfan.js';
 import { closeReview, saveReview } from '../ingest/review.js';
+import { closeReportPopup } from '../report/report-popup.js';
 import { initHistory } from '../pages/history.js';
 import { initSettings } from '../pages/settings.js';
 
@@ -31,11 +33,10 @@ export function bindShellEvents(): void {
 
   ($('#btn-signin') as HTMLButtonElement).addEventListener('click', async () => {
     try {
-      ($('#auth-note') as HTMLElement).textContent = 'Opening Google…';
+      ($('#auth-note') as HTMLElement).textContent = t('auth.opening');
       await Auth.signInWithGoogle();
     } catch (err) {
-      ($('#auth-note') as HTMLElement).textContent = err instanceof Error ? err.message
-        : 'Sign-in could not start. Check the Supabase Google provider and redirect URL.';
+      ($('#auth-note') as HTMLElement).textContent = err instanceof Error ? err.message : t('auth.startFail');
     }
   });
 
@@ -45,9 +46,7 @@ export function bindShellEvents(): void {
     e.preventDefault();
     const parsed = parseReportUrl($input('#in-report-url').value);
     if (!parsed.ok) {
-      toast(parsed.reason === 'no-base'
-        ? 'A player id on its own needs a report address. Add one in Settings, or paste the full link.'
-        : 'That does not look like a report link', 'error');
+      toast(parsed.reason === 'no-base' ? t('shell.paste.needbase') : t('shell.notlink'), 'error');
       return;
     }
     Capture.closeSheet();
@@ -60,7 +59,7 @@ export function bindShellEvents(): void {
     input.value = '';
     if (!file) return;
     Capture.closeSheet();
-    if (file.size > 18 * 1024 * 1024) { toast('That file is larger than 18 MB', 'error'); return; }
+    if (file.size > 18 * 1024 * 1024) { toast(t('shell.toobig'), 'error'); return; }
     void Capture.startReading({ mode: 'file', file });
   });
 
@@ -75,7 +74,7 @@ export function bindShellEvents(): void {
     if (!file) return;
     try {
       const text = await Capture.scanImageFile(file);
-      if (!text) { toast('No QR code found in that photo', 'error'); return; }
+      if (!text) { toast(t('shell.noqr'), 'error'); return; }
 
       const parsed = parseReportUrl(text);
       if (!parsed.ok) {
@@ -83,20 +82,26 @@ export function bindShellEvents(): void {
         if (/\d{6,}/.test(text)) {
           Capture.stopScanner();
           if (parsed.reason === 'no-base') {
-            toast('A player id on its own needs a report address to look up. Add one in Settings.', 'error');
+            toast(t('scan.playerid.nobase'), 'error');
             return;
           }
           void Capture.startReading({ mode: 'player-id', playerId: text.trim(), language: DEFAULT_REPORT_LANGUAGE });
           return;
         }
-        toast('That code is not a report link', 'error');
+        toast(t('shell.codenotlink'), 'error');
         return;
       }
       Capture.stopScanner();
       void Capture.startReading({ mode: 'report-url', url: parsed.url, playerId: parsed.playerId, language: parsed.language });
     } catch (err) {
-      toast('The photo could not be read', 'error');
+      toast(t('shell.photofail'), 'error');
     }
+  });
+
+  /* Report image popup chrome */
+  ($('#btn-report-close') as HTMLButtonElement).addEventListener('click', closeReportPopup);
+  document.querySelectorAll('[data-close-report]').forEach((node) => {
+    node.addEventListener('click', closeReportPopup);
   });
 
   /* Review screen chrome */
@@ -116,6 +121,7 @@ export function bindShellEvents(): void {
   window.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!($('#view-scanner') as HTMLElement).hidden) Capture.stopScanner();
+    else if (!($('#sheet-report') as HTMLElement).hidden) closeReportPopup();
     else if (!($('#view-review') as HTMLElement).hidden) closeReview();
     else if (!($('#sheet-capture') as HTMLElement).hidden) Capture.closeSheet();
   });

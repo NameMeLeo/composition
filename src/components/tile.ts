@@ -2,6 +2,7 @@
 
 import { METRICS } from '../core/metrics.js';
 import { el } from '../core/dom.js';
+import { t, metricLabel } from '../core/i18n.js';
 import { metricDisplay, axisFormat } from '../core/format.js';
 import { deltaFor, rawPoints } from '../data/store.js';
 import { deltaChip } from './chip.js';
@@ -26,7 +27,7 @@ export function tile(key: string, reading: Reading | null, opts?: TileOpts): HTM
   const node = el('div', 'tile');
   node.style.setProperty('--tile-accent', meta.accent);
 
-  node.appendChild(el('span', 'tile__label', meta.label));
+  node.appendChild(el('span', 'tile__label', metricLabel(key, meta.label)));
 
   const value = el('span', 'tile__value');
   const shown = metricDisplay(key, raw);
@@ -37,7 +38,7 @@ export function tile(key: string, reading: Reading | null, opts?: TileOpts): HTM
   const delta = opts && 'delta' in opts ? (opts.delta as number | null) : deltaFor(key);
   const foot = el('div', 'tile__foot');
   if (delta == null) {
-    foot.textContent = raw == null ? 'Not recorded yet' : 'Only one reading so far';
+    foot.textContent = raw == null ? t('tile.unrecorded') : t('tile.one');
   } else {
     foot.appendChild(deltaChip(key, delta));
   }
